@@ -103,7 +103,7 @@ const projectData = [
   },
 ]
 
-const Projects = () => {
+const Business = () => {
 
     const [searchTerm, setSearchTerm] = useState("")
     const [rowsPerPage, setRowsPerPage] = useState("10")
@@ -114,39 +114,39 @@ const Projects = () => {
         <div className="flex flex-col gap-6">
             <div className="flex items-end w-full justify-between gap-6">
                 <div className="flex flex-col gap-2 w-full">
-                    <span className="text-sm text-[#878A93] font-medium">Total Projects: <span className="text-[#3E4351]">1000</span></span>
+                    <span className="text-sm text-[#878A93] font-medium">Total Registered Businesses: <span className="text-[#3E4351]">1000</span></span>
                     <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl flex gap-6 p-4">
                         <div className="border-r w-full flex flex-col gap-4 border-[#EFF2F3]">
                             <span className="text-2xl font-bold text-[#0E1426]">500</span>
-                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary-hover">Pending</span>
+                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">Verified</span>
                         </div>
                         <div className="border-r w-full flex flex-col gap-4 border-[#EFF2F3]">
-                            <span className="text-2xl font-bold text-[#0E1426]">500</span>
-                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary">In-Progress</span>
+                            <span className="text-2xl font-bold text-[#0E1426]">200</span>
+                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary-hover">Pending</span>
                         </div>
                         <div className="w-full flex flex-col gap-4">
-                            <span className="text-2xl font-bold text-[#0E1426]">500</span>
-                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">Completed</span>
+                            <span className="text-2xl font-bold text-[#0E1426]">300</span>
+                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">Active Business</span>
                         </div>
                     </div>
                 </div>
                 <div className="w-full"></div>
-                <Button className="hover:bg-primary-hover hover:text-black">Start a new project</Button>
+                {/* <Button className="hover:bg-primary-hover hover:text-black">Start a new project</Button> */}
             </div>
 
             <div className="w-full p-6 bg-white">
                 {/* Header */}
-                <h1 className="text-2xl font-medium text-[#878A93] mb-6">Project List</h1>
+                <h1 className="text-2xl font-medium text-[#878A93] mb-6">Business List</h1>
 
                 {/* Controls */}
                 <div className="flex items-center justify-between mb-6 gap-4">
                     <div className="flex items-center gap-4">
-                        <Select value="all-projects" defaultValue="all-projects">
+                        <Select value="all-business" defaultValue="all-business">
                             <SelectTrigger className="w-[140px] h-9 text-sm border-gray-300">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all-projects">All projects</SelectItem>
+                                <SelectItem value="all-business">All Business</SelectItem>
                                 <SelectItem value="in-progress">In-Progress</SelectItem>
                                 <SelectItem value="completed">Completed</SelectItem>
                                 <SelectItem value="pending">Pending</SelectItem>
@@ -186,17 +186,17 @@ const Projects = () => {
                     <Table>
                     <TableHeader>
                         <TableRow className="bg-gray-50/50">
-                        <TableHead className="text-[#878A93] font-medium text-sm py-4">Project name</TableHead>
-                        <TableHead className="text-[#878A93] font-medium text-sm py-4">Experts</TableHead>
-                        <TableHead className="text-[#878A93] font-medium text-sm py-4">Total Task</TableHead>
+                        <TableHead className="text-[#878A93] font-medium text-sm py-4">Business name</TableHead>
+                        <TableHead className="text-[#878A93] font-medium text-sm py-4">Owner</TableHead>
+                        <TableHead className="text-[#878A93] font-medium text-sm py-4">Email</TableHead>
                         <TableHead className="text-[#878A93] font-medium text-sm py-4">Status</TableHead>
-                        <TableHead className="text-[#878A93] font-medium text-sm py-4">Due Date</TableHead>
+                        <TableHead className="text-[#878A93] font-medium text-sm py-4">Date Joined</TableHead>
                         <TableHead className="text-[#878A93] font-medium text-sm py-4">Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {projectData.map((business, index) => (
-                        <TableRow onClick={() => router.push('/projects/1')} key={business.id} className="border-b border-gray-100 cursor-pointer hover:bg-gray-50/50">
+                        <TableRow onClick={() => router.push('/business/1')} key={business.id} className="border-b border-gray-100 cursor-pointer hover:bg-gray-50/50">
                             <TableCell className="py-4">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm">
@@ -274,4 +274,4 @@ const Projects = () => {
     )
 }
 
-export default Projects
+export default Business
