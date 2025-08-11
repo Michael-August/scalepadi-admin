@@ -9,6 +9,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const projectData = [
   {
@@ -103,7 +104,7 @@ const projectData = [
   },
 ]
 
-const Projects = () => {
+const Experts = () => {
 
     const [searchTerm, setSearchTerm] = useState("")
     const [rowsPerPage, setRowsPerPage] = useState("10")
@@ -114,29 +115,29 @@ const Projects = () => {
         <div className="flex flex-col gap-6">
             <div className="flex items-end w-full justify-between gap-6">
                 <div className="flex flex-col gap-2 w-full">
-                    <span className="text-sm text-[#878A93] font-medium">Total Projects: <span className="text-[#3E4351]">1000</span></span>
+                    <span className="text-sm text-[#878A93] font-medium">Total Registered Experts: <span className="text-[#3E4351]">1000</span></span>
                     <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl flex gap-6 p-4">
                         <div className="border-r w-full flex flex-col gap-4 border-[#EFF2F3]">
-                            <span className="text-2xl font-bold text-[#0E1426]">500</span>
-                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary-hover">Pending</span>
+                            <span className="text-2xl font-bold text-[#0E1426]">750</span>
+                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">Verfied</span>
                         </div>
                         <div className="border-r w-full flex flex-col gap-4 border-[#EFF2F3]">
-                            <span className="text-2xl font-bold text-[#0E1426]">500</span>
-                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary">In-Progress</span>
+                            <span className="text-2xl font-bold text-[#0E1426]">200</span>
+                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary-hover">In-Progress</span>
                         </div>
                         <div className="w-full flex flex-col gap-4">
-                            <span className="text-2xl font-bold text-[#0E1426]">500</span>
-                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">Completed</span>
+                            <span className="text-2xl font-bold text-[#0E1426]">034</span>
+                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">Active Expert</span>
                         </div>
                     </div>
                 </div>
                 <div className="w-full"></div>
-                <Button className="hover:bg-primary-hover hover:text-black">Start a new project</Button>
+                {/* <Button className="hover:bg-primary-hover hover:text-black">Start a new project</Button> */}
             </div>
 
             <div className="w-full p-6 bg-white">
                 {/* Header */}
-                <h1 className="text-2xl font-medium text-[#878A93] mb-6">Project List</h1>
+                <h1 className="text-2xl font-medium text-[#878A93] mb-6">Experts List</h1>
 
                 {/* Controls */}
                 <div className="flex items-center justify-between mb-6 gap-4">
@@ -186,21 +187,21 @@ const Projects = () => {
                     <Table>
                     <TableHeader>
                         <TableRow className="bg-gray-50/50">
-                        <TableHead className="text-[#878A93] font-medium text-sm py-4">Project name</TableHead>
-                        <TableHead className="text-[#878A93] font-medium text-sm py-4">Experts</TableHead>
-                        <TableHead className="text-[#878A93] font-medium text-sm py-4">Total Task</TableHead>
+                        <TableHead className="text-[#878A93] font-medium text-sm py-4">Expert name</TableHead>
+                        <TableHead className="text-[#878A93] font-medium text-sm py-4">Role</TableHead>
+                        <TableHead className="text-[#878A93] font-medium text-sm py-4">No of Projects Task</TableHead>
                         <TableHead className="text-[#878A93] font-medium text-sm py-4">Status</TableHead>
-                        <TableHead className="text-[#878A93] font-medium text-sm py-4">Due Date</TableHead>
+                        <TableHead className="text-[#878A93] font-medium text-sm py-4">Date Joined</TableHead>
                         <TableHead className="text-[#878A93] font-medium text-sm py-4">Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {projectData.map((business, index) => (
-                        <TableRow onClick={() => router.push('/projects/1')} key={business.id} className="border-b border-gray-100 cursor-pointer hover:bg-gray-50/50">
+                        <TableRow onClick={() => router.push('/experts/1')} key={business.id} className="border-b border-gray-100 cursor-pointer hover:bg-gray-50/50">
                             <TableCell className="py-4">
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm">
-                                    <FolderOpen className={business.status === "Verified" ? "text-[#04E762]" : "text-[#F2BB05]"} />
+                                <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
+                                    <Image src={'/images/profile-pics.svg'} alt="profile picture" width={20} height={20} />
                                 </div>
                                 <span className="text-gray-900 text-sm">{business.name}</span>
                             </div>
@@ -274,4 +275,4 @@ const Projects = () => {
     )
 }
 
-export default Projects
+export default Experts

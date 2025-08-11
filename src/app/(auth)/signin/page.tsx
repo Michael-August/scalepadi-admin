@@ -65,10 +65,6 @@ const SignIn = () => {
                             <Button className="bg-primary text-white w-fit rounded-[14px] px-4 py-6">Login</Button>
                         </form>
                     </div>}
-
-                    <div className="w-full">
-                        <Link href={'/signup'} className="text-sm text-[#878A93] text-left">Don’t have an account? <span className="text-primary cursor-pointer">Create account</span></Link>
-                    </div>
                 </div>
                 
             </div>
