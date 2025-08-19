@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Calendar, ChevronLeft, ChevronRight, Clock, FolderOpen, MessageCircle, MoreHorizontal, Search, Tag, User, Users2 } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, Clock, FolderOpen, MessageCircle, MoreHorizontal, Search, Tag, User } from "lucide-react"
 import { useState } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -456,7 +456,7 @@ const BusinessId = () => {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {projectData.map((business, index) => (
+                                        {projectData.map((business) => (
                                         <TableRow onClick={() => router.push('/projects/1')} key={business.id} className="border-b border-gray-100 cursor-pointer hover:bg-gray-50/50">
                                             <TableCell className="py-4">
                                             <div className="flex items-center gap-3">

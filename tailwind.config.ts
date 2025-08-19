@@ -75,7 +75,8 @@ const config: Config = {
   				'Inter',
   				'ui-sans-serif',
   				'system-ui'
-  			]
+  			],
+			 montserrat: ["var(--font-montserrat)", "sans-serif"],
   		},
   		backgroundImage: {
   			'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

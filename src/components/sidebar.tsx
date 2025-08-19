@@ -1,11 +1,11 @@
 import { Routes } from "@/lib/routes"
-import { ChevronRight, Folder, FolderOpen, LogOutIcon } from "lucide-react"
+import { ChevronRight, LogOutIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 const SideBar = ({ onLinkClick }: { onLinkClick?: () => void }) => {
-
+console.warn(onLinkClick)
     const pathname = usePathname();
     
     return (
