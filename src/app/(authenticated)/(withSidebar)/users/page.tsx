@@ -1,13 +1,7 @@
 "use client";
 
 import {
-  MoreHorizontal,
-  ArrowUpDown,
   Download,
-  Search,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   UserPlus,
   CheckCircle,
   X,
@@ -15,152 +9,19 @@ import {
   Info as InfoIcon,
 } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import React, { useEffect, useState, useMemo } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-
-// Dummy data for Admin Users
-const AdminUserList = [
-  {
-    id: 1,
-    name: "Titi Ayomide",
-    email: "titi@scalepadi.com",
-    role: "Super Admin",
-    lastActive: "2 hrs ago",
-    status: "Active",
-    phoneNumber: "23412345678",
-  },
-  {
-    id: 2,
-    name: "John Doe",
-    email: "john@scalepadi.com",
-    role: "Admin",
-    lastActive: "1 day ago",
-    status: "Active",
-    phoneNumber: "23412345678",
-  },
-  {
-    id: 3,
-    name: "Jane Smith",
-    email: "jane@scalepadi.com",
-    role: "Support",
-    lastActive: "3 days ago",
-    status: "Inactive",
-    phoneNumber: "23412345678",
-  },
-  {
-    id: 4,
-    name: "Mike Johnson",
-    email: "mike@scalepadi.com",
-    role: "Viewer",
-    lastActive: "1 week ago",
-    status: "Active",
-    phoneNumber: "23412345678",
-  },
-  {
-    id: 5,
-    name: "Sarah Williams",
-    email: "sarah@scalepadi.com",
-    role: "Admin",
-    lastActive: "5 hours ago",
-    status: "Active",
-    phoneNumber: "23412345678",
-  },
-  {
-    id: 6,
-    name: "David Brown",
-    email: "david@scalepadi.com",
-    role: "Support",
-    lastActive: "2 days ago",
-    status: "Active",
-    phoneNumber: "23412345678",
-  },
-  {
-    id: 7,
-    name: "Emily Davis",
-    email: "emily@scalepadi.com",
-    role: "Viewer",
-    lastActive: "1 month ago",
-    status: "Inactive",
-    phoneNumber: "23412345678",
-  },
-  {
-    id: 8,
-    name: "Robert Wilson",
-    email: "robert@scalepadi.com",
-    role: "Admin",
-    lastActive: "1 week ago",
-    status: "Active",
-    phoneNumber: "23412345678",
-  },
-  {
-    id: 9,
-    name: "Lisa Moore",
-    email: "lisa@scalepadi.com",
-    role: "Super Admin",
-    lastActive: "3 days ago",
-    status: "Active",
-    phoneNumber: "23412345678",
-  },
-  {
-    id: 10,
-    name: "Thomas Taylor",
-    email: "thomas@scalepadi.com",
-    role: "Support",
-    lastActive: "Just now",
-    status: "Active",
-    phoneNumber: "23412345678",
-  },
-];
-
-const statusStyles = {
-  Active: "bg-green-100/50 text-green-500/70 border border-green-500/70",
-  Inactive: "bg-gray-100/50 text-gray-500/70 border border-gray-500/70",
-  Suspended: "bg-red-100/50 text-red-500/70 border border-red-500/70",
-};
-
-const roleStyles = {
-  "Super Admin":
-    "bg-purple-100/50 text-purple-500/70 border border-purple-500/70",
-  Admin: "bg-blue-100/50 text-blue-500/70 border border-blue-500/70",
-  Support: "bg-yellow-100/50 text-yellow-500/70 border border-yellow-500/70",
-  Viewer: "bg-gray-100/50 text-gray-500/70 border border-gray-500/70",
-};
+import { AdminUserList } from "@/app/data";
+import { FilterDropdown, Pagination, SearchInput, UserTable } from "./User";
 
 const roles = ["All roles", "Super Admin", "Admin", "Support", "Viewer"];
 const statusFilters = ["All statuses", "Active", "Inactive", "Suspended"];
 
+// Main Component
 export default function UsersList() {
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "asc" | "desc";
-  } | null>(null);
   const [showRoleFilter, setShowRoleFilter] = useState(false);
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const [selectedRole, setSelectedRole] = useState("All roles");
@@ -230,57 +91,24 @@ export default function UsersList() {
     });
   }, [searchQuery, selectedRole, selectedStatus]);
 
-  const sortedData = useMemo(() => {
-    if (!sortConfig) return filteredUsers;
-    return [...filteredUsers].sort((a, b) => {
-      const key = sortConfig.key as keyof typeof a;
-      const aValue = a[key];
-      const bValue = b[key];
-      // Only compare if both values are string or number
-      if ((typeof aValue === "string" && typeof bValue === "string") || (typeof aValue === "number" && typeof bValue === "number")) {
-        if (aValue < bValue) {
-          return sortConfig.direction === "asc" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "asc" ? 1 : -1;
-        }
-        return 0;
-      }
-      return 0;
-    });
-  }, [filteredUsers, sortConfig]);
-
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
-    return sortedData.slice(startIndex, startIndex + rowsPerPage);
-  }, [sortedData, currentPage, rowsPerPage]);
+    return filteredUsers.slice(startIndex, startIndex + rowsPerPage);
+  }, [filteredUsers, currentPage, rowsPerPage]);
 
   const totalPages = Math.ceil(filteredUsers.length / rowsPerPage);
 
-  const requestSort = (key: string) => {
-    let direction: "asc" | "desc" = "asc";
-    if (
-      sortConfig &&
-      sortConfig.key === key &&
-      sortConfig.direction === "asc"
-    ) {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-    setCurrentPage(1);
-  };
+  // const handlePreviousPage = () => {
+  //   if (currentPage > 1) {
+  //     setCurrentPage(currentPage - 1);
+  //   }
+  // };
 
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
+  // const handleNextPage = () => {
+  //   if (currentPage < totalPages) {
+  //     setCurrentPage(currentPage + 1);
+  //   }
+  // };
 
   const exportToCSV = (
   ) => {
@@ -368,99 +196,43 @@ export default function UsersList() {
           <div className="flex flex-col md:flex-row md:items-center xl:justify-between gap-4 mb-6">
             <div className="flex items-center gap-3 flex-wrap">
               {/* Role Filter */}
-              <div className="relative">
-                <button
-                  className="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowRoleFilter(!showRoleFilter);
-                    setShowStatusFilter(false);
-                  }}
-                >
-                  {selectedRole}
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${
-                      showRoleFilter ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {showRoleFilter && (
-                  <div className="absolute z-10 mt-1 w-32 bg-white border border-gray-200 rounded-xl shadow-lg">
-                    {roles.map((role) => (
-                      <button
-                        key={role}
-                        className={`w-full text-left px-4 py-2 text-xs first:rounded-t-xl last:rounded-b-xl ${
-                          selectedRole === role
-                            ? "bg-gray-100 text-gray-600"
-                            : "text-gray-600 hover:bg-gray-50"
-                        }`}
-                        onClick={() => {
-                          setSelectedRole(role);
-                          setShowRoleFilter(false);
-                          setCurrentPage(1);
-                        }}
-                      >
-                        {role}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <FilterDropdown
+                options={roles}
+                selectedValue={selectedRole}
+                onSelect={(value) => {
+                  setSelectedRole(value);
+                  setCurrentPage(1);
+                }}
+                isOpen={showRoleFilter}
+                onToggle={() => {
+                  setShowRoleFilter(!showRoleFilter);
+                  setShowStatusFilter(false);
+                }}
+              />
 
               {/* Status Filter */}
-              <div className="relative">
-                <button
-                  className="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowStatusFilter(!showStatusFilter);
-                    setShowRoleFilter(false);
-                  }}
-                >
-                  {selectedStatus}
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${
-                      showStatusFilter ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {showStatusFilter && (
-                  <div className="absolute z-10 mt-1 w-32 bg-white border border-gray-200 rounded-xl shadow-lg">
-                    {statusFilters.map((status) => (
-                      <button
-                        key={status}
-                        className={`w-full text-left px-4 py-2 text-xs first:rounded-t-xl last:rounded-b-xl ${
-                          selectedStatus === status
-                            ? "bg-gray-100 text-gray-600"
-                            : "text-gray-600 hover:bg-gray-50"
-                        }`}
-                        onClick={() => {
-                          setSelectedStatus(status);
-                          setShowStatusFilter(false);
-                          setCurrentPage(1);
-                        }}
-                      >
-                        {status}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <FilterDropdown
+                options={statusFilters}
+                selectedValue={selectedStatus}
+                onSelect={(value) => {
+                  setSelectedStatus(value);
+                  setCurrentPage(1);
+                }}
+                isOpen={showStatusFilter}
+                onToggle={() => {
+                  setShowStatusFilter(!showStatusFilter);
+                  setShowRoleFilter(false);
+                }}
+              />
 
               {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400" />
-                <input
-                  type="search"
-                  placeholder="Search users..."
-                  className="pl-8 pr-4 py-2.5 w-full md:w-36 text-xs border border-gray-200 rounded-xl outline-none transition-colors"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                />
-              </div>
+              <SearchInput
+                value={searchQuery}
+                onChange={(value) => {
+                  setSearchQuery(value);
+                  setCurrentPage(1);
+                }}
+              />
             </div>
 
             <div className="flex justify-end items-center gap-3">
@@ -485,196 +257,22 @@ export default function UsersList() {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="text-left font-medium text-gray-500 tracking-wider whitespace-nowrap">
-                    Admin Name
-                  </TableHead>
-                  <TableHead className="text-left font-medium text-gray-500 tracking-wider whitespace-nowrap">
-                    Email
-                  </TableHead>
-                  <TableHead
-                    className="text-left font-medium text-gray-500 tracking-wider cursor-pointer whitespace-nowrap"
-                    onClick={() => requestSort("role")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Role
-                      <ArrowUpDown className="w-3 h-3" />
-                      {sortConfig?.key === "role" &&
-                        (sortConfig.direction === "asc" ? "↑" : "↓")}
-                    </div>
-                  </TableHead>
-                  <TableHead
-                    className="text-left font-medium text-gray-500 tracking-wider cursor-pointer whitespace-nowrap"
-                    onClick={() => requestSort("lastActive")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Last Active Status
-                      <ArrowUpDown className="w-3 h-3" />
-                      {sortConfig?.key === "lastActive" &&
-                        (sortConfig.direction === "asc" ? "↑" : "↓")}
-                    </div>
-                  </TableHead>
-                  <TableHead className="text-left font-medium text-gray-500 tracking-wider whitespace-nowrap">
-                    Status
-                  </TableHead>
-                  <TableHead className="text-left font-medium text-gray-500 tracking-wider whitespace-nowrap">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.length > 0 ? (
-                  paginatedData.map((user) => (
-                    <TableRow key={user.id} className="hover:bg-gray-50">
-                      <TableCell className="whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center">
-                            <span className="text-gray-600 text-xs font-medium">
-                              {user.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </span>
-                          </div>
-                          <div className="ml-2">
-                            <div className="text-sm font-medium text-gray-500">
-                              {user.name}
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-sm text-gray-600">
-                        {user.email}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <span
-                          className={`px-2.5 py-1.5 inline-flex text-[13px] leading-5 font-semibold rounded-full ${
-                            roleStyles[user.role as keyof typeof roleStyles] ||
-                            "bg-gray-100 text-gray-800 border border-gray-900"
-                          }`}
-                        >
-                          {user.role}
-                        </span>
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-sm text-gray-500">
-                        {user.lastActive}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            statusStyles[
-                              user.status as keyof typeof statusStyles
-                            ]
-                          }`}
-                        >
-                          {user.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-center text-sm font-medium">
-                        <div className="relative">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                              >
-                                <MoreHorizontal className="h-4 w-4 text-gray-400" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => router.push(`/users/${user.id}`)}>
-                                View profile
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                                Chat
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                                Assign Task
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                                Edit Role
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                className="text-red-600"
-                                onClick={() => handleAction(user.id, "suspend")}
-                              >
-                                Suspend
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="px-6 py-4 text-center text-sm text-gray-500"
-                    >
-                      No users found matching your criteria
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          <UserTable 
+            data={paginatedData} 
+            onEditUser={handleEditUser}
+            onAction={handleAction}
+          />
 
           {/* Pagination */}
           {filteredUsers.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 whitespace-nowrap">Rows per page</span>
-                <Select 
-                  value={rowsPerPage.toString()} 
-                  onValueChange={(value) => {
-                    setRowsPerPage(Number(value));
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-16 h-8 text-sm border-gray-300">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600 whitespace-nowrap">
-                  {filteredUsers.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1}-
-                  {Math.min(currentPage * rowsPerPage, filteredUsers.length)} of {filteredUsers.length}
-                </span>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={handlePreviousPage}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={handleNextPage}
-                    disabled={currentPage === totalPages || totalPages === 0}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              rowsPerPage={rowsPerPage}
+              totalItems={filteredUsers.length}
+              onPageChange={(page) => setCurrentPage(page)}
+              onRowsPerPageChange={(rows) => setRowsPerPage(rows)}
+            />
           )}
         </section>
       </main>
