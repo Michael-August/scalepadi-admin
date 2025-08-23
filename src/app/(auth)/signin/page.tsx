@@ -7,11 +7,57 @@ import { Eye, EyeOff, Mail } from "lucide-react";
 import Image from "next/image"
 import Link from "next/link";
 import { useState } from "react";
+import * as z from 'zod';
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useLogin } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
+const signinFormSchema = z.object({
+    email: z.string().email("Invalid email address"),
+    password: z
+        .string()
+        .min(8, "Password must be at least 8 characters long")
+        .refine((value) => {
+            // Check for at least one uppercase letter, one lowercase letter, one number, and one special character
+            return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(value);
+        }, "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character")
+});
+
+type SignInFormData = z.infer<typeof signinFormSchema>;
 
 const SignIn = () => {
 
     const [showPassword, setShowPassword] = useState(false);
     const [signInMethod, setSignInMethod] = useState('initial')
+    const router = useRouter();
+
+    const { login, isPending } = useLogin();
+
+    const { handleSubmit, formState: {errors}, register, reset } = useForm<SignInFormData>({
+        resolver: zodResolver(signinFormSchema),
+        defaultValues: {
+            email: '',
+            password: ''
+        }
+    })
+
+    const onSubmit = (data: SignInFormData) => {
+        login(data, {
+            onSuccess: (res) => {
+                console.log(res);
+                localStorage.setItem("token", res.data.token);
+                toast.success("Login successful");
+                reset();
+                router.replace('/overview');
+            },
+            onError: (error) => {
+                toast.error(error.message || "An error occurred during login");
+                console.error("Login error:", error);
+            }
+        });
+    }
 
     return (
         <div className="flex">
@@ -35,10 +81,11 @@ const SignIn = () => {
                     </div>}
 
                     { signInMethod === 'email' && <div className="rounded-3xl bg-white p-10 border border-[#EFF2F3] w-full">
-                        <form action="" className="flex flex-col gap-6">
+                        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
                             <div className="form-group flex flex-col gap-2">
                                 <Label>Email <span className="text-red-600">*</span></Label>
-                                <Input className="rounded-[14px] py-6 px-4 border border-[#D1DAEC]" type="email" placeholder="Enter email" />
+                                <Input {...register('email')} className="rounded-[14px] py-6 px-4 border border-[#D1DAEC]" type="email" placeholder="Enter email" />
+                                {errors.email && <span className="text-red-600 text-sm">{errors.email.message}</span>}
                             </div>
                             <div className="form-group flex flex-col gap-2">
                                 <Label>
@@ -49,6 +96,7 @@ const SignIn = () => {
                                         className="rounded-[14px] py-6 px-4 border border-[#D1DAEC] pr-12"
                                         type={showPassword ? "text" : "password"}
                                         placeholder="Enter password"
+                                        {...register('password')}
                                     />
                                     <button
                                         type="button"
@@ -58,11 +106,12 @@ const SignIn = () => {
                                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
                                 </div>
+                                {errors.password && <span className="text-red-600 text-sm">{errors.password.message}</span>}
                                 <Link href='' className="font-normal text-sm text-[#878A93] cursor-pointer">
                                     Forgot password
                                 </Link>
                             </div>
-                            <Button className="bg-primary text-white w-fit rounded-[14px] px-4 py-6">Login</Button>
+                            <Button disabled={isPending} type="submit" className="bg-primary text-white w-fit rounded-[14px] px-4 py-6">{isPending ? 'Logging in...' : 'Login'}</Button>
                         </form>
                     </div>}
                 </div>

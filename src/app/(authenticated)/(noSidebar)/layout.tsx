@@ -7,14 +7,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
-            <body>
-                <main className="flex flex-col lg:w-[1440px] lg:max-w-[1440px] lg:mx-auto w-screen">
-                    <DashboardNav />
-                    {children}
-                    <Footer />
-                </main>
-            </body>
-        </html>
+        <main className="flex flex-col lg:w-[1440px] lg:max-w-[1440px] lg:mx-auto w-screen">
+            <DashboardNav />
+            {children}
+            <Footer />
+        </main>
     );
 }
