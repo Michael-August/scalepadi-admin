@@ -195,7 +195,7 @@ const Projects = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {projectData.map((business, index) => (
+                        {projectData.map((business) => (
                         <TableRow onClick={() => router.push('/projects/1')} key={business.id} className="border-b border-gray-100 cursor-pointer hover:bg-gray-50/50">
                             <TableCell className="py-4">
                             <div className="flex items-center gap-3">

@@ -222,7 +222,7 @@ const ProjectDetails = () => {
 
                                     <div className="flex flex-col gap-1">
                                         <span className="text-[#1A1A1A] text-sm">Additional notes</span>
-                                        <span className="text-sm text-[#727374]">Review GreenMart's landing pages, sign-up process, and paid traffic sources. Identify key drop-off points and capture screenshots where applicable.</span>
+                                        <span className="text-sm text-[#727374]">Review GreenMart`s landing pages, sign-up process, and paid traffic sources. Identify key drop-off points and capture screenshots where applicable.</span>
                                     </div>
 
                                     <div className="flex items-center justify-end gap-3">

@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Calendar, ChevronLeft, ChevronRight, FolderOpen, MoreHorizontal, Search } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, MoreHorizontal, Search } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -196,7 +196,7 @@ const Experts = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {projectData.map((business, index) => (
+                        {projectData.map((business) => (
                         <TableRow onClick={() => router.push('/experts/1')} key={business.id} className="border-b border-gray-100 cursor-pointer hover:bg-gray-50/50">
                             <TableCell className="py-4">
                             <div className="flex items-center gap-3">

@@ -28,7 +28,7 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
                                 <div className="border-l-4 border-primary pl-3 py-2 mb-2">
                                     <p className="text-sm font-semibold">Client name/company</p>
                                     <p className="text-xs text-muted-foreground">
-                                        You've received feedback on your project with GreenMart
+                                        You`ve received feedback on your project with GreenMart
                                     </p>
                                     <p className="text-[10px] text-muted-foreground">2 mins ago</p>
                                 </div>

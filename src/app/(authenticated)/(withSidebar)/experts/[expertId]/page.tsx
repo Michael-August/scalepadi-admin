@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Calendar, Dot, House, Info, Link, MessageCircle, Star, User, Verified } from "lucide-react";
+import { Calendar, Dot, House, Info, Link, MessageCircle, Star, Verified } from "lucide-react";
 import { useState } from "react";
 import CircularProgress from "@/components/circular-progress";
 

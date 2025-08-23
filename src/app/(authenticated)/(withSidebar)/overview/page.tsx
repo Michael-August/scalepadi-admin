@@ -239,7 +239,7 @@ const Overview = () => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {businessData.map((business, index) => (
+                            {businessData.map((business) => (
                                 <TableRow key={business.id} className="hover:bg-gray-50/50">
                                     <TableCell className="py-4">
                                         <div className="flex items-center gap-3">

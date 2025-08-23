@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import DashboardNav from "@/components/dashboard-navbar";
 import SideBar from "@/components/sidebar";
@@ -11,10 +11,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
-    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false)
-
-    return (
+  return (
         <div className="flex h-screen overflow-hidden">
             <div className="hidden lg:flex w-[17.25rem] bg-white h-screen fixed left-0 top-0 z-30">
                 <SideBar />
