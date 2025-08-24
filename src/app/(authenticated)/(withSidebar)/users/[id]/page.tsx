@@ -37,7 +37,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useGetAdminById } from "@/hooks/useAuth";
 
 interface Project {
   id: number;
@@ -205,7 +206,12 @@ const AdminDetails = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all-projects");
   const [sortOption, setSortOption] = useState<string>("sort");
 
-  const router = useRouter();
+const router = useRouter();
+const params = useParams();
+const id = Array.isArray(params.id) ? params.id[0] : params.id;
+
+const { AdminDetails } = useGetAdminById(id ?? "");
+console.log(AdminDetails)
 
   // Filter and sort logic
   const filteredData = useMemo(() => {
@@ -277,7 +283,7 @@ const AdminDetails = () => {
           </span>
           <span className="text-[#CFD0D4] text-sm">/</span>
           <span className="text-[#1A1A1A] text-sm font-medium whitespace-nowrap">
-            Bill Sanders{" "}
+            {AdminDetails?.name || "user name"}
           </span>
           <span className="text-[#CFD0D4] text-sm">/</span>
         </div>
@@ -302,12 +308,12 @@ const AdminDetails = () => {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <span className="text-[#1A1A1A] font-medium text-[18px] sm:text-[20px]">
-                  Bill Sanders
+                <span className="text-[#1A1A1A] font-medium text-[18px] capitalize sm:text-[20px]">
+                  {AdminDetails?.name || "user name"}
                 </span>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <span className="flex items-center gap-[2px] font-medium text-[#0DDC0E] text-sm">
-                    <Verified className="w-4 h-4" /> Vetting Admin
+                  <span className="flex items-center gap-[2px] font-medium capitalize text-[#0DDC0E] text-sm">
+                    <Verified className="w-4 h-4" /> {AdminDetails?.role || "Admin"}
                   </span>
                   {/* <span className="text-[#878A93] text-sm font-medium">
                     Growth Marketing Expert
@@ -317,7 +323,7 @@ const AdminDetails = () => {
               <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
                 <User2Icon className="w-4 h-4" />
                 Contact:{" "}
-                <span className="text-[#121217] font-semibold">Lagos, Nigeria | billsander@scalepadi.com | +234 789012345</span>
+                <span className="text-[#121217] font-semibold">Lagos, Nigeria | {AdminDetails?.email || "admin@scalepadi.com "} | {AdminDetails?.phone || "+234 789012345"}</span>
               </span>
             </div>
               </div>
@@ -326,11 +332,11 @@ const AdminDetails = () => {
               <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
                 <Calendar className="w-4 h-4" />
                 Joined Date:{" "}
-                <span className="text-[#121217]">May 25, 2025 | 21: Accounts Reviewed</span>
+                <span className="text-[#121217]">{new Date(AdminDetails?.createdAt).toLocaleDateString() || "May 25, 2025"} | 21: Accounts Reviewed</span>
               </span>
               <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
                 <House className="w-4 h-4" />
-                Activity status: <span className="text-[#121217]">Active</span>
+                Activity status: <span className="text-[#121217] capitalize">{AdminDetails?.status}</span>
               </span>
             </div>
             <div className="flex flex-wrap items-center mt-3 sm:mt-5 gap-3">
