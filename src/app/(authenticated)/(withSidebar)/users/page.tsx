@@ -10,11 +10,16 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useState, useMemo } from "react";
-import { AdminUserList } from "@/app/data";
 import { FilterDropdown, Pagination, SearchInput, UserTable } from "./User";
+import {
+  useCreateAdmin,
+  useGetAdminList,
+  useUpdateAdminBySuperAdmin,
+} from "@/hooks/useAuth";
+import { toast } from "sonner";
 
-const roles = ["All roles", "Super Admin", "Admin", "Support", "Viewer"];
-const statusFilters = ["All statuses", "Active", "Inactive", "Suspended"];
+const roles = ["All roles", "super", "admin", "support", "vetting", "finance"];
+const statusFilters = ["All statuses", "active", "Inactive", "Suspended"];
 
 // Main Component
 export default function UsersList() {
@@ -37,12 +42,19 @@ export default function UsersList() {
     name: "",
     email: "",
     phone: "",
-    role: "Admin",
-    status: "Active",
+    password: "",
+    role: "",
+    status: "active",
   });
+
+  const { AdminUserList, isLoading } = useGetAdminList();
+  const { updateAdminBySuperAdmin, isPending } = useUpdateAdminBySuperAdmin();
+  const { createAdmin } = useCreateAdmin();
+  // console.log(AdminUserList);
 
   const handleAction = (id: number, action: string) => {
     setActiveDropdown(null);
+    if (!Array.isArray(AdminUserList)) return [];
     const user = AdminUserList.find((u) => u.id === id);
     if (!user) return;
 
@@ -75,6 +87,7 @@ export default function UsersList() {
   }, [activeDropdown]);
 
   const filteredUsers = useMemo(() => {
+    if (!Array.isArray(AdminUserList)) return [];
     return AdminUserList.filter((user) => {
       const matchesSearch =
         searchQuery === "" ||
@@ -89,7 +102,7 @@ export default function UsersList() {
 
       return matchesSearch && matchesRole && matchesStatus;
     });
-  }, [searchQuery, selectedRole, selectedStatus]);
+  }, [AdminUserList, searchQuery, selectedRole, selectedStatus]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
@@ -98,20 +111,7 @@ export default function UsersList() {
 
   const totalPages = Math.ceil(filteredUsers.length / rowsPerPage);
 
-  // const handlePreviousPage = () => {
-  //   if (currentPage > 1) {
-  //     setCurrentPage(currentPage - 1);
-  //   }
-  // };
-
-  // const handleNextPage = () => {
-  //   if (currentPage < totalPages) {
-  //     setCurrentPage(currentPage + 1);
-  //   }
-  // };
-
-  const exportToCSV = (
-  ) => {
+  const exportToCSV = () => {
     if (filteredUsers.length === 0) return;
 
     const headers = Object.keys(filteredUsers[0]);
@@ -147,17 +147,30 @@ export default function UsersList() {
   };
 
   const handleAddUser = () => {
-    console.log("Adding new user:", newUser);
-    setSuccessMessage(`Successfully added ${newUser.name} has been added as a ${newUser.role}. They've recieved an email with login access. You can update their permission or suspend their account anytime.`);
-    setShowSuccessModal(true);
-    setNewUser({
-      name: "",
-      email: "",
-      role: "Admin",
-      phone: "Admin",
-      status: "Active",
+    createAdmin(newUser, {
+      onSuccess: () => {
+        toast.success(
+          `Successfully added ${newUser.name} as a ${newUser.role}. They've received an email with login access.`
+        );
+        setSuccessMessage(
+          `Successfully added ${newUser.name} as a ${newUser.role}. They've recieved an email with login access. You can update their permission or suspend their account anytime.`
+        );
+        setShowSuccessModal(true);
+        setNewUser({
+          name: "",
+          email: "",
+          phone: "",
+          password: "",
+          role: "",
+          status: "",
+        });
+        setShowAddUserModal(false);
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to create admin user");
+      },
     });
-    setShowAddUserModal(false);
+    console.log(newUser)
   };
 
   const handleEditUser = (user: (typeof AdminUserList)[0]) => {
@@ -168,14 +181,29 @@ export default function UsersList() {
 
   const handleUpdateUser = () => {
     if (!editingUser) return;
-    console.log("Updating user:", editingUser);
-    setSuccessMessage(
-      `Successfully updated ${editingUser.name}'s role to ${editingUser.role}`
+    updateAdminBySuperAdmin(
+      {
+        id: String(editingUser.id),
+        role: editingUser.role,
+      },
+      {
+        onSuccess: () => {
+          toast.success(
+            `Successfully updated ${editingUser.name}'s role to ${editingUser.role}`
+          );
+          setSuccessMessage(
+            `Successfully updated ${editingUser.name}'s role to ${editingUser.role}`
+          );
+          setShowSuccessModal(true);
+          setEditingUser(null);
+          setIsEditing(false);
+          setShowAddUserModal(false);
+        },
+        onError: (error) => {
+          console.error("Update failed:", error.message);
+        },
+      }
     );
-    setShowSuccessModal(true);
-    setEditingUser(null);
-    setIsEditing(false);
-    setShowAddUserModal(false);
   };
 
   return (
@@ -257,8 +285,9 @@ export default function UsersList() {
           </div>
 
           {/* Table */}
-          <UserTable 
-            data={paginatedData} 
+          <UserTable
+            isLoading={isLoading}
+            data={paginatedData}
             onEditUser={handleEditUser}
             onAction={handleAction}
           />
@@ -338,6 +367,22 @@ export default function UsersList() {
                 />
               </div>
 
+              {!editingUser && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password<span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    placeholder="*********"
+                    className="w-full p-3 border border-gray-300 rounded-xl outline-none placeholder:text-sm"
+                    value={newUser.password}
+                    onChange={(e) =>
+                      setNewUser({ ...newUser, password: e.target.value })
+                    }
+                  />
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Phone Number<span className="text-red-600">*</span>
@@ -354,18 +399,16 @@ export default function UsersList() {
                     type="number"
                     placeholder="+234 234567809"
                     className="pl-8 pr-4 p-3 w-full text-sm border border-gray-200 rounded-xl outline-none transition-colors"
-                    value={
-                      isEditing ? editingUser?.phoneNumber || "" : newUser.phone
-                    }
+                    value={isEditing ? editingUser?.phone || "" : newUser.phone}
                     onChange={(e) =>
                       isEditing
                         ? setEditingUser({
                             ...editingUser!,
-                            phoneNumber: e.target.value,
+                            phone: e.target.value,
                           })
                         : setNewUser({ ...newUser, phone: e.target.value })
                     }
-                    disabled={isEditing}
+                    // disabled={isEditing}
                   />
                 </div>
               </div>
@@ -376,9 +419,7 @@ export default function UsersList() {
                 </label>
                 <select
                   className="w-full px-3 py-3 text-gray-500 border border-gray-300 rounded-xl outline-none placeholder:text-sm"
-                  value={
-                    isEditing ? editingUser?.role || "Admin" : newUser.role
-                  }
+                  value={isEditing ? editingUser?.role || "" : newUser.role}
                   onChange={(e) =>
                     isEditing
                       ? setEditingUser({
@@ -388,10 +429,11 @@ export default function UsersList() {
                       : setNewUser({ ...newUser, role: e.target.value })
                   }
                 >
-                  <option value="Super Admin">Super Admin</option>
-                  <option value="Admin">Admin</option>
-                  <option value="Support">Support</option>
-                  <option value="Viewer">Viewer</option>
+                  <option value="super">Super Admin</option>
+                  <option value="ops">Ops Admin</option>
+                  <option value="support">Support</option>
+                  <option value="vetting">Vetting Admin</option>
+                  <option value="finance">Finance Admin</option>
                 </select>
               </div>
 
@@ -403,13 +445,15 @@ export default function UsersList() {
               <div className="mt-6 flex justify-start space-x-3">
                 <button
                   onClick={isEditing ? handleUpdateUser : handleAddUser}
-                  className="flex items-center px-4 py-3 text-sm text-white bg-blue-800/90 rounded-xl hover:bg-blue-900/80"
+                  className="flex items-center px-4 py-3 text-sm text-white bg-blue-800/90 rounded-xl hover:bg-blue-900/80 disabled:opacity-70"
+                  disabled={isPending}
                 >
-                  {isEditing ? "Update User" : "Send Invite"}{" "}
-                  <Loader
-                    size={15}
-                    className={`ml-2 ${isEditing && `animate-spin`}`}
-                  />
+                  <span className="flex items-center">
+                    {isEditing ? "Update User" : "Send Invite"}
+                    {isPending && (
+                      <Loader size={15} className="ml-2 animate-spin" />
+                    )}
+                  </span>
                 </button>
               </div>
             </div>
@@ -421,7 +465,7 @@ export default function UsersList() {
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-xl px-6 py-10 w-full max-w-xl mx-4">
-             <div className="flex justify-end">
+            <div className="flex justify-end">
               <button
                 onClick={() => setShowSuccessModal(false)}
                 className="p-1 bg-gray-100 rounded-full hover:bg-gray-200 border"
@@ -434,7 +478,9 @@ export default function UsersList() {
               <h3 className="text-sm md:text-2xl font-bold text-gray-900 mb-2">
                 Admin Added Successfully
               </h3>
-              <p className="text-lg text-gray-600 px-5 text-center mb-4">{successMessage}</p>
+              <p className="text-lg text-gray-600 px-5 text-center mb-4">
+                {successMessage}
+              </p>
               <button
                 onClick={() => setShowSuccessModal(false)}
                 className="px-4 py-2 text-sm text-yellow-300 bg-black/90 rounded-xl"
