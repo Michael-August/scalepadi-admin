@@ -11,12 +11,16 @@ export const useGetAllProjects = () => {
       try {
         const response = await axiosClient.get(`/projects/admin`);
         if (response.data?.status === false) {
-          throw new Error(response.data?.message || "Failed to fetch projects.");
+          throw new Error(
+            response.data?.message || "Failed to fetch projects."
+          );
         }
-        return response.data.data;
+        return response.data;
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
-          toast.error(error.response?.data?.message || "Failed to fetch projects.");
+          toast.error(
+            error.response?.data?.message || "Failed to fetch projects."
+          );
         } else if (error instanceof Error) {
           toast.error(error.message);
         } else {
@@ -31,23 +35,23 @@ export const useGetAllProjects = () => {
 
 export const useGetProjectById = (id: string) => {
   const { data, isLoading } = useQuery({
-    queryKey: ["projects", id],
-    queryFn: async ({ queryKey }) => {
-      const [, projectId] = queryKey;
+    queryKey: ["project", id],
+    queryFn: async () => {
       try {
-        const response = await axiosClient.get(`/project/admin/${projectId}`);
+        const response = await axiosClient.get(`/project/${id}/admin`);
         if (response.data?.status === false) {
           throw new Error(response.data?.message || "Failed to fetch project.");
         }
-        // API returns subscription object directly
-        return response.data.data;
+        return response?.data?.data;
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
-          toast.error(error.response?.data?.message || "Failed to fetch projects.");
+          toast.error(
+            error.response?.data?.message || "Failed to fetch project."
+          );
         } else if (error instanceof Error) {
           toast.error(error.message);
         } else {
-          toast.error("An unexpected error occurred while fetching projects.");
+          toast.error("An unexpected error occurred while fetching project.");
         }
         throw error;
       }
@@ -60,20 +64,35 @@ export const useGetProjectById = (id: string) => {
 export const useAssignSupervisor = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ projectId, supervisorId }: { projectId: string; supervisorId: string }) => {
+    mutationFn: async ({
+      projectId,
+      supervisorId,
+    }: {
+      projectId: string;
+      supervisorId: string;
+    }) => {
       try {
-        const response = await axiosClient.post(`/project/${projectId}/assign-supervisor`, { supervisorId });
+        const response = await axiosClient.post(
+          `/project/${projectId}/assign-supervisor`,
+          { supervisorId }
+        );
         if (response.data?.status === false) {
-          throw new Error(response.data?.message || "Failed to assign supervisor.");
+          throw new Error(
+            response.data?.message || "Failed to assign supervisor."
+          );
         }
         return response.data.data;
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
-          toast.error(error.response?.data?.message || "Failed to assign supervisor.");
+          toast.error(
+            error.response?.data?.message || "Failed to assign supervisor."
+          );
         } else if (error instanceof Error) {
           toast.error(error.message);
         } else {
-          toast.error("An unexpected error occurred while assigning supervisor.");
+          toast.error(
+            "An unexpected error occurred while assigning supervisor."
+          );
         }
         throw error;
       }
@@ -88,16 +107,33 @@ export const useAssignSupervisor = () => {
 export const useApproveProject = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ projectId, approved, totalCost, discount }: { projectId: string; approved: boolean; totalCost: number; discount: number }) => {
+    mutationFn: async ({
+      projectId,
+      approved,
+      totalCost,
+      discount,
+    }: {
+      projectId: string;
+      approved: boolean;
+      totalCost: number;
+      discount: number;
+    }) => {
       try {
-        const response = await axiosClient.post(`/project/${projectId}/approve`, { approved, totalCost, discount });
+        const response = await axiosClient.post(
+          `/project/${projectId}/approve`,
+          { approved, totalCost, discount }
+        );
         if (response.data?.status === false) {
-          throw new Error(response.data?.message || "Failed to approve project.");
+          throw new Error(
+            response.data?.message || "Failed to approve project."
+          );
         }
         return response.data.data;
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
-          toast.error(error.response?.data?.message || "Failed to approve project.");
+          toast.error(
+            error.response?.data?.message || "Failed to approve project."
+          );
         } else if (error instanceof Error) {
           toast.error(error.message);
         } else {
@@ -116,16 +152,29 @@ export const useApproveProject = () => {
 export const useInviteExperts = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ projectId, expertIds }: { projectId: string; expertIds: string[] }) => {
+    mutationFn: async ({
+      projectId,
+      expertIds,
+    }: {
+      projectId: string;
+      expertIds: string[];
+    }) => {
       try {
-        const response = await axiosClient.post(`/project/${projectId}/invite-experts`, { expertIds });
+        const response = await axiosClient.post(
+          `/project/${projectId}/invite-experts`,
+          { expertIds }
+        );
         if (response.data?.status === false) {
-          throw new Error(response.data?.message || "Failed to invite experts.");
+          throw new Error(
+            response.data?.message || "Failed to invite experts."
+          );
         }
         return response.data.data;
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
-          toast.error(error.response?.data?.message || "Failed to invite experts.");
+          toast.error(
+            error.response?.data?.message || "Failed to invite experts."
+          );
         } else if (error instanceof Error) {
           toast.error(error.message);
         } else {
