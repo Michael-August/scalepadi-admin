@@ -48,7 +48,6 @@ const ProjectDetails = () => {
   const projectId = params.projectId as string;
   
   const { projectDetails, isLoading } = useGetProjectById(projectId);
-  console.log(projectDetails)
 
   if (isLoading) {
     return <ProjectSkeleton />;

@@ -37,7 +37,7 @@ import { format } from "date-fns";
 import { useGetAllProjects } from "@/hooks/useProjects";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 
-type Project = {
+export type Project = {
   id: string;
   title: string;
   status: "pending" | "in-progress" | "completed";
