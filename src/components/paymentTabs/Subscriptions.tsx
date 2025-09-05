@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { subscriptionsData, statusStyles } from "@/app/data";
+import { statusStyles } from "@/app/data";
+import { useGetAllSubscription } from "@/hooks/useSubscription";
 
 interface SubscriptionsProps {
   searchQuery: string;
@@ -34,34 +35,64 @@ export default function Subscriptions({
     key: string;
     direction: "asc" | "desc";
   } | null>(null);
+  const { subscriptionList, isLoading } = useGetAllSubscription();
+  console.log(subscriptionList);
+
 
   const filteredSubscriptions = useMemo(() => {
-    let filtered = subscriptionsData.filter((sub) => {
+    const dummySubscriptions = [
+      {
+        id: 1,
+        business: "Acme Corp",
+        plan: "Padi Pro",
+        amount: "₦10,000",
+        renewal: "2025-09-07T10:45:46.870Z",
+        status: "Active",
+        avatar: ""
+      },
+      {
+        id: 2,
+        business: "Beta Ltd",
+        plan: "Padi Basic",
+        amount: "₦5,000",
+        renewal: "2025-09-10T10:45:46.870Z",
+        status: "Expired",
+        avatar: ""
+      },
+      {
+        id: 3,
+        business: "Gamma Inc",
+        plan: "Padi Yakata",
+        amount: "₦7,500",
+        renewal: "2025-09-15T10:45:46.870Z",
+        status: "Trial",
+        avatar: ""
+      }
+    ];
+    const source = Array.isArray(subscriptionList) && subscriptionList.length > 0 ? subscriptionList : dummySubscriptions;
+    let filtered = source.filter((sub) => {
       const matchesStatus =
         subscriptionStatus === "All statuses" ||
         sub.status === subscriptionStatus;
       const matchesSearch =
         searchQuery === "" ||
-        sub.business.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        sub.plan.toLowerCase().includes(searchQuery.toLowerCase());
+        (sub.business && sub.business.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (sub.plan && sub.plan.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchesStatus && matchesSearch;
     });
     if (sortConfig) {
       filtered = [...filtered].sort((a, b) => {
         const { key, direction } = sortConfig;
-        // Only allow sorting by known keys
         type SubscriptionKey = "business" | "plan" | "amount" | "renewal" | "status";
-        if (!(["business", "plan", "amount", "renewal", "status"].includes(key))) return 0;
+        if (!( ["business", "plan", "amount", "renewal", "status"].includes(key) )) return 0;
         const aValue = (a as Record<SubscriptionKey, unknown>)[key as SubscriptionKey];
         const bValue = (b as Record<SubscriptionKey, unknown>)[key as SubscriptionKey];
         let aSort = aValue;
         let bSort = bValue;
-        // Handle numeric sort for amount
         if (key === "amount") {
           aSort = typeof aSort === "string" ? parseFloat(aSort.replace(/[^\d.]/g, "")) : aSort;
           bSort = typeof bSort === "string" ? parseFloat(bSort.replace(/[^\d.]/g, "")) : bSort;
         }
-        // Handle date sort for renewal
         if (key === "renewal") {
           aSort = typeof aSort === "string" ? new Date(aSort) : aSort;
           bSort = typeof bSort === "string" ? new Date(bSort) : bSort;
@@ -81,7 +112,7 @@ export default function Subscriptions({
       });
     }
     return filtered;
-  }, [subscriptionStatus, searchQuery, sortConfig]);
+  }, [subscriptionList, subscriptionStatus, searchQuery, sortConfig]);
 
   const paginatedSubscriptions = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
@@ -219,6 +250,9 @@ export default function Subscriptions({
 
       {/* Table */}
       <div className="rounded-lg overflow-x-auto">
+        {isLoading ? (
+          <div className="py-8 text-center text-gray-500">Loading subscriptions...</div>
+        ) : (
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50/50">
@@ -306,7 +340,7 @@ export default function Subscriptions({
                     </div>
                   </TableCell>
                   <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">{row.amount}</TableCell>
-                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">{row.renewal}</TableCell>
+                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">{new Date(row.renewal).toLocaleDateString("en-GB")}</TableCell>
                   <TableCell className="py-4 whitespace-nowrap">
                     <Badge
                       variant={
@@ -368,6 +402,7 @@ export default function Subscriptions({
             )}
           </TableBody>
         </Table>
+        )}
       </div>
 
       {/* Pagination */}

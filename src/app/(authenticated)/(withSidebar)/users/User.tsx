@@ -31,33 +31,73 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { AdminUserList } from "@/app/data";
+import { ActiveStatus } from "@/components/ui/ActiveStatus";
+import React from "react";
+import Skeleton from 'react-loading-skeleton'; 
+import 'react-loading-skeleton/dist/skeleton.css';
+
+// AdminUser type definition
+type AdminUser = {
+  id: number;
+  name: string;
+  email: string;
+  role: "super" | "ops" | "support" | "vetting" | "finance" | string;
+  lastLogin: string;
+  status: "active" | "Inactive" | "Suspended" | string;
+};
 
 const statusStyles = {
-  Active: "bg-green-100/50 text-green-500/70 border border-green-500/70",
-  Inactive: "bg-gray-100/50 text-gray-500/70 border border-gray-500/70",
+  active: "bg-green-100/50 text-green-500/70 border border-green-500/70",
+  inactive: "bg-gray-100/50 text-gray-500/70 border border-gray-500/70",
   Suspended: "bg-red-100/50 text-red-500/70 border border-red-500/70",
 };
 
 const roleStyles = {
-  "Super Admin":
-    "bg-purple-100/50 text-purple-500/70 border border-purple-500/70",
-  Admin: "bg-blue-100/50 text-blue-500/70 border border-blue-500/70",
-  Support: "bg-yellow-100/50 text-yellow-500/70 border border-yellow-500/70",
-  Viewer: "bg-gray-100/50 text-gray-500/70 border border-gray-500/70",
+  super: "bg-green-100/50 text-green-500/70 border border-green-500/70",
+  ops: "bg-pink-100/50 text-pink-500/70 border border-pink-500/70",
+  support: "bg-purple-100/50 text-purple-500/70 border border-purple-500/70",
+  finance: "bg-blue-100/50 text-blue-500/70 border border-blue-500/70",
+  vetting: "bg-orange-100/50 text-orange-500/70 border border-orange-500/70",
 };
 
-export const UserTable = ({ 
-  data, 
-  onEditUser, 
-  onAction 
-}: { 
-  data: typeof AdminUserList; 
-  onEditUser: (user: (typeof AdminUserList)[0]) => void; 
-  onAction: (id: number, action: string) => void; 
+// UserTable Component
+// UserTable Component with isLoading and skeleton support
+export const UserTable = ({
+  data,
+  isLoading,
+  onEditUser,
+  onAction,
+}: {
+  data: AdminUser[];
+  isLoading: boolean;
+  onEditUser: (user: AdminUser) => void;
+  onAction: (id: number, action: string) => void;
 }) => {
   const router = useRouter();
-  
+
+  const renderSkeletonRow = () => (
+    <TableRow>
+      <TableCell className="whitespace-nowrap">
+        <Skeleton width={100} height={16} />
+      </TableCell>
+      <TableCell>
+        <Skeleton width={150} height={16} />
+      </TableCell>
+      <TableCell>
+        <Skeleton width={80} height={16} />
+      </TableCell>
+      <TableCell>
+        <Skeleton width={120} height={16} />
+      </TableCell>
+      <TableCell>
+        <Skeleton width={80} height={16} />
+      </TableCell>
+      <TableCell>
+        <Skeleton width={40} height={16} />
+      </TableCell>
+    </TableRow>
+  );
+
   return (
     <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
       <Table>
@@ -84,7 +124,13 @@ export const UserTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.length > 0 ? (
+          {isLoading ? (
+            <>
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <React.Fragment key={idx}>{renderSkeletonRow()}</React.Fragment>
+              ))}
+            </>
+          ) : data.length > 0 ? (
             data.map((user) => (
               <TableRow key={user.id} className="hover:bg-gray-50">
                 <TableCell className="whitespace-nowrap">
@@ -109,7 +155,7 @@ export const UserTable = ({
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <span
-                    className={`px-2.5 py-1.5 inline-flex text-[13px] leading-5 font-semibold rounded-full ${
+                    className={`px-2.5 py-1.5 inline-flex text-[13px] capitalize leading-5 font-semibold rounded-full ${
                       roleStyles[user.role as keyof typeof roleStyles] ||
                       "bg-gray-100 text-gray-800 border border-gray-900"
                     }`}
@@ -118,14 +164,12 @@ export const UserTable = ({
                   </span>
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-sm text-gray-500">
-                  {user.lastActive}
+                  <ActiveStatus lastLogin={user.lastLogin} />
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <span
-                    className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      statusStyles[
-                        user.status as keyof typeof statusStyles
-                      ]
+                    className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold capitalize rounded-full ${
+                      statusStyles[user.status as keyof typeof statusStyles]
                     }`}
                   >
                     {user.status}
@@ -144,7 +188,9 @@ export const UserTable = ({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => router.push(`/users/${user.id}`)}>
+                        <DropdownMenuItem
+                          onClick={() => router.push(`/users/${user.id}`)}
+                        >
                           View profile
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onEditUser(user)}>
@@ -156,7 +202,7 @@ export const UserTable = ({
                         <DropdownMenuItem onClick={() => onEditUser(user)}>
                           Edit Role
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           className="text-red-600"
                           onClick={() => onAction(user.id, "suspend")}
                         >
@@ -184,21 +230,21 @@ export const UserTable = ({
   );
 };
 
-// Simple Pagination Component
-export const Pagination = ({ 
-  currentPage, 
-  totalPages, 
-  rowsPerPage, 
+
+export const Pagination = ({
+  currentPage,
+  totalPages,
+  rowsPerPage,
   totalItems,
-  onPageChange, 
-  onRowsPerPageChange 
-}: { 
-  currentPage: number; 
-  totalPages: number; 
-  rowsPerPage: number; 
+  onPageChange,
+  onRowsPerPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  rowsPerPage: number;
   totalItems: number;
-  onPageChange: (page: number) => void; 
-  onRowsPerPageChange: (rows: number) => void; 
+  onPageChange: (page: number) => void;
+  onRowsPerPageChange: (rows: number) => void;
 }) => {
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
   const endItem = Math.min(currentPage * rowsPerPage, totalItems);
@@ -206,9 +252,11 @@ export const Pagination = ({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
       <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-600 whitespace-nowrap">Rows per page</span>
-        <Select 
-          value={rowsPerPage.toString()} 
+        <span className="text-sm text-gray-600 whitespace-nowrap">
+          Rows per page
+        </span>
+        <Select
+          value={rowsPerPage.toString()}
           onValueChange={(value) => {
             onRowsPerPageChange(Number(value));
             onPageChange(1);
@@ -255,24 +303,24 @@ export const Pagination = ({
   );
 };
 
-// Simple Filter Component
-export const FilterDropdown = ({ 
-  options, 
-  selectedValue, 
-  onSelect, 
-  isOpen, 
-  onToggle 
-}: { 
-  options: string[]; 
-  selectedValue: string; 
-  onSelect: (value: string) => void; 
-  isOpen: boolean; 
-  onToggle: () => void; 
+// FilterDropdown Component
+export const FilterDropdown = ({
+  options,
+  selectedValue,
+  onSelect,
+  isOpen,
+  onToggle,
+}: {
+  options: string[];
+  selectedValue: string;
+  onSelect: (value: string) => void;
+  isOpen: boolean;
+  onToggle: () => void;
 }) => {
   return (
     <div className="relative">
       <button
-        className="flex items-center gap-2 px-3 py-2.5 text-xs text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+        className="flex items-center gap-2 px-3 py-2.5 capitalize text-xs text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
         onClick={(e) => {
           e.stopPropagation();
           onToggle();
@@ -286,11 +334,11 @@ export const FilterDropdown = ({
         />
       </button>
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-32 bg-white border border-gray-200 rounded-xl shadow-lg">
+        <div className="absolute z-10 mt-1 capitalize w-32 bg-white border border-gray-200 rounded-xl shadow-lg">
           {options.map((option) => (
             <button
               key={option}
-              className={`w-full text-left px-4 py-2 text-xs first:rounded-t-xl last:rounded-b-xl ${
+              className={`w-full text-left px-4 py-2 capitalize text-xs first:rounded-t-xl last:rounded-b-xl ${
                 selectedValue === option
                   ? "bg-gray-100 text-gray-600"
                   : "text-gray-600 hover:bg-gray-50"
@@ -309,13 +357,13 @@ export const FilterDropdown = ({
   );
 };
 
-// Simple Search Component
-export const SearchInput = ({ 
-  value, 
-  onChange 
-}: { 
-  value: string; 
-  onChange: (value: string) => void; 
+// SearchInput Component
+export const SearchInput = ({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
 }) => {
   return (
     <div className="relative">

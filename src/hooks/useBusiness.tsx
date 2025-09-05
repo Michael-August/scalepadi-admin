@@ -1,0 +1,62 @@
+import { axiosClient } from "@/lib/api/axiosclient";
+import { useQuery } from "@tanstack/react-query";
+import { AxiosError } from "axios";
+import { toast } from "sonner";
+
+export const useGetAllBusiness = (page: number = 1, limit: number = 10) => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["business", page, limit],
+    queryFn: async () => {
+      try {
+        const response = await axiosClient.get(`/businesses?page=${page}&limit=${limit}`);
+        if (response.data?.status === false) {
+          throw new Error(
+            response.data?.message || "Failed to fetch business."
+          );
+        }
+        return response.data;
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          toast.error(
+            error.response?.data?.message || "Failed to fetch business."
+          );
+        } else if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error("An unexpected error occured while fetching business.");
+        }
+        throw error;
+      }
+    },
+  });
+  return { businessList: data, isLoading };
+};
+
+export const useGetBusinessById = (id: string) => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["business", id],
+    queryFn: async () => {
+      try {
+        const response = await axiosClient.get(`/business/${id}`);
+        if (response.data?.status === false) {
+          throw new Error(response.data?.message || "Failed to fetch business.");
+        }
+        return response?.data?.data;
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          toast.error(
+            error.response?.data?.message || "Failed to fetch business."
+          );
+        } else if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error("An unexpected error occurred while fetching business.");
+        }
+        throw error;
+      }
+    },
+    enabled: !!id,
+  });
+  return { businessDetails: data, isLoading };
+};
+

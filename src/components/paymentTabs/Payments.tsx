@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { paymentsData, paymentTypes, statusStyles } from "@/app/data";
+import { paymentTypes, statusStyles } from "@/app/data";
+import { useGetAllPayment } from "@/hooks/usePayment";
 
 interface PaymentsProps {
   searchQuery: string;
@@ -38,8 +39,48 @@ export default function Payments({
     console.log(`Action ${action} for row ${id}`);
   };
 
+  const { paymentList, isLoading } = useGetAllPayment();
   const filteredPayments = useMemo(() => {
-    let filtered = paymentsData.filter((payment) => {
+    const dummyPayments = [
+      {
+        id: 1,
+        type: "Milestone",
+        business: "Acme Corp",
+        expert: "John Doe",
+        amount: "₦10,000",
+        trxId: "TRX123456",
+        status: "Paid",
+        date: "2025-08-29T10:45:46.870Z",
+        avatar: "",
+        expertAvatar: ""
+      },
+      {
+        id: 2,
+        type: "Project",
+        business: "Beta Ltd",
+        expert: "Jane Smith",
+        amount: "₦5,000",
+        trxId: "TRX654321",
+        status: "Pending",
+        date: "2025-08-28T10:45:46.870Z",
+        avatar: "",
+        expertAvatar: ""
+      },
+      {
+        id: 3,
+        type: "Milestone",
+        business: "Gamma Inc",
+        expert: "Alice Brown",
+        amount: "₦7,500",
+        trxId: "TRX789012",
+        status: "Paid",
+        date: "2025-08-27T10:45:46.870Z",
+        avatar: "",
+        expertAvatar: ""
+      }
+    ];
+    const source = Array.isArray(paymentList) && paymentList.length > 0 ? paymentList : dummyPayments;
+    let filtered = source.filter((payment) => {
       const matchesType =
         paymentType === "All payments" || payment.status === paymentType;
       const matchesSearch =
@@ -53,47 +94,36 @@ export default function Payments({
     if (sortConfig) {
       filtered = [...filtered].sort((a, b) => {
         const { key, direction } = sortConfig;
-        // Only allow sorting by known keys
         type PaymentKey = "type" | "business" | "expert" | "amount" | "trxId" | "status" | "date";
-        if (!(["type", "business", "expert", "amount", "trxId", "status", "date"].includes(key))) return 0;
-        
+        if (!( ["type", "business", "expert", "amount", "trxId", "status", "date"].includes(key) )) return 0;
         const aValue = (a as Record<PaymentKey, unknown>)[key as PaymentKey];
         const bValue = (b as Record<PaymentKey, unknown>)[key as PaymentKey];
         let aSort = aValue;
         let bSort = bValue;
-        
-        // Handle numeric sort for amount
         if (key === "amount") {
           aSort = typeof aSort === "string" ? parseFloat(aSort.replace(/[^\d.]/g, "")) : aSort;
           bSort = typeof bSort === "string" ? parseFloat(bSort.replace(/[^\d.]/g, "")) : bSort;
         }
-        
-        // Handle date sort for date
         if (key === "date") {
           aSort = typeof aSort === "string" ? new Date(aSort) : aSort;
           bSort = typeof bSort === "string" ? new Date(bSort) : bSort;
         }
-        
         if (typeof aSort === "string" && typeof bSort === "string") {
           if (aSort < bSort) return direction === "asc" ? -1 : 1;
           if (aSort > bSort) return direction === "asc" ? 1 : -1;
           return 0;
         }
-        
         if (typeof aSort === "number" && typeof bSort === "number") {
           return direction === "asc" ? aSort - bSort : bSort - aSort;
         }
-        
         if (aSort instanceof Date && bSort instanceof Date) {
           return direction === "asc" ? aSort.getTime() - bSort.getTime() : bSort.getTime() - aSort.getTime();
         }
-        
         return 0;
       });
     }
-    
     return filtered;
-  }, [paymentType, searchQuery, sortConfig]);
+  }, [paymentList, paymentType, searchQuery, sortConfig]);
 
   const paginatedPayments = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
@@ -230,6 +260,9 @@ export default function Payments({
 
       {/* Table */}
       <div className="rounded-lg overflow-x-auto">
+        {isLoading ? (
+          <div className="py-8 text-center text-gray-500">Loading payments...</div>
+        ) : (
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50/50">
@@ -363,7 +396,7 @@ export default function Payments({
                       {row.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">{row.date}</TableCell>
+                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">{new Date(row.date).toLocaleDateString("en-GB")}</TableCell>
                   <TableCell className="py-4 whitespace-nowrap">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -405,6 +438,7 @@ export default function Payments({
             )}
           </TableBody>
         </Table>
+        )}
       </div>
 
       {/* Pagination */}

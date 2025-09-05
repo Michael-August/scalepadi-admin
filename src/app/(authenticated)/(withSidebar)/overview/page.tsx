@@ -1,291 +1,667 @@
-"use client"
+"use client";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calendar, Clock, MoreHorizontal } from 'lucide-react';
-import Image from 'next/image';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useGetAllProjects } from "@/hooks/useProjects";
+import { Calendar, Clock, MoreHorizontal } from "lucide-react";
+import Image from "next/image";
+import { useMemo } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { Project } from "../projects/page";
+import { useGetAllBusiness } from "@/hooks/useBusiness";
+import { BusinessType } from "../business/page";
+import { useGetAllExpert } from "@/hooks/useExpert";
+import { Expert } from "../experts/page";
+import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
+import { useGetAdminByToken } from "@/hooks/useAuth";
 
 const data = [
-    { name: 'Jan', Business: 60, Expert: 110, Project: 30 },
-    { name: 'Feb', Business: 60, Expert: 110, Project: 30 },
-    { name: 'Mar', Business: 60, Expert: 110, Project: 30 },
-    { name: 'Apr', Business: 60, Expert: 110, Project: 30 },
-    { name: 'May', Business: 60, Expert: 110, Project: 30 },
-    { name: 'Jun', Business: 40, Expert: 80, Project: 5 },
-    { name: 'Jul', Business: 35, Expert: 110, Project: 0 },
-    { name: 'Aug', Business: 60, Expert: 110, Project: 30 },
-    { name: 'Sep', Business: 60, Expert: 110, Project: 30 },
-    { name: 'Oct', Business: 60, Expert: 110, Project: 30 },
-    { name: 'Nov', Business: 60, Expert: 110, Project: 30 },
-    { name: 'Dec', Business: 60, Expert: 110, Project: 30 },
+  { name: "Jan", Business: 60, Expert: 110, Project: 30 },
+  { name: "Feb", Business: 60, Expert: 110, Project: 30 },
+  { name: "Mar", Business: 60, Expert: 110, Project: 30 },
+  { name: "Apr", Business: 60, Expert: 110, Project: 30 },
+  { name: "May", Business: 60, Expert: 110, Project: 30 },
+  { name: "Jun", Business: 40, Expert: 80, Project: 5 },
+  { name: "Jul", Business: 35, Expert: 110, Project: 0 },
+  { name: "Aug", Business: 60, Expert: 110, Project: 30 },
+  { name: "Sep", Business: 60, Expert: 110, Project: 30 },
+  { name: "Oct", Business: 60, Expert: 110, Project: 30 },
+  { name: "Nov", Business: 60, Expert: 110, Project: 30 },
+  { name: "Dec", Business: 60, Expert: 110, Project: 30 },
 ];
 
-const businessData = [
-    {
-        id: 1,
-        name: "GreenMart",
-        owner: "James Peterson",
-        email: "tanya.hill@exple.com",
-        status: "Verified",
-        dateJoined: "Feb 2, 2019 19:28",
-        avatar: "🌱",
-    },
-    {
-        id: 2,
-        name: "TrewCruz",
-        owner: "Asara Cruz",
-        email: "stcruz@example.com",
-        status: "Verified",
-        dateJoined: "Dec 30, 2019 05:18",
-        avatar: "🔵",
-    },
-    {
-        id: 3,
-        name: "XTRAbidial",
-        owner: "sandra Abidial",
-        email: "kandra@hotmail.com",
-        status: "Pending",
-        dateJoined: "Dec 30, 2019 05:18",
-        avatar: "👤",
-    },
-]
-
 const Overview = () => {
-    return (
-        <div className="flex flex-col gap-6">
-            <header className="text-2xl text-[#878A93] font-semibold mb-6">Welcome back, Samuel! 👋</header>
-            <div className="flex items-center w-full gap-6">
-                <div className="flex flex-col gap-2 w-full">
-                    <span className="text-sm text-[#878A93] font-medium">Total Experts: <span className="text-[#3E4351]">1000</span></span>
-                    <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl flex gap-6 p-4">
-                        <div className="border-r w-full flex flex-col gap-4 border-[#EFF2F3]">
-                            <span className="text-2xl font-bold text-[#0E1426]">500</span>
-                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary">Registered</span>
-                        </div>
-                        <div className="w-full flex flex-col gap-4 border-[#EFF2F3]">
-                            <span className="text-2xl font-bold text-[#0E1426]">500</span>
-                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary-hover">Verified</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="flex flex-col gap-2 w-full">
-                    <span className="text-sm text-[#878A93] font-medium">Total Businesses: <span className="text-[#3E4351]">1000</span></span>
-                    <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl flex gap-6 p-4">
-                        <div className="border-r w-full flex flex-col gap-4 border-[#EFF2F3]">
-                            <span className="text-2xl font-bold text-[#0E1426]">500</span>
-                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary">Registered</span>
-                        </div>
-                        <div className="w-full flex flex-col gap-4 border-[#EFF2F3]">
-                            <span className="text-2xl font-bold text-[#0E1426]">500</span>
-                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">Active</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="flex flex-col gap-2 w-full">
-                    <span className="text-sm text-[#878A93] font-medium">Total Projects: <span className="text-[#3E4351]">05</span></span>
-                    <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl flex gap-6 p-4">
-                        <div className="border-r w-full flex flex-col gap-4 border-[#EFF2F3]">
-                            <span className="text-2xl font-bold text-[#0E1426]">500</span>
-                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#1E88E5]">Active</span>
-                        </div>
-                        <div className="w-full flex flex-col gap-4 border-[#EFF2F3]">
-                            <span className="text-2xl font-bold text-[#0E1426]">500</span>
-                            <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#1E88E5]">Completed</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  // Project stat
+  const { admin, isLoading: adminLoading } = useGetAdminByToken()
+  const { projectList, isLoading: projectsLoading } = useGetAllProjects();
+  const { businessList, isLoading: businessLoading } = useGetAllBusiness(1);
+  const { expertList, isLoading: expertsLoading } = useGetAllExpert(1);
 
-            <div className="flex gap-6 mt-4">
-                <div className="flex-1">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-[#878A93] text-[20px] font-medium">Growth insight</h2>
-                        <Select value='monthly'>
-                            <SelectTrigger className="w-[100px]">
-                                <SelectValue placeholder="" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="weekly">Weekly</SelectItem>
-                                <SelectItem value="monthly">Monthly</SelectItem>
-                                <SelectItem value="annualy">Annualy</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="h-80">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={data} barGap={1} barCategoryGap={20}>
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                                <YAxis axisLine={false} tickLine={false} />
-                                <Tooltip />
-                                <Legend verticalAlign="top" align="right" iconType="square" iconSize={12} wrapperStyle={{ paddingBottom: 20, fontSize: '8px' }} />
-                                <Bar dataKey="Business" fill="#1746A2" radius={[4, 4, 0, 0]} barSize={12} />
-                                <Bar dataKey="Expert" fill="#1A1A1A" radius={[4, 4, 0, 0]} barSize={12} />
-                                <Bar dataKey="Project" fill="#FCCE37" radius={[4, 4, 0, 0]} barSize={12} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-                <div className="w-[351px] flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                        <span className='text-[#878A93] font-medium text-[20px]'>Projects</span>
-                        <span className='text-base text-[#0E1426] font-medium cursor-pointer'>See all</span>
-                    </div>  
-                    <div className="bg-[#FBFCFC] w-full hide-scrollbar h-80 overflow-y-scroll rounded-3xl p-6 pb-0">
-                        <div className="w-full flex flex-col gap-2 p-[10px]">
-                            <div className='flex w-full items-center justify-between'>
-                                <div className='flex items-center gap-1'>
-                                    <Image src={'/icons/inprogress.svg'} width={18} height={18} alt='inprogress icon' />
-                                    <span className='text-xs text-[#3A5EFC]'>In-Progress</span>
-                                </div>
-                                <MoreHorizontal className='w-4' />
-                            </div>
-                            <div className='flex items-center gap-2'>
-                                <div className="flex items-center">
-                                    <Image src={'/images/profile-pics.svg'} alt='profile picture' width={20} height={20} className='w-5 h-5 rounded-full' />
-                                    <Image src={'/images/profile-pics.svg'} alt='profile picture' width={20} height={20} className='w-5 h-5 rounded-full' />
-                                </div>
-                                <span className='text-sm text-[#878A93]'>GreenMart Project task</span>
-                            </div>
-                            <span className='text-sm text-[#878A93]'>Being worked on by David Eze</span>
-                            <div className='flex items-center justify-between'>
-                                <div className='flex gap-1 items-center'>
-                                    <Calendar className='w-4 h-4 text-[#878A93]' />
-                                    <span className='text-sm text-[#878A93]'>23-Jun-2025</span>
-                                </div>
-                                <div className='flex gap-1 items-center'>
-                                    <Clock className='w-4 h-4 text-[#878A93]' />
-                                    <span className='text-sm text-[#878A93]'>Due: 4weeks</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="w-full flex flex-col gap-2 p-[10px]">
-                            <div className='flex w-full items-center justify-between'>
-                                <div className='flex items-center gap-1'>
-                                    <Image src={'/icons/completed.svg'} width={18} height={18} alt='inprogress icon' />
-                                    <span className='text-xs text-[#04E762]'>Completed</span>
-                                </div>
-                                <MoreHorizontal className='w-4' />
-                            </div>
-                            <div className='flex items-center gap-2'>
-                                <div className="flex items-center">
-                                    <Image src={'/images/profile-pics.svg'} alt='profile picture' width={20} height={20} className='w-5 h-5 rounded-full' />
-                                    <Image src={'/images/profile-pics.svg'} alt='profile picture' width={20} height={20} className='w-5 h-5 rounded-full' />
-                                </div>
-                                <span className='text-sm text-[#878A93]'>GreenMart Project task</span>
-                            </div>
-                            <span className='text-sm text-[#878A93]'>Being worked on by David Eze</span>
-                            <div className='flex items-center justify-between'>
-                                <div className='flex gap-1 items-center'>
-                                    <Calendar className='w-4 h-4 text-[#878A93]' />
-                                    <span className='text-sm text-[#878A93]'>23-Jun-2025</span>
-                                </div>
-                                <div className='flex gap-1 items-center'>
-                                    <Clock className='w-4 h-4 text-[#878A93]' />
-                                    <span className='text-sm text-[#878A93]'>Due: 4weeks</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="w-full flex flex-col gap-2 p-[10px]">
-                            <div className='flex w-full items-center justify-between'>
-                                <div className='flex items-center gap-1'>
-                                    <Image src={'/icons/completed.svg'} width={18} height={18} alt='inprogress icon' />
-                                    <span className='text-xs text-[#04E762]'>Completed</span>
-                                </div>
-                                <MoreHorizontal className='w-4' />
-                            </div>
-                            <div className='flex items-center gap-2'>
-                                <div className="flex items-center">
-                                    <Image src={'/images/profile-pics.svg'} alt='profile picture' width={20} height={20} className='w-5 h-5 rounded-full' />
-                                    <Image src={'/images/profile-pics.svg'} alt='profile picture' width={20} height={20} className='w-5 h-5 rounded-full' />
-                                </div>
-                                <span className='text-sm text-[#878A93]'>GreenMart Project task</span>
-                            </div>
-                            <span className='text-sm text-[#878A93]'>Being worked on by David Eze</span>
-                            <div className='flex items-center justify-between'>
-                                <div className='flex gap-1 items-center'>
-                                    <Calendar className='w-4 h-4 text-[#878A93]' />
-                                    <span className='text-sm text-[#878A93]'>23-Jun-2025</span>
-                                </div>
-                                <div className='flex gap-1 items-center'>
-                                    <Clock className='w-4 h-4 text-[#878A93]' />
-                                    <span className='text-sm text-[#878A93]'>Due: 4weeks</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  const isLoading = projectsLoading || businessLoading || expertsLoading || adminLoading;
 
-            <div className='flex flex-col gap-4 mt-4'>
-                <div className='flex items-center justify-between'>
-                    <span className='text-[20px] font-medium text-[#878A93]'>Sign-up feeds</span>
-                    <span className='text-base text-[#0E1426] font-medium cursor-pointer'>See all</span>
-                </div>
+  const statusCounts = useMemo(() => {
+    if (!projectList?.data?.data)
+      return { pending: 0, "in-progress": 0, completed: 0 };
 
-                <div className="rounded-lg overflow-hidden">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-gray-50/50">
-                                <TableHead className="text-[#878A93] font-medium text-sm py-4">user name</TableHead>
-                                <TableHead className="text-[#878A93] font-medium text-sm py-4">Email</TableHead>
-                                <TableHead className="text-[#878A93] font-medium text-sm py-4">Account Type</TableHead>
-                                <TableHead className="text-[#878A93] font-medium text-sm py-4">Status</TableHead>
-                                <TableHead className="text-[#878A93] font-medium text-sm py-4">Created</TableHead>
-                                <TableHead className="text-[#878A93] font-medium text-sm py-4">Action</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {businessData.map((business) => (
-                                <TableRow key={business.id} className="hover:bg-gray-50/50">
-                                    <TableCell className="py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm">
-                                            {business.avatar}
-                                            </div>
-                                            <span className="text-gray-900 text-sm">{business.name}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-gray-700 text-sm py-4">{business.email}</TableCell>
-                                    <TableCell className="text-gray-700 text-sm py-4">{business.owner}</TableCell>
-                                    <TableCell className="py-4">
-                                        <Badge
-                                            variant={business.status === "Verified" ? "default" : "secondary"}
-                                            className={
-                                            business.status === "Verified"
-                                                ? "bg-green-100 text-green-700 hover:bg-green-100 text-xs font-normal px-2 py-1"
-                                                : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 text-xs font-normal px-2 py-1"
-                                            }
-                                        >
-                                            {business.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-gray-700 text-sm py-4">{business.dateJoined}</TableCell>
-                                    <TableCell className="py-4">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                                    <MoreHorizontal className="h-4 w-4 text-gray-400" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem>View profile</DropdownMenuItem>
-                                                <DropdownMenuItem>Verify</DropdownMenuItem>
-                                                {/* <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem> */}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+    const data = projectList.data.data;
+    return {
+      pending: data.filter((project: Project) => project.status === "pending")
+        .length,
+      "in-progress": data.filter(
+        (project: Project) => project.status === "in-progress"
+      ).length,
+      completed: data.filter(
+        (project: Project) => project.status === "completed"
+      ).length,
+    };
+  }, [projectList]);
+
+  //   EXPERT
+  const experts: Expert[] = useMemo(
+    () => expertList?.data?.data ?? [],
+    [expertList]
+  );
+  const totalItems = expertList?.data?.totalItems ?? 0;
+
+  //   BUSINESS
+  const businesses: BusinessType[] = useMemo(
+    () => businessList?.data?.data ?? [],
+    [businessList]
+  );
+  const totalBusinesses = businessList?.data?.totalItems || 0;
+  const verifiedCount =
+    businesses.filter((b: BusinessType) => b.verified).length || 0;
+  const activeCount =
+    businesses.filter((b: BusinessType) => b.status === "active").length || 0;
+
+  // Projects data for the project cards
+  const projects: Project[] = useMemo(
+    () => projectList?.data?.data?.slice(0, 3) ?? [], // Show only first 3 projects
+    [projectList]
+  );
+
+  // Recent signups (combine businesses and experts)
+  const recentSignups = useMemo(() => {
+    const businessSignups = businesses.slice(0, 3).map((business) => ({
+      id: business.id,
+      name: business.name,
+      email: business.email,
+      accountType: "Business",
+      status: business.verified ? "Verified" : "Pending",
+      createdAt: business.createdAt,
+      avatar: business.name?.charAt(1),
+    }));
+
+    const expertSignups = experts.slice(0, 3).map((expert) => ({
+      id: expert.id,
+      name: expert.name,
+      email: expert.email,
+      accountType: "Expert",
+      status: expert.verified ? "Verified" : "Pending",
+      createdAt: expert.createdAt,
+      avatar: expert.name?.charAt(1),
+    }));
+
+    return [...businessSignups, ...expertSignups]
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .slice(0, 6);
+  }, [businesses, experts]);
+
+  // Format date function
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  // Calculate due date weeks
+  const calculateDueWeeks = (dueDate: string) => {
+    const due = new Date(dueDate);
+    const now = new Date();
+    const diffTime = Math.abs(due.getTime() - now.getTime());
+    const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
+    return `${diffWeeks} week${diffWeeks !== 1 ? "s" : ""}`;
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      <header className="text-2xl text-[#878A93] font-semibold mb-6">
+        Welcome back, {admin?.name}! 👋
+      </header>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Experts Stats */}
+        <div className="flex flex-col gap-2">
+          <span className="text-sm text-[#878A93] font-medium">
+            Total Experts:{" "}
+            <span className="text-[#3E4351]">
+              {isLoading ? (
+                <Skeleton className="h-4 w-10 inline-block" />
+              ) : (
+                totalItems
+              )}
+            </span>
+          </span>
+          <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl flex gap-4 p-4">
+            {isLoading ? (
+              <>
+                <div className="border-r w-full flex flex-col gap-3 border-[#EFF2F3]">
+                  <Skeleton className="h-7 w-16" />
+                  <Skeleton className="h-4 w-20" />
                 </div>
-            </div>
+                <div className="w-full flex flex-col gap-3">
+                  <Skeleton className="h-7 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="border-r w-full flex flex-col gap-4 border-[#EFF2F3]">
+                  <span className="text-2xl font-bold text-[#0E1426]">
+                    {
+                      experts.filter((e: Expert) => e.status === "active")
+                        .length
+                    }
+                  </span>
+                  <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary">
+                    Active
+                  </span>
+                </div>
+                <div className="w-full flex flex-col gap-4 border-[#EFF2F3]">
+                  <span className="text-2xl font-bold text-[#0E1426]">
+                    {
+                      experts.filter(
+                        (e: Expert) =>
+                          e.verified === true && e.status === "active"
+                      ).length
+                    }
+                  </span>
+                  <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary-hover">
+                    Verified
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-    )
-}
+
+        {/* Businesses Stats */}
+        <div className="flex flex-col gap-2">
+          <span className="text-sm text-[#878A93] font-medium">
+            Total Businesses:{" "}
+            <span className="text-[#3E4351]">
+              {isLoading ? (
+                <Skeleton className="h-4 w-10 inline-block" />
+              ) : (
+                totalBusinesses
+              )}
+            </span>
+          </span>
+          <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl flex gap-4 p-4">
+            {isLoading ? (
+              <>
+                <div className="border-r w-full flex flex-col gap-3 border-[#EFF2F3]">
+                  <Skeleton className="h-7 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <div className="w-full flex flex-col gap-3">
+                  <Skeleton className="h-7 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="border-r w-full flex flex-col gap-4 border-[#EFF2F3]">
+                  <span className="text-2xl font-bold text-[#0E1426]">
+                    {verifiedCount}
+                  </span>
+                  <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary">
+                    Verified
+                  </span>
+                </div>
+                <div className="w-full flex flex-col gap-4 border-[#EFF2F3]">
+                  <span className="text-2xl font-bold text-[#0E1426]">
+                    {activeCount}
+                  </span>
+                  <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">
+                    Active
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Projects Stats */}
+        <div className="flex flex-col gap-2">
+          <span className="text-sm text-[#878A93] font-medium">
+            Total Projects:{" "}
+            <span className="text-[#3E4351]">
+              {isLoading ? (
+                <Skeleton className="h-4 w-10 inline-block" />
+              ) : (
+                projectList?.data?.totalItems || 0
+              )}
+            </span>
+          </span>
+          <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl flex gap-4 p-4">
+            {isLoading ? (
+              <>
+                <div className="border-r w-full flex flex-col gap-3 border-[#EFF2F3]">
+                  <Skeleton className="h-7 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <div className="w-full flex flex-col gap-3">
+                  <Skeleton className="h-7 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="border-r w-full flex flex-col gap-4 border-[#EFF2F3]">
+                  <span className="text-2xl font-bold text-[#0E1426]">
+                    {statusCounts.pending}
+                  </span>
+                  <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#1E88E5]">
+                    Pending
+                  </span>
+                </div>
+                <div className="w-full flex flex-col gap-4 border-[#EFF2F3]">
+                  <span className="text-2xl font-bold text-[#0E1426]">
+                    {statusCounts.completed}
+                  </span>
+                  <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#1E88E5]">
+                    Completed
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Chart and Projects Section */}
+      <div className="flex flex-col lg:flex-row gap-6 mt-4">
+        <div className="flex-1">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-[#878A93] text-[20px] font-medium">
+              Growth insight
+            </h2>
+            <Select value="monthly">
+              <SelectTrigger className="w-[100px]">
+                <SelectValue placeholder="" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="annualy">Annualy</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="h-80">
+            {isLoading ? (
+              <Skeleton className="h-full w-full" />
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data} barGap={1} barCategoryGap={20}>
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                  <YAxis axisLine={false} tickLine={false} />
+                  <Tooltip />
+                  <Legend
+                    verticalAlign="top"
+                    align="right"
+                    iconType="square"
+                    iconSize={12}
+                    wrapperStyle={{ paddingBottom: 20, fontSize: "8px" }}
+                  />
+                  <Bar
+                    dataKey="Business"
+                    fill="#1746A2"
+                    radius={[4, 4, 0, 0]}
+                    barSize={12}
+                  />
+                  <Bar
+                    dataKey="Expert"
+                    fill="#1A1A1A"
+                    radius={[4, 4, 0, 0]}
+                    barSize={12}
+                  />
+                  <Bar
+                    dataKey="Project"
+                    fill="#FCCE37"
+                    radius={[4, 4, 0, 0]}
+                    barSize={12}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        <div className="w-full lg:w-[351px] flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <span className="text-[#878A93] font-medium text-[20px]">
+              Projects
+            </span>
+            <Link href="/projects" passHref>
+              <span className="text-base text-[#0E1426] font-medium cursor-pointer hover:underline">
+                See all
+              </span>
+            </Link>
+          </div>
+
+          <div className="bg-[#FBFCFC] w-full hide-scrollbar h-80 overflow-y-auto rounded-3xl p-4">
+            {isLoading ? (
+              Array(3)
+                .fill(0)
+                .map((_, i) => (
+                  <div key={i} className="w-full flex flex-col gap-3 p-3 mb-4">
+                    <div className="flex w-full items-center justify-between">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-4 rounded-full" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center">
+                        <Skeleton className="h-5 w-5 rounded-full mr-1" />
+                        <Skeleton className="h-5 w-5 rounded-full" />
+                      </div>
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                    <Skeleton className="h-4 w-40" />
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                  </div>
+                ))
+            ) : projects.length > 0 ? (
+              projects.map((project) => (
+                <div
+                  key={project.id}
+                  className="w-full flex flex-col gap-2 p-3 mb-4 border-b border-[#EFF2F3] last:border-b-0"
+                >
+                  <div className="flex w-full items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <Image
+                        src={
+                          project.status === "completed"
+                            ? "/icons/completed.svg"
+                            : "/icons/inprogress.svg"
+                        }
+                        width={18}
+                        height={18}
+                        alt={`${project.status} icon`}
+                      />
+                      <span
+                        className={`text-xs ${
+                          project.status === "completed"
+                            ? "text-[#04E762]"
+                            : project.status === "in-progress"
+                            ? "text-[#3A5EFC]"
+                            : "text-[#FF9500]"
+                        }`}
+                      >
+                        {project.status.charAt(0).toUpperCase() +
+                          project.status.slice(1)}
+                      </span>
+                    </div>
+                    <MoreHorizontal className="w-4 cursor-pointer" />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center">
+                      <Image
+                        src={"/images/profile-pics.svg"}
+                        alt="profile picture"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5 rounded-full"
+                      />
+                      <Image
+                        src={"/images/profile-pics.svg"}
+                        alt="profile picture"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5 rounded-full -ml-2"
+                      />
+                    </div>
+                    <span className="text-sm text-[#878A93]">
+                      {project.title}
+                    </span>
+                  </div>
+
+                  <span className="text-sm text-[#878A93]">
+                    {project.businessId &&
+                    typeof project.businessId === "object"
+                      ? `Business: ${project.businessId.name}`
+                      : "Business information not available"}
+                  </span>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-1 items-center">
+                      <Calendar className="w-4 h-4 text-[#878A93]" />
+                      <span className="text-sm text-[#878A93]">
+                        {formatDate(project.createdAt)}
+                      </span>
+                    </div>
+                    <div className="flex gap-1 items-center">
+                      <Clock className="w-4 h-4 text-[#878A93]" />
+                      <span className="text-sm text-[#878A93]">
+                        Due:{" "}
+                        {project.dueDate
+                          ? calculateDueWeeks(project.dueDate)
+                          : "N/A"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-[#878A93]">No projects available</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Sign-up feeds Section */}
+      <div className="flex flex-col gap-4 mt-4">
+        <div className="flex items-center justify-between">
+          <span className="text-[20px] font-medium text-[#878A93]">
+            Sign-up feeds
+          </span>
+          <Link href="/experts" passHref>
+            <span className="text-base text-[#0E1426] font-medium cursor-pointer hover:underline">
+              See all
+            </span>
+          </Link>
+        </div>
+
+        <div className="rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50/50">
+                <TableHead className="text-[#878A93] font-medium text-sm py-4">
+                  User name
+                </TableHead>
+                <TableHead className="text-[#878A93] font-medium text-sm py-4">
+                  Email
+                </TableHead>
+                <TableHead className="text-[#878A93] font-medium text-sm py-4">
+                  Account Type
+                </TableHead>
+                <TableHead className="text-[#878A93] font-medium text-sm py-4">
+                  Status
+                </TableHead>
+                <TableHead className="text-[#878A93] font-medium text-sm py-4">
+                  Created
+                </TableHead>
+                <TableHead className="text-[#878A93] font-medium text-sm py-4">
+                  Action
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array(3)
+                  .fill(0)
+                  .map((_, i) => (
+                    <TableRow key={i} className="hover:bg-gray-50/50">
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="w-8 h-8 rounded-full" />
+                          <Skeleton className="h-4 w-32" />
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <Skeleton className="h-4 w-40" />
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <Skeleton className="h-4 w-20" />
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <Skeleton className="h-6 w-16" />
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <Skeleton className="h-4 w-24" />
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+              ) : recentSignups.length > 0 ? (
+                recentSignups.map((user) => (
+                  <TableRow key={user.id} className="hover:bg-gray-50/50">
+                    <TableCell className="py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm capitalize">
+                          <Badge
+                            variant={
+                              user.status === "Verified"
+                                ? "default"
+                                : "secondary"
+                            }
+                            className={
+                              user.status === "Verified"
+                                ? "bg-green-100 text-green-700 hover:bg-green-100 text-xs font-normal px-2 py-1"
+                                : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 text-xs font-normal px-2 py-1"
+                            }
+                          >
+                            {user.avatar}
+                          </Badge>
+                        </div>
+                        <span className="text-gray-900 text-sm">
+                          {user.name}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-gray-700 text-sm py-4">
+                      {user.email}
+                    </TableCell>
+                    <TableCell className="text-gray-700 text-sm py-4">
+                      {user.accountType}
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <Badge
+                        variant={
+                          user.status === "Verified" ? "default" : "secondary"
+                        }
+                        className={
+                          user.status === "Verified"
+                            ? "bg-green-100 text-green-700 hover:bg-green-100 text-xs font-normal px-2 py-1"
+                            : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 text-xs font-normal px-2 py-1"
+                        }
+                      >
+                        {user.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-gray-700 text-sm py-4">
+                      {formatDate(user.createdAt)}
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                          >
+                            <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href={
+                                user.accountType === "Business"
+                                  ? `/business/${user.id}`
+                                  : `/experts/${user.id}`
+                              }
+                            >
+                              View profile
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>Verify</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="text-center py-8 text-[#878A93]"
+                  >
+                    No recent signups
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default Overview;
