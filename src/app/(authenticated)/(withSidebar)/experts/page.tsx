@@ -34,7 +34,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useGetAllExpert } from "@/hooks/useExpert";
+import { useGetAllExpert, useSearchExpert } from "@/hooks/useExpert";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export interface SocialLinks {
@@ -50,6 +50,7 @@ export interface Expert {
   email: string;
   status: "active" | "inactive";
   category: string;
+  image?: string;
   phone: string;
   gender: string;
   verified: boolean;
@@ -87,18 +88,25 @@ const Experts = () => {
   const router = useRouter();
 
   const { expertList, isLoading } = useGetAllExpert(page, Number(rowsPerPage));
+  const [query, setQuery] = useState("");
 
-  // Extract experts data safely
-  const totalPages = expertList?.data?.totalPages ?? 1;
-  const currentPage = expertList?.data?.currentPage ?? 1;
-  const totalItems = expertList?.data?.totalItems ?? 0;
-
-  const experts: Expert[] = useMemo(
-    () => expertList?.data?.data ?? [],
-    [expertList]
+  const { expertList: searchResults } = useSearchExpert(
+    searchTerm,
+    page,
+    Number(rowsPerPage)
   );
 
-  // Filtering + Sorting
+  const activeList = searchTerm ? searchResults : expertList;
+
+  const totalPages = activeList?.data?.totalPages ?? 1;
+  const currentPage = activeList?.data?.currentPage ?? 1;
+  const totalItems = activeList?.data?.totalItems ?? 0;
+
+  const experts: Expert[] = useMemo(
+    () => activeList?.data?.data ?? [],
+    [activeList]
+  );
+
   const filteredExperts = useMemo(() => {
     let filtered: Expert[] = experts;
 
@@ -205,14 +213,24 @@ const Experts = () => {
               </SelectContent>
             </Select>
 
-            <div className="relative">
+            <div className="relative flex items-center gap-2">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 placeholder="Search by name/email"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
                 className="pl-10 w-[200px] h-9 text-sm border-gray-300"
               />
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  setSearchTerm(query); // triggers search
+                  setPage(1); // reset to page 1
+                }}
+              >
+                Search
+              </Button>
             </div>
           </div>
 
@@ -324,8 +342,8 @@ const Experts = () => {
                         }
                         className={
                           expert.status === "active"
-                            ? "border border-[#04E762] text-[#04E762] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
-                            : "border border-[#F2BB05] text-[#F2BB05] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
+                            ? "border border-[#04E762] text-[#04E762] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent w-16 justify-center"
+                            : "border border-[#F2BB05] text-[#F2BB05] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent w-16 justify-center"
                         }
                       >
                         {expert.status}

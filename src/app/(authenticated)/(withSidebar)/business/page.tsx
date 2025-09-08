@@ -33,10 +33,9 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
-import { useGetAllBusiness } from "@/hooks/useBusiness";
+import { useGetAllBusiness, useSearchBusiness } from "@/hooks/useBusiness";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Define business type
 export type BusinessType = {
   id: string;
   name: string;
@@ -60,15 +59,17 @@ const Business = () => {
     currentPage,
     parseInt(rowsPerPage)
   );
+  const [query, setQuery] = useState("");
 
-  // Filter and sort data
+  const { businessList: searchResults } = useSearchBusiness(
+    searchTerm,
+    currentPage,
+    parseInt(rowsPerPage)
+  );
+  const activeData = searchTerm ? searchResults : businessList;
+
   const filteredData: BusinessType[] =
-    businessList?.data?.data?.filter((business: BusinessType) => {
-      const matchesSearch =
-        business.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        business.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        business.email.toLowerCase().includes(searchTerm.toLowerCase());
-
+    activeData?.data?.data?.filter((business: BusinessType) => {
       const matchesStatus =
         statusFilter === "all-business" ||
         (statusFilter === "verified" && business.verified) ||
@@ -80,7 +81,7 @@ const Business = () => {
         !dateFilter ||
         new Date(business.createdAt).toLocaleDateString("en-CA") === dateFilter;
 
-      return matchesSearch && matchesStatus && matchesDate;
+      return matchesStatus && matchesDate;
     }) || [];
 
   const sortedData = [...filteredData].sort(
@@ -96,7 +97,6 @@ const Business = () => {
     }
   );
 
-  // Calculate totals
   const totalBusinesses = businessList?.data?.totalItems || 0;
   const verifiedCount =
     businessList?.data?.data?.filter((b: BusinessType) => b.verified).length ||
@@ -109,7 +109,6 @@ const Business = () => {
     businessList?.data?.data?.filter((b: BusinessType) => b.status === "active")
       .length || 0;
 
-  // Handle page change
   const handlePageChange = (direction: "next" | "prev") => {
     if (
       direction === "next" &&
@@ -121,7 +120,6 @@ const Business = () => {
     }
   };
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, sortFilter, rowsPerPage, dateFilter]);
@@ -161,7 +159,6 @@ const Business = () => {
             </div>
           </div>
         </div>
-        {/* <div className="w-full lg:w-auto"></div> */}
       </div>
 
       <div className="w-full bg-white rounded-lg shadow-sm">
@@ -197,14 +194,24 @@ const Business = () => {
               </SelectContent>
             </Select>
 
-            <div className="relative">
+            <div className="relative flex items-center gap-2">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 placeholder="Search business"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
                 className="pl-10 w-[200px] h-9 text-sm border-gray-300"
               />
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  setSearchTerm(query); // trigger search
+                  setCurrentPage(1); // reset to page 1
+                }}
+              >
+                Search
+              </Button>
             </div>
 
             <div className="relative">
@@ -316,7 +323,7 @@ const Business = () => {
                         {
                           year: "numeric",
                           month: "short",
-                          day: "numeric"
+                          day: "numeric",
                           // hour: "2-digit",
                           // minute: "2-digit",
                         }

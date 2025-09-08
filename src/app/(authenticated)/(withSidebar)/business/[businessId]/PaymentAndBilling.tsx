@@ -368,11 +368,11 @@ export default function PaymentsTab({
                                 ? "secondary"
                                 : "outline"
                             }
-                            className={
-                              statusStyles[
+                            className={`w-16 justify-center
+                              ${statusStyles[
                                 row.status as keyof typeof statusStyles
-                              ]
-                            }
+                              ]}
+                            `}
                           >
                             {row.status}
                           </Badge>
@@ -382,7 +382,7 @@ export default function PaymentsTab({
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-8 text-xs rounded-xl text-gray-500"
+                              className="h-8 w-20 justify-center text-xs rounded-xl text-gray-500"
                             >
                               Pause
                             </Button>
@@ -391,7 +391,7 @@ export default function PaymentsTab({
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-8 text-xs rounded-xl text-gray-500"
+                              className="h-8 w-20 justify-center text-xs rounded-xl text-gray-500"
                             >
                               Renew
                             </Button>
@@ -400,7 +400,7 @@ export default function PaymentsTab({
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-8 text-xs rounded-xl text-gray-500"
+                              className="h-8 w-20 justify-center text-xs rounded-xl text-gray-500"
                             >
                               Upgrade
                             </Button>

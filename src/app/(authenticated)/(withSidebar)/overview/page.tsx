@@ -26,7 +26,7 @@ import {
 import { useGetAllProjects } from "@/hooks/useProjects";
 import { Calendar, Clock, MoreHorizontal } from "lucide-react";
 import Image from "next/image";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -37,7 +37,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Project } from "../projects/page";
-import { useGetAllBusiness } from "@/hooks/useBusiness";
+import { useGetAllBusiness, useGrowthInsight } from "@/hooks/useBusiness";
 import { BusinessType } from "../business/page";
 import { useGetAllExpert } from "@/hooks/useExpert";
 import { Expert } from "../experts/page";
@@ -45,29 +45,52 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { useGetAdminByToken } from "@/hooks/useAuth";
 
-const data = [
-  { name: "Jan", Business: 60, Expert: 110, Project: 30 },
-  { name: "Feb", Business: 60, Expert: 110, Project: 30 },
-  { name: "Mar", Business: 60, Expert: 110, Project: 30 },
-  { name: "Apr", Business: 60, Expert: 110, Project: 30 },
-  { name: "May", Business: 60, Expert: 110, Project: 30 },
-  { name: "Jun", Business: 40, Expert: 80, Project: 5 },
-  { name: "Jul", Business: 35, Expert: 110, Project: 0 },
-  { name: "Aug", Business: 60, Expert: 110, Project: 30 },
-  { name: "Sep", Business: 60, Expert: 110, Project: 30 },
-  { name: "Oct", Business: 60, Expert: 110, Project: 30 },
-  { name: "Nov", Business: 60, Expert: 110, Project: 30 },
-  { name: "Dec", Business: 60, Expert: 110, Project: 30 },
+const monthNames = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
 const Overview = () => {
-  // Project stat
-  const { admin, isLoading: adminLoading } = useGetAdminByToken()
+  const { admin, isLoading: adminLoading } = useGetAdminByToken();
   const { projectList, isLoading: projectsLoading } = useGetAllProjects();
   const { businessList, isLoading: businessLoading } = useGetAllBusiness(1);
   const { expertList, isLoading: expertsLoading } = useGetAllExpert(1);
+  const [year, setYear] = useState(new Date().getFullYear());
+  const { insights, isLoading: insightLoading } = useGrowthInsight(year);
 
-  const isLoading = projectsLoading || businessLoading || expertsLoading || adminLoading;
+  const data =
+    insights?.data?.map(
+      (item: {
+        month: number;
+        businesses: number;
+        experts: number;
+        projects: number;
+      }) => ({
+        name: monthNames[item.month - 1],
+        Business: item.businesses,
+        Expert: item.experts,
+        Project: item.projects,
+      })
+    ) ?? [];
+
+  console.log(projectList);
+
+  const isLoading =
+    projectsLoading ||
+    businessLoading ||
+    expertsLoading ||
+    adminLoading ||
+    insightLoading;
 
   const statusCounts = useMemo(() => {
     if (!projectList?.data?.data)
@@ -104,13 +127,11 @@ const Overview = () => {
   const activeCount =
     businesses.filter((b: BusinessType) => b.status === "active").length || 0;
 
-  // Projects data for the project cards
   const projects: Project[] = useMemo(
-    () => projectList?.data?.data?.slice(0, 3) ?? [], // Show only first 3 projects
+    () => projectList?.data?.data?.slice(0, 3) ?? [],
     [projectList]
   );
 
-  // Recent signups (combine businesses and experts)
   const recentSignups = useMemo(() => {
     const businessSignups = businesses.slice(0, 3).map((business) => ({
       id: business.id,
@@ -150,7 +171,6 @@ const Overview = () => {
     });
   };
 
-  // Calculate due date weeks
   const calculateDueWeeks = (dueDate: string) => {
     const due = new Date(dueDate);
     const now = new Date();
@@ -322,19 +342,25 @@ const Overview = () => {
         <div className="flex-1">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-[#878A93] text-[20px] font-medium">
-              Growth insight
+              Growth insight ({year})
             </h2>
-            <Select value="monthly">
+
+            {/* Year selector */}
+            <Select
+              value={String(year)}
+              onValueChange={(val) => setYear(Number(val))}
+            >
               <SelectTrigger className="w-[100px]">
-                <SelectValue placeholder="" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="annualy">Annualy</SelectItem>
+                <SelectItem value="2023">2023</SelectItem>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
           <div className="h-80">
             {isLoading ? (
               <Skeleton className="h-full w-full" />
@@ -447,21 +473,52 @@ const Overview = () => {
 
                   <div className="flex items-center gap-2">
                     <div className="flex items-center">
-                      <Image
-                        src={"/images/profile-pics.svg"}
-                        alt="profile picture"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5 rounded-full"
-                      />
-                      <Image
-                        src={"/images/profile-pics.svg"}
-                        alt="profile picture"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5 rounded-full -ml-2"
-                      />
+                      {project.experts && project.experts.length > 0 ? (
+                        project.experts.map((expert: Expert, idx: number) => {
+                          const initials = expert.name
+                            ? expert.name
+                                .split(" ")
+                                .map((n: string) => n[0])
+                                .join("")
+                                .toUpperCase()
+                            : "?";
+
+                          return expert.image ? (
+                            <Image
+                              key={idx}
+                              src={expert.image}
+                              alt={expert.name || "profile picture"}
+                              width={20}
+                              height={20}
+                              className={`w-5 h-5 rounded-full ${
+                                idx > 0 ? "-ml-2" : ""
+                              }`}
+                            />
+                          ) : (
+                            <div
+                              key={idx}
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium text-white ${
+                                idx > 0 ? "-ml-2" : ""
+                              }`}
+                              style={{
+                                backgroundColor:
+                                  "#" +
+                                  ((Math.random() * 0xffffff) << 0).toString(
+                                    16
+                                  ),
+                              }}
+                            >
+                              {initials}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">
+                          No expert
+                        </span>
+                      )}
                     </div>
+
                     <span className="text-sm text-[#878A93]">
                       {project.title}
                     </span>

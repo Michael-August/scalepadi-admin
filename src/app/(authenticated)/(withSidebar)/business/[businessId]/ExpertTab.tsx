@@ -360,11 +360,11 @@ export default function ExpertTab({
                               ? "secondary"
                               : "outline"
                           }
-                          className={
+                          className={`w-20 justify-center ${
                             statusStyles[
                               row.status as keyof typeof statusStyles
                             ]
-                          }
+                          }`}
                         >
                           {row.status}
                         </Badge>

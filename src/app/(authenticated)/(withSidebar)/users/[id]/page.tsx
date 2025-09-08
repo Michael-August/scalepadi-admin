@@ -206,49 +206,54 @@ const AdminDetails = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all-projects");
   const [sortOption, setSortOption] = useState<string>("sort");
 
-const router = useRouter();
-const params = useParams();
-const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const router = useRouter();
+  const params = useParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
-const { AdminDetails } = useGetAdminById(id ?? "");
-console.log(AdminDetails)
+  const { AdminDetails } = useGetAdminById(id ?? "");
+  console.log(AdminDetails);
 
   // Filter and sort logic
   const filteredData = useMemo(() => {
     let result = [...projectData];
-    
+
     // Apply status filter
     if (statusFilter !== "all-projects") {
-      result = result.filter(item => 
-        statusFilter === "in-progress" ? true : // Adjust this based on your needs
-        statusFilter === "completed" ? true :  // Adjust this based on your needs
-        item.status.toLowerCase() === statusFilter.toLowerCase()
+      result = result.filter((item) =>
+        statusFilter === "in-progress"
+          ? true // Adjust this based on your needs
+          : statusFilter === "completed"
+          ? true // Adjust this based on your needs
+          : item.status.toLowerCase() === statusFilter.toLowerCase()
       );
     }
-    
+
     // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      result = result.filter(item =>
-        item.name.toLowerCase().includes(term) ||
-        item.owner.toLowerCase().includes(term) ||
-        item.email.toLowerCase().includes(term) ||
-        item.role?.toLowerCase().includes(term)
+      result = result.filter(
+        (item) =>
+          item.name.toLowerCase().includes(term) ||
+          item.owner.toLowerCase().includes(term) ||
+          item.email.toLowerCase().includes(term) ||
+          item.role?.toLowerCase().includes(term)
       );
     }
-    
+
     // Apply sorting
     if (sortOption !== "sort") {
       result.sort((a, b) => {
         if (sortOption === "name") {
           return a.name.localeCompare(b.name);
         } else if (sortOption === "date") {
-          return new Date(a.dateJoined).getTime() - new Date(b.dateJoined).getTime();
+          return (
+            new Date(a.dateJoined).getTime() - new Date(b.dateJoined).getTime()
+          );
         }
         return 0;
       });
     }
-    
+
     return result;
   }, [statusFilter, searchTerm, sortOption]);
 
@@ -271,6 +276,21 @@ console.log(AdminDetails)
     }
   };
 
+  function getInitials(name: string) {
+    const parts = name.split(" ");
+    if (parts.length === 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  function stringToColor(str: string) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const color = `hsl(${hash % 360}, 70%, 50%)`; // unique but consistent
+    return color;
+  }
+
   return (
     <div className="flex w-full flex-col lg:w-[82%] xl:w-full gap-6 bg-gray-100/50 px-4 md:px-6">
       <div className="flex flex-col gap-4 border-b border-[#EDEEF3] pb-4">
@@ -291,14 +311,28 @@ console.log(AdminDetails)
         <div className="flex flex-col md:flex-row w-full items-start md:items-center justify-between gap-4">
           <div className="top flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-2 sm:mt-5">
-              <div className="w-[76px] relative h-[76px] rounded-full">
-                <Image
-                  src={"/images/profile-pic.svg"}
-                  alt="Profile Picture"
-                  width={76}
-                  height={76}
-                  className="rounded-full w-full h-full"
-                />
+              <div className="w-[76px] relative h-[76px] rounded-full flex items-center justify-center overflow-hidden">
+                {AdminDetails?.image ? (
+                  <Image
+                    src={AdminDetails.image}
+                    alt={AdminDetails?.name || "Profile Picture"}
+                    width={76}
+                    height={76}
+                    className="rounded-full w-full h-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className={`w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-lg`}
+                    style={{
+                      backgroundColor: stringToColor(
+                        AdminDetails?.name || "User"
+                      ),
+                    }}
+                  >
+                    {getInitials(AdminDetails?.name || "User")}
+                  </div>
+                )}
+
                 <Image
                   className="absolute bottom-0 left-0"
                   src={"/images/profile-logo.svg"}
@@ -307,36 +341,47 @@ console.log(AdminDetails)
                   height={20}
                 />
               </div>
+
               <div className="flex flex-col gap-2">
                 <span className="text-[#1A1A1A] font-medium text-[18px] capitalize sm:text-[20px]">
                   {AdminDetails?.name || "user name"}
                 </span>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                   <span className="flex items-center gap-[2px] font-medium capitalize text-[#0DDC0E] text-sm">
-                    <Verified className="w-4 h-4" /> {AdminDetails?.role || "Admin"}
+                    <Verified className="w-4 h-4" />{" "}
+                    {AdminDetails?.role || "Admin"} admin
                   </span>
-                  {/* <span className="text-[#878A93] text-sm font-medium">
-                    Growth Marketing Expert
-                  </span> */}
                 </div>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
-              <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
-                <User2Icon className="w-4 h-4" />
-                Contact:{" "}
-                <span className="text-[#121217] font-semibold">Lagos, Nigeria | {AdminDetails?.email || "admin@scalepadi.com "} | {AdminDetails?.phone || "+234 789012345"}</span>
-              </span>
-            </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
+                  <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
+                    <User2Icon className="w-4 h-4" />
+                    Contact:{" "}
+                    <span className="text-[#121217] font-semibold">
+                      Lagos, Nigeria |{" "}
+                      {AdminDetails?.email || "admin@scalepadi.com "} |{" "}
+                      {AdminDetails?.phone || "+234 789012345"}
+                    </span>
+                  </span>
+                </div>
               </div>
             </div>
+
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
               <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
                 <Calendar className="w-4 h-4" />
                 Joined Date:{" "}
-                <span className="text-[#121217]">{new Date(AdminDetails?.createdAt).toLocaleDateString() || "May 25, 2025"} | 21: Accounts Reviewed</span>
+                <span className="text-[#121217]">
+                  {new Date(AdminDetails?.createdAt).toLocaleDateString() ||
+                    "May 25, 2025"}{" "}
+                  | 21: Accounts Reviewed
+                </span>
               </span>
               <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
                 <House className="w-4 h-4" />
-                Activity status: <span className="text-[#121217] capitalize">{AdminDetails?.status}</span>
+                Activity status:{" "}
+                <span className="text-[#121217] capitalize">
+                  {AdminDetails?.status}
+                </span>
               </span>
             </div>
             <div className="flex flex-wrap items-center mt-3 sm:mt-5 gap-3">
@@ -388,8 +433,8 @@ console.log(AdminDetails)
                 {/* Controls */}
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
-                    <Select 
-                      value={statusFilter} 
+                    <Select
+                      value={statusFilter}
                       onValueChange={setStatusFilter}
                       defaultValue="all-projects"
                     >
@@ -406,7 +451,7 @@ console.log(AdminDetails)
                       </SelectContent>
                     </Select>
 
-                    <Select 
+                    <Select
                       value={sortOption}
                       onValueChange={setSortOption}
                       defaultValue="sort"
@@ -474,7 +519,9 @@ console.log(AdminDetails)
                       {paginatedData.length > 0 ? (
                         paginatedData.map((business) => (
                           <TableRow
-                            onClick={() => router.push(`/experts/${business.id}`)}
+                            onClick={() =>
+                              router.push(`/experts/${business.id}`)
+                            }
                             key={business.id}
                             className="border-b border-gray-100 cursor-pointer hover:bg-gray-50/50"
                           >
@@ -543,7 +590,10 @@ console.log(AdminDetails)
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={6} className="py-4 text-center text-gray-500">
+                          <TableCell
+                            colSpan={6}
+                            className="py-4 text-center text-gray-500"
+                          >
                             No results found
                           </TableCell>
                         </TableRow>
@@ -555,9 +605,11 @@ console.log(AdminDetails)
                 {/* Pagination */}
                 <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600 whitespace-nowrap">Rows per page</span>
-                    <Select 
-                      value={rowsPerPage.toString()} 
+                    <span className="text-sm text-gray-600 whitespace-nowrap">
+                      Rows per page
+                    </span>
+                    <Select
+                      value={rowsPerPage.toString()}
                       onValueChange={(value) => {
                         setRowsPerPage(Number(value));
                         setCurrentPage(1); // Reset to first page when changing rows per page
@@ -577,8 +629,12 @@ console.log(AdminDetails)
 
                   <div className="flex items-center gap-4">
                     <span className="text-sm text-gray-600 whitespace-nowrap">
-                      {filteredData.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1}-
-                      {Math.min(currentPage * rowsPerPage, filteredData.length)} of {filteredData.length}
+                      {filteredData.length === 0
+                        ? 0
+                        : (currentPage - 1) * rowsPerPage + 1}
+                      -
+                      {Math.min(currentPage * rowsPerPage, filteredData.length)}{" "}
+                      of {filteredData.length}
                     </span>
                     <div className="flex items-center gap-1">
                       <Button
@@ -595,7 +651,9 @@ console.log(AdminDetails)
                         size="sm"
                         className="h-8 w-8 p-0"
                         onClick={handleNextPage}
-                        disabled={currentPage === totalPages || totalPages === 0}
+                        disabled={
+                          currentPage === totalPages || totalPages === 0
+                        }
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>

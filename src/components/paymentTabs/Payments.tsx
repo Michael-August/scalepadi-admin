@@ -387,10 +387,10 @@ export default function Payments({
                           ? "secondary"
                           : "outline"
                       }
-                      className={
-                        statusStyles[
+                      className={`w-16 justify-center
+                        ${statusStyles[
                           row.status as keyof typeof statusStyles
-                        ]
+                        ]}`
                       }
                     >
                       {row.status}

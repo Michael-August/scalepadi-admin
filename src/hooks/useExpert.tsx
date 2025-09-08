@@ -40,7 +40,6 @@ export const useGetAllExpert = (page: number = 1, limit: number = 10) => {
   return { expertList: data, isLoading }
 }
 
-
 export const useGetExpertById = (id: string) => {
   const { data, isLoading } = useQuery({
     queryKey: ["expert", id],
@@ -69,3 +68,45 @@ export const useGetExpertById = (id: string) => {
   return { expertDetails: data, isLoading };
 };
 
+export const useSearchExpert = (
+  search: string,
+  page: number = 1,
+  limit: number = 10
+) => {
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["expert", search, page, limit],
+    queryFn: async () => {
+      try {
+        const response = await axiosClient.get(
+          `/experts?page=${page}&limit=${limit}&search=${encodeURIComponent(
+            search
+          )}`
+        );
+
+        if (response.data?.status === false) {
+          throw new Error(
+            response.data?.message || "Failed to fetch expert."
+          );
+        }
+
+        return response.data;
+      } catch (err: unknown) {
+        if (err instanceof AxiosError) {
+          toast.error(
+            err.response?.data?.message || "Failed to fetch expert."
+          );
+        } else if (err instanceof Error) {
+          toast.error(err.message);
+        } else {
+          toast.error(
+            "An unexpected error occurred while fetching experts."
+          );
+        }
+        throw err;
+      }
+    },
+    enabled: !!search, 
+  });
+
+  return { expertList: data, isLoading, isError, error };
+};

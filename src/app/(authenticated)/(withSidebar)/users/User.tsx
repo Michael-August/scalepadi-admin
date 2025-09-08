@@ -155,12 +155,12 @@ export const UserTable = ({
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <span
-                    className={`px-2.5 py-1.5 inline-flex text-[13px] capitalize leading-5 font-semibold rounded-full ${
+                    className={`w-28 justify-center px-2.5 py-1.5 inline-flex text-[13px] capitalize leading-5 font-semibold rounded-full ${
                       roleStyles[user.role as keyof typeof roleStyles] ||
                       "bg-gray-100 text-gray-800 border border-gray-900"
                     }`}
                   >
-                    {user.role}
+                    {user.role} admin
                   </span>
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-sm text-gray-500">
@@ -168,7 +168,7 @@ export const UserTable = ({
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <span
-                    className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold capitalize rounded-full ${
+                    className={`w-16 justify-center px-2 py-1 inline-flex text-xs leading-5 font-semibold capitalize rounded-full ${
                       statusStyles[user.status as keyof typeof statusStyles]
                     }`}
                   >

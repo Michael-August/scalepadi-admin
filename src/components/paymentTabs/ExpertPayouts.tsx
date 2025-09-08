@@ -364,10 +364,10 @@ export default function ExpertPayouts({
                           ? "secondary"
                           : "outline"
                       }
-                      className={
-                        statusStyles[
+                      className={`w-20 justify-center
+                        ${statusStyles[
                           row.status as keyof typeof statusStyles
-                        ]
+                        ]}`
                       }
                     >
                       {row.status}
