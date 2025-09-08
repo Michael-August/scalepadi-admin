@@ -162,7 +162,6 @@ const projectData: Project[] = [
   },
 ];
 
-
 const BusinessId = () => {
   const [activeTab, setActiveTab] = useState<
     "about" | "aiusage" | "projects" | "experts" | "payments"
@@ -176,7 +175,6 @@ const BusinessId = () => {
 
   const router = useRouter();
   const { businessDetails, isLoading } = useGetBusinessById(businessId);
- 
 
   if (isLoading) {
     return <ProjectSkeleton />;
@@ -216,19 +214,21 @@ const BusinessId = () => {
           <span className="text-[#CFD0D4] text-sm">/</span>
         </div>
 
-        <div className="flex flex-col lg:flex-row w-full items-start lg:items-center justify-between gap-4">
+        <div className="flex flex-col xl:flex-row w-full items-start xl:items-center justify-between gap-4">
+          {/* Left section */}
           <div className="top flex flex-col gap-4 w-full">
+            {/* Business Info Header */}
             <div className="w-full flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <div className="bg-[#CDFAE0] flex items-center justify-center p-[8.22px] text-[#1A1A1A] text-xs h-[76px] w-[79.77px] rounded-[16.43px]">
                 {businessDetails.name.substring(0, 8)}
               </div>
               <div className="flex flex-col gap-2">
-                <span className="text-lg sm:text-[20px] text-[#3E4351] font-semibold">
+                <span className="text-lg sm:text-[20px] text-[#3E4351] font-semibold break-words">
                   {businessDetails.title}
                 </span>
                 <div className="items-center gap-2 flex flex-wrap">
-                  <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
-                    <User className="w-4 h-4" />
+                  <span className="flex items-center gap-[4px] text-sm text-[#878A93]">
+                    <User className="w-4 h-4 shrink-0" />
                     Contact Person:{" "}
                     <span className="text-[#121217]">
                       {businessDetails.name}{" "}
@@ -241,43 +241,47 @@ const BusinessId = () => {
                 </div>
               </div>
             </div>
-            <div className="items-center gap-2 flex flex-wrap">
-              <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
-                <Calendar className="w-4 h-4" />
+
+            {/* Meta details */}
+            <div className="items-center gap-3 flex flex-wrap">
+              <span className="flex items-center gap-[4px] text-sm text-[#878A93]">
+                <Calendar className="w-4 h-4 shrink-0" />
                 Joined Date:{" "}
                 <span className="text-[#121217]">
                   {formatDate(businessDetails.createdAt)}
                 </span>
               </span>
-              <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
-                <Clock className="w-4 h-4" />
+              <span className="flex items-center gap-[4px] text-sm text-[#878A93]">
+                <Clock className="w-4 h-4 shrink-0" />
                 Account status:{" "}
                 <span className="text-[#121217]">
                   {businessDetails.verified ? "Verified" : "Pending"}
                 </span>
               </span>
-              <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
-                <Clock className="w-4 h-4" />
+              <span className="flex items-center gap-[4px] text-sm text-[#878A93]">
+                <Clock className="w-4 h-4 shrink-0" />
                 Activity status:{" "}
                 <span className="text-[#121217] capitalize">
                   {businessDetails.status}
                 </span>
               </span>
-              <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
-                <Tag className="w-4 h-4" />
+              <span className="flex items-center gap-[4px] text-sm text-[#878A93]">
+                <Tag className="w-4 h-4 shrink-0" />
                 Current Plan: <span className="text-[#121217]">Padi Pro</span>
               </span>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-3 w-full lg:w-auto">
-            <Button className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black">
+
+          {/* Right section */}
+          <div className="flex items-center justify-end gap-3 w-full xl:w-auto">
+            <Button className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full sm:w-auto">
               <MessageCircle className="w-4 h-4 mr-2" />
               Chat
             </Button>
           </div>
         </div>
       </div>
-      <div className="project-details w-full lg:w-full xl:w-[895px] pb-10">
+      <div className="project-details w-full">
         <div className="tab pt-2 w-full flex items-center gap-2 sm:gap-5 bg-[#F9FAFB] overflow-x-auto">
           <div
             className={`flex cursor-pointer w-full items-center justify-center border-b-2 pb-3 min-w-max
@@ -343,8 +347,8 @@ const BusinessId = () => {
         </div>
 
         {activeTab === "about" && (
-          <div className="flex flex-col gap-4">
-            <div className="about flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
+          <div className="flex flex-col gap-4 my-3">
+            <div className="about flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-3">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-lg sm:text-[20px] text-primary">
                   Business Summary
@@ -468,8 +472,8 @@ const BusinessId = () => {
         )}
 
         {activeTab === "aiusage" && (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
+          <div className="flex flex-col gap-4 my-4">
+            <div className="flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-3">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-sm text-[#0E1426]">
                   AI Assistant Usage Overview
@@ -566,9 +570,9 @@ const BusinessId = () => {
           </div>
         )}
         {activeTab === "projects" && (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
-              <div className="w-full p-4 md:p-6 bg-white">
+          <div className="flex flex-col gap-4 my-4">
+            <div className="flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-3">
+              <div className="bg-white">
                 {/* Header */}
                 <h1 className="text-xl md:text-2xl font-medium text-[#878A93] mb-6">
                   Project List

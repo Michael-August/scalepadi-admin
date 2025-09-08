@@ -99,7 +99,7 @@ export const UserTable = ({
   );
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+    <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm lg:w-[88%] xl:w-full">
       <Table>
         <TableHeader>
           <TableRow className="bg-gray-50">

@@ -173,7 +173,8 @@ const Projects = () => {
             Total Projects:{" "}
             <span className="text-[#3E4351]">{projectList?.data?.totalItems || 0}</span>
           </span>
-          <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl flex flex-col sm:flex-row gap-6 p-4">
+          
+          <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl grid md:grid-cols-3 w-[400px] gap-6 p-4">
             <div className="border-b sm:border-b-0 sm:border-r w-full flex flex-col gap-4 border-[#EFF2F3] pb-4 sm:pb-0">
               <span className="text-2xl font-bold text-[#0E1426]">{statusCounts.pending}</span>
               <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary-hover">
@@ -194,13 +195,13 @@ const Projects = () => {
             </div>
           </div>
         </div>
-        <div className="w-full"></div>
+        {/* <div className="w-full"></div> */}
         <Button className="hover:bg-primary-hover hover:text-black w-full md:w-auto">
           Start a new project
         </Button>
       </div>
 
-      <div className="w-full p-3 md:p-6 bg-white overflow-x-auto">
+      <div className="w-full bg-white overflow-x-auto">
         {/* Header */}
         <h1 className="text-xl md:text-2xl font-medium text-[#878A93] mb-6">
           Project List
@@ -254,7 +255,7 @@ const Projects = () => {
         </div>
 
         {/* Table */}
-        <div className="rounded-lg overflow-hidden min-w-[800px]">
+        <div className="rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50/50">
@@ -284,7 +285,7 @@ const Projects = () => {
                   <TableRow
                     onClick={() => router.push(`/projects/${project.id}`)}
                     key={project.id}
-                    className="border-b border-gray-100 cursor-pointer hover:bg-gray-50/50"
+                    className="border-b border-gray-100 cursor-pointer hover:bg-gray-50/50 truncate"
                   >
                     <TableCell className="py-4">
                       <div className="flex items-center gap-3">
@@ -305,14 +306,14 @@ const Projects = () => {
                       </div>
                     </TableCell>
                     <TableCell className="text-gray-700 text-sm py-4">
-                      {project.businessId?.name || "N/A"}
+                      {project.businessId?.name || "N/A"} 
                     </TableCell>
                     <TableCell className="text-gray-700 text-sm py-4">
                       {project.experts && project.experts.length > 0
                         ? `${project.experts.length} assigned`
                         : "No experts"}
                     </TableCell>
-                    <TableCell className="py-4">
+                    <TableCell className="py-4 capitalize">
                       <Badge
                         variant="secondary"
                         className={

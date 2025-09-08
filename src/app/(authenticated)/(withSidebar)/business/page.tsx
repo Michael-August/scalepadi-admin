@@ -127,8 +127,8 @@ const Business = () => {
   }, [searchTerm, statusFilter, sortFilter, rowsPerPage, dateFilter]);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col lg:flex-row items-start lg:items-end w-full justify-between gap-6">
+    <div className="flex flex-col gap-6 w-full">
+      <div className="flex flex-col lg:flex-row items-start lg:items-end w-full lg:w-[88%] xl:w-full justify-between gap-6">
         <div className="flex flex-col gap-2 w-full">
           <span className="text-sm text-[#878A93] font-medium">
             Total Registered Businesses:{" "}
@@ -161,10 +161,10 @@ const Business = () => {
             </div>
           </div>
         </div>
-        <div className="w-full lg:w-auto"></div>
+        {/* <div className="w-full lg:w-auto"></div> */}
       </div>
 
-      <div className="w-full p-4 sm:p-6 bg-white rounded-lg shadow-sm">
+      <div className="w-full bg-white rounded-lg shadow-sm">
         {/* Header */}
         <h1 className="text-xl sm:text-2xl font-medium text-[#878A93] mb-6">
           Business List
@@ -219,7 +219,7 @@ const Business = () => {
         </div>
 
         {/* Table */}
-        <div className="rounded-lg overflow-x-auto">
+        <div className="rounded-lg overflow-hidden lg:w-[88%] xl:w-full">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50/50">
@@ -274,7 +274,7 @@ const Business = () => {
                   <TableRow
                     onClick={() => router.push(`/business/${business.id}`)}
                     key={business.id}
-                    className="border-b border-gray-100 cursor-pointer hover:bg-gray-50/50"
+                    className="border-b border-gray-100 truncate cursor-pointer hover:bg-gray-50/50"
                   >
                     <TableCell className="py-4">
                       <div className="flex items-center gap-3">
@@ -316,9 +316,9 @@ const Business = () => {
                         {
                           year: "numeric",
                           month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
+                          day: "numeric"
+                          // hour: "2-digit",
+                          // minute: "2-digit",
                         }
                       )}
                     </TableCell>

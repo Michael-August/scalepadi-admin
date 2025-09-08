@@ -222,7 +222,7 @@ export default function ExpertPayouts({
       </div>
 
       {/* Table */}
-      <div className="rounded-lg overflow-x-auto">
+      <div className="rounded-lg overflow-x-auto lg:w-[80%] xl:w-full">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50/50">

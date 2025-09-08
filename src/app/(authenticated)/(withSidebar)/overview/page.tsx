@@ -161,7 +161,7 @@ const Overview = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="text-2xl text-[#878A93] font-semibold mb-6">
+      <header className="text-xl md:text-2xl text-[#878A93] font-semibold mb-">
         Welcome back, {admin?.name}! 👋
       </header>
 
@@ -519,13 +519,13 @@ const Overview = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50/50">
-                <TableHead className="text-[#878A93] font-medium text-sm py-4">
+                <TableHead className="text-[#878A93] font-medium text-sm py-4 line-clamp-1">
                   User name
                 </TableHead>
                 <TableHead className="text-[#878A93] font-medium text-sm py-4">
                   Email
                 </TableHead>
-                <TableHead className="text-[#878A93] font-medium text-sm py-4">
+                <TableHead className="text-[#878A93] font-medium text-sm py-4 line-clamp-1">
                   Account Type
                 </TableHead>
                 <TableHead className="text-[#878A93] font-medium text-sm py-4">
@@ -589,7 +589,7 @@ const Overview = () => {
                             {user.avatar}
                           </Badge>
                         </div>
-                        <span className="text-gray-900 text-sm">
+                        <span className="text-gray-900 text-sm line-clamp-1">
                           {user.name}
                         </span>
                       </div>

@@ -10,7 +10,7 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
     const route = pathName.replace(/^\//, '');
 
     return (
-        <nav className="w-full bg-white border-b border-primary-border flex items-center justify-between py-2 px-4 lg:pr-14">
+        <nav className="w-full bg-white flex items-center justify-between py-2 px-4 xl:pr-14">
             {!withLogo && <div className="text-[#0E1426] text-lg font-medium">{ route.charAt(0).toUpperCase() + route.slice(1) }</div>}
             {withLogo && <Image src={'/logo.svg'} alt="Logo" width={104} height={27.54} />}
 

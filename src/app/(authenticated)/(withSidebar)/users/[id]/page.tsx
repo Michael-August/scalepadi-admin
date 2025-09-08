@@ -272,7 +272,7 @@ console.log(AdminDetails)
   };
 
   return (
-    <div className="flex w-full flex-col gap-6 bg-gray-100/50 px-4 md:px-6">
+    <div className="flex w-full flex-col lg:w-[82%] xl:w-full gap-6 bg-gray-100/50 px-4 md:px-6">
       <div className="flex flex-col gap-4 border-b border-[#EDEEF3] pb-4">
         <div className="heading w-full bg-[#F8F8F8] py-4 px-4 md:px-6 flex items-center gap-2 overflow-x-auto">
           <span

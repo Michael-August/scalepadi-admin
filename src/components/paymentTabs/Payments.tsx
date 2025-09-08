@@ -259,24 +259,24 @@ export default function Payments({
       </div>
 
       {/* Table */}
-      <div className="rounded-lg overflow-x-auto">
+      <div className="rounded-lg overflow-x-auto lg:w-[82%] xl:w-full">
         {isLoading ? (
           <div className="py-8 text-center text-gray-500">Loading payments...</div>
         ) : (
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50/50">
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+              <TableHead className="text-[#878A93] font-medium text-sm py-4 ">
                 Payment type
               </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+              <TableHead className="text-[#878A93] font-medium text-sm py-4 ">
                 Business
               </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+              <TableHead className="text-[#878A93] font-medium text-sm py-4">
                 Expert
               </TableHead>
               <TableHead
-                className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer"
+                className="text-[#878A93] font-medium text-sm py-4 cursor-pointer"
                 onClick={() => requestSort("amount")}
               >
                 <div className="flex items-center gap-1">
@@ -286,14 +286,14 @@ export default function Payments({
                     (sortConfig.direction === "asc" ? "↑" : "↓")}
                 </div>
               </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+              <TableHead className="text-[#878A93] font-medium text-sm py-4">
                 Trx ID
               </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+              <TableHead className="text-[#878A93] font-medium text-sm py-4">
                 Status
               </TableHead>
               <TableHead
-                className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer"
+                className="text-[#878A93] font-medium text-sm py-4 cursor-pointer"
                 onClick={() => requestSort("date")}
               >
                 <div className="flex items-center gap-1">
@@ -303,7 +303,7 @@ export default function Payments({
                     (sortConfig.direction === "asc" ? "↑" : "↓")}
                 </div>
               </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+              <TableHead className="text-[#878A93] font-medium text-sm py-4">
                 Action
               </TableHead>
             </TableRow>

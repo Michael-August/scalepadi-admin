@@ -172,10 +172,9 @@ const Experts = () => {
             </div>
           </div>
         </div>
-        <div className="w-full"></div>
       </div>
 
-      <div className="w-full p-6 bg-white">
+      <div className="w-full bg-white">
         {/* Header */}
         <h1 className="text-2xl font-medium text-[#878A93] mb-6">
           Experts List
