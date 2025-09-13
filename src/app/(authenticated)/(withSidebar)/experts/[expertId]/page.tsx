@@ -1,6 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import Image from "next/image";
 import {
   Calendar,
@@ -11,14 +19,32 @@ import {
   MessageCircle,
   Star,
   Verified,
+  FolderOpen,
+  User,
 } from "lucide-react";
 import { useState } from "react";
 import CircularProgress from "@/components/circular-progress";
 import { useParams } from "next/navigation";
 import { ProjectSkeleton } from "@/components/ui/project-skeleton";
-import { useGetExpertById } from "@/hooks/useExpert";
+import { useGetExpertById, useInviteExperts } from "@/hooks/useExpert";
+import { useGetAllProjects } from "@/hooks/useProjects";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-// types/expert.ts
 export interface ExpertDetails {
   id: string;
   name: string;
@@ -53,11 +79,25 @@ const ExpertDetails = () => {
   const [activeTab, setActiveTab] = useState<
     "about" | "documents" | "performance" | "account"
   >("about");
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [projectSearchTerm, setProjectSearchTerm] = useState("");
+  const [assigningProjects, setAssigningProjects] = useState<Set<string>>(
+    new Set()
+  );
+
   const params = useParams();
   const expertId = params.expertId as string;
 
   const { expertDetails, isLoading } = useGetExpertById(expertId);
-  console.log(expertDetails);
+  const { projectList, isLoading: projectsLoading } = useGetAllProjects(
+    1,
+    10,
+    "all",
+    "createdAt",
+    projectSearchTerm
+  );
+  const { mutate: inviteExperts } = useInviteExperts();
+
 
   if (isLoading) {
     return <ProjectSkeleton />;
@@ -102,7 +142,7 @@ const ExpertDetails = () => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-5">
               <div className="w-[76px] relative h-[76px] rounded-full">
                 <Image
-                  src={"/images/profile-pic.svg"}
+                  src={expertDetails?.profilePicture}
                   alt="Profile Picture"
                   width={76}
                   height={76}
@@ -159,9 +199,280 @@ const ExpertDetails = () => {
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Chat
               </Button>
-              <Button variant={"outline"} className="rounded-[14px] text-sm">
-                Assign to project
-              </Button>
+
+              <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className="rounded-[14px] text-sm"
+                  >
+                    <span>Assign to project</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="w-[95vw] max-w-6xl overflow-y-auto max-h-screen">
+                  <SheetHeader className="mb-4">
+                    <SheetTitle className="text-xl font-semibold">
+                      Assign Expert to Project
+                    </SheetTitle>
+                    <SheetDescription className="text-gray-600">
+                      Select a project from the list below to assign{" "}
+                      {expertDetails.name || "this expert"}.
+                    </SheetDescription>
+                  </SheetHeader>
+
+                  <div className="relative w-full my-6">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Search projects"
+                      value={projectSearchTerm}
+                      onChange={(e) => setProjectSearchTerm(e.target.value)}
+                      className="pl-10 w-full h-10 text-sm border-gray-300 outline-none rounded-lg"
+                    />
+                  </div>
+
+                  <div className="rounded-lg overflow-hidden border border-gray-200">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50 hover:bg-gray-50">
+                          <TableHead className="text-gray-600 truncate font-medium text-sm py-4">
+                            Project Name
+                          </TableHead>
+                          <TableHead className="text-gray-600 truncate font-medium text-sm py-4">
+                            Business Name
+                          </TableHead>
+                          <TableHead className="text-gray-600 truncate font-medium text-sm py-4">
+                            Assigned Experts
+                          </TableHead>
+                          <TableHead className="text-gray-600 font-medium text-sm py-4">
+                            Status
+                          </TableHead>
+                          <TableHead className="text-gray-600 font-medium text-sm py-4 text-right">
+                            Action
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {projectsLoading ? (
+                          [...Array(5)].map((_, i) => (
+                            <TableRow key={i} className="hover:bg-gray-50/50">
+                              <TableCell className="py-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-4 h-4 rounded bg-gray-200 animate-pulse" />
+                                  <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-4 h-4 rounded-full bg-gray-200 animate-pulse" />
+                                  <div className="h-4 w-28 bg-gray-200 rounded animate-pulse" />
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-4">
+                                <div className="flex -space-x-2">
+                                  {[...Array(3)].map((_, j) => (
+                                    <div
+                                      key={j}
+                                      className="h-6 w-6 rounded-full bg-gray-200 animate-pulse"
+                                    />
+                                  ))}
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-4">
+                                <div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse" />
+                              </TableCell>
+                              <TableCell className="py-4 text-right">
+                                <div className="h-9 w-20 bg-gray-200 rounded-md animate-pulse ml-auto" />
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : projectList?.data && projectList.data.length > 0 ? (
+                          projectList.data.map((project) => {
+                            const statusColor =
+                              project.status === "completed"
+                                ? "text-green-600"
+                                : project.status === "in-progress"
+                                ? "text-blue-600"
+                                : "text-amber-600";
+
+                            const badgeColor =
+                              project.status === "completed"
+                                ? "bg-green-100 text-green-800"
+                                : project.status === "in-progress"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-amber-100 text-amber-800";
+
+                            return (
+                              <TableRow
+                                key={project.id}
+                                className="hover:bg-gray-50/50"
+                              >
+                                <TableCell className="py-4 text-gray-700 text-sm truncate">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
+                                      <FolderOpen
+                                        className={`w-4 h-4 ${statusColor}`}
+                                      />
+                                    </div>
+                                    <span>{project.title || "N/A"}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="py-4 text-gray-700 text-sm truncate">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
+                                      <User
+                                        className={`h-3 w-3 ${statusColor}`}
+                                      />
+                                    </div>
+                                    <span>
+                                      {project.businessId?.name || "N/A"}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="py-4">
+                                  <div className="flex -space-x-2">
+                                    {project.experts?.slice(0, 3).map((exp) => (
+                                      <div
+                                        key={exp.id}
+                                        className="relative h-7 w-7 rounded-full overflow-hidden border-2 border-white shadow-sm bg-gray-100 flex items-center justify-center"
+                                      >
+                                        {exp.image ? (
+                                          <Image
+                                            src={exp.image}
+                                            alt={exp.name || "Expert"}
+                                            fill
+                                            className="object-cover"
+                                          />
+                                        ) : (
+                                          <User
+                                            className={`h-4 w-4 ${statusColor}`}
+                                          />
+                                        )}
+                                      </div>
+                                    ))}
+                                    {project.experts &&
+                                      project.experts.length > 3 && (
+                                        <div className="relative h-7 w-7 rounded-full overflow-hidden border-2 border-white bg-gray-200 flex items-center justify-center text-xs font-medium">
+                                          +{project.experts.length - 3}
+                                        </div>
+                                      )}
+                                    {(!project.experts ||
+                                      project.experts.length === 0) && (
+                                      <span className="text-xs text-gray-500">
+                                        None
+                                      </span>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="py-4">
+                                  <span
+                                    className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${badgeColor}`}
+                                  >
+                                    {project.status.replace("-", " ")}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="py-4 text-right">
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        {(() => {
+                                          const isExpertAssigned =
+                                            project.experts?.some(
+                                              (expert) => expert.id === expertId
+                                            );
+                                          return (
+                                            <Button
+                                              onClick={() => {
+                                                setAssigningProjects((prev) =>
+                                                  new Set(prev).add(project.id)
+                                                );
+                                                inviteExperts(
+                                                  {
+                                                    projectId: project.id,
+                                                    expertIds: [expertId],
+                                                  },
+                                                  {
+                                                    onSuccess: () => {
+                                                      setAssigningProjects(
+                                                        (prev) => {
+                                                          const newSet =
+                                                            new Set(prev);
+                                                          newSet.delete(
+                                                            project.id
+                                                          );
+                                                          return newSet;
+                                                        }
+                                                      );
+                                                    },
+                                                    onError: () => {
+                                                      setAssigningProjects(
+                                                        (prev) => {
+                                                          const newSet =
+                                                            new Set(prev);
+                                                          newSet.delete(
+                                                            project.id
+                                                          );
+                                                          return newSet;
+                                                        }
+                                                      );
+                                                    },
+                                                  }
+                                                );
+                                              }}
+                                              size="sm"
+                                              className="bg-primary text-primary-foreground hover:bg-primary/90 ml-auto"
+                                              disabled={
+                                                isExpertAssigned ||
+                                                assigningProjects.has(
+                                                  project.id
+                                                )
+                                              }
+                                            >
+                                              {assigningProjects.has(project.id)
+                                                ? "Assigning..."
+                                                : "Assign"}
+                                            </Button>
+                                          );
+                                        })()}
+                                      </TooltipTrigger>
+                                      {project.experts?.some(
+                                        (expert) => expert.id === expertId
+                                      ) && (
+                                        <TooltipContent>
+                                          <p>
+                                            This expert is already assigned to
+                                            this project.
+                                          </p>
+                                        </TooltipContent>
+                                      )}
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        ) : (
+                          <TableRow>
+                            <TableCell
+                              colSpan={5}
+                              className="text-center py-12 text-gray-500"
+                            >
+                              <div className="flex flex-col items-center justify-center gap-2">
+                                <FolderOpen className="h-10 w-10 text-gray-300" />
+                                <p>No projects found</p>
+                                {projectSearchTerm && (
+                                  <p className="text-sm">
+                                    Try adjusting your search term
+                                  </p>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
           <div className="flex items-center justify-end gap-3 w-full lg:w-auto">
@@ -396,7 +707,7 @@ const ExpertDetails = () => {
                       Years of experience
                     </span>
                     <span className="text-[#1A1A1A] text-base font-semibold">
-                      2 years
+                      {expertDetails.yearsOfExperience}
                     </span>
                   </div>
                   <div className="flex flex-col gap-1">
@@ -605,7 +916,7 @@ const ExpertDetails = () => {
                           <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
                           <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
                           <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
+                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
                         </div>
                         <span className="text-[#0E1426] text-sm font-normal">
                           40%

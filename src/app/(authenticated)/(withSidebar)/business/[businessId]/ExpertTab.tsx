@@ -1,14 +1,13 @@
 "use client";
 
 import {
-  ArrowUpDown,
   Download,
   Search,
   ChevronLeft,
   ChevronRight,
   Star,
 } from "lucide-react";
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import {
   Select,
   SelectContent,
@@ -28,134 +27,98 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { expertPayoutData, payoutStatuses, statusStyles } from "@/app/data";
+import { useGetExpertsCount } from "@/hooks/useExpert";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 
-interface ExpertPayoutsProps {
+interface Expert {
+  expertId: string;
+  name: string;
+  email: string;
+  profilePicture?: string;
+  count: number;
+  role?: string;
+  status?: string;
+  rating?: number;
+  taskInvolvement?: number;
+}
+
+interface ExpertTabProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   currentPage: number;
+  itemsPerPage: number;
   setCurrentPage: (page: number) => void;
-  rowsPerPage: number;
-  setRowsPerPage: (rows: number) => void;
+  setItemsPerPage: (rows: number) => void;
+  statusFilter: string;
+  setStatusFilter: (status: string) => void;
+  sortBy: string;
+  businessId: string;
 }
 
 export default function ExpertTab({
   searchQuery,
   setSearchQuery,
   currentPage,
+  itemsPerPage,
   setCurrentPage,
-  rowsPerPage,
-  setRowsPerPage,
-}: ExpertPayoutsProps) {
-  const [payoutStatus, setPayoutStatus] = useState("All statuses");
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "asc" | "desc";
-  } | null>(null);
+  setItemsPerPage,
+  statusFilter,
+  setStatusFilter,
+  sortBy,
+  businessId,
+}: ExpertTabProps) {
+  const { expertsCount, isLoading, error } = useGetExpertsCount(
+    businessId,
+    currentPage, 
+    itemsPerPage,
+    statusFilter,
+    sortBy,
+    searchQuery
+  );
 
-  const filteredPayouts = useMemo(() => {
-    let filtered = expertPayoutData.filter((payout) => {
+  const expertsData = useMemo(() => {
+    if (!expertsCount) return [];
+    
+    // Check if expertsCount is an array or has a data property with array
+    const expertsArray = Array.isArray(expertsCount) 
+      ? expertsCount 
+      : (expertsCount as any)?.data && Array.isArray((expertsCount as any).data)
+        ? (expertsCount as any).data
+        : [];
+    
+    return expertsArray.map((expert: any) => ({
+      expertId: expert.expertId || expert.id || "",
+      name: expert.name || "",
+      email: expert.email || "",
+      profilePicture: expert.profilePicture,
+      count: expert.count || 0,
+      role: expert.role || "Expert",
+      status: expert.status || "Active",
+      rating: expert.rating || 4.6,
+      taskInvolvement: expert.taskInvolvement || expert.count || 0,
+    }));
+  }, [expertsCount]);
+
+  const filteredExperts = useMemo(() => {
+    return expertsData.filter((expert: Expert) => {
       const matchesStatus =
-        payoutStatus === "All statuses" || payout.status === payoutStatus;
+        statusFilter === "all" || expert.status === statusFilter;
       const matchesSearch =
         searchQuery === "" ||
-        payout.expert.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        payout.trxId.toLowerCase().includes(searchQuery.toLowerCase());
+        expert.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        expert.email.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesStatus && matchesSearch;
     });
+  }, [statusFilter, searchQuery, expertsData]);
 
-    if (sortConfig) {
-      filtered = [...filtered].sort((a, b) => {
-        const { key, direction } = sortConfig;
-        // Only allow sorting by known keys
-        type PayoutKey =
-          | "expert"
-          | "amount"
-          | "trxId"
-          | "status"
-          | "date"
-          | "type"
-          | "method";
-        if (
-          ![
-            "expert",
-            "amount",
-            "trxId",
-            "status",
-            "date",
-            "type",
-            "method",
-          ].includes(key)
-        )
-          return 0;
-
-        const aValue = (a as Record<PayoutKey, unknown>)[key as PayoutKey];
-        const bValue = (b as Record<PayoutKey, unknown>)[key as PayoutKey];
-        let aSort = aValue;
-        let bSort = bValue;
-
-        // Handle numeric sort for amount
-        if (key === "amount") {
-          aSort =
-            typeof aSort === "string"
-              ? parseFloat(aSort.replace(/[^\d.]/g, ""))
-              : aSort;
-          bSort =
-            typeof bSort === "string"
-              ? parseFloat(bSort.replace(/[^\d.]/g, ""))
-              : bSort;
-        }
-
-        // Handle date sort for date
-        if (key === "date") {
-          aSort = typeof aSort === "string" ? new Date(aSort) : aSort;
-          bSort = typeof bSort === "string" ? new Date(bSort) : bSort;
-        }
-
-        if (typeof aSort === "string" && typeof bSort === "string") {
-          if (aSort < bSort) return direction === "asc" ? -1 : 1;
-          if (aSort > bSort) return direction === "asc" ? 1 : -1;
-          return 0;
-        }
-
-        if (typeof aSort === "number" && typeof bSort === "number") {
-          return direction === "asc" ? aSort - bSort : bSort - aSort;
-        }
-
-        if (aSort instanceof Date && bSort instanceof Date) {
-          return direction === "asc"
-            ? aSort.getTime() - bSort.getTime()
-            : bSort.getTime() - aSort.getTime();
-        }
-
-        return 0;
-      });
-    }
-
-    return filtered;
-  }, [payoutStatus, searchQuery, sortConfig]);
-
-  const paginatedPayouts = useMemo(() => {
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    return filteredPayouts.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredPayouts, currentPage, rowsPerPage]);
+  const paginatedExperts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredExperts.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredExperts, currentPage, itemsPerPage]);
 
   const totalPages = useMemo(() => {
-    return Math.ceil(filteredPayouts.length / rowsPerPage);
-  }, [filteredPayouts, rowsPerPage]);
-
-  const requestSort = (key: string) => {
-    let direction: "asc" | "desc" = "asc";
-    if (
-      sortConfig &&
-      sortConfig.key === key &&
-      sortConfig.direction === "asc"
-    ) {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-    setCurrentPage(1);
-  };
+    return Math.ceil(filteredExperts.length / itemsPerPage);
+  }, [filteredExperts, itemsPerPage]);
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
@@ -212,12 +175,30 @@ export default function ExpertTab({
       .toUpperCase();
   }
 
+  const statusStyles = {
+    Active: "bg-green-100 text-green-800",
+    Inactive: "bg-gray-100 text-gray-800",
+    Pending: "bg-yellow-100 text-yellow-800",
+  };
+
+  if (isLoading) {
+    return <TableSkeleton 
+      columns={6} 
+      rows={5} 
+      headers={["Expert Name", "Role", "Status", "Rating", "Task Involvement", "Action"]}
+    />;
+  }
+
+  if (error) {
+    return <div className="p-4 text-center text-red-500">Error loading experts: {(error as Error).message}</div>;
+  }
+
   return (
     <div className="flex flex-col gap-4 my-4">
       <div className="flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-3">
         <section aria-labelledby="expert-list-heading">
           <h2 id="expert-list-heading" className="sr-only">
-            Expert Payouts
+            Expert List
           </h2>
           {/* Header */}
           <h1 className="text-2xl font-medium text-[#878A93] my-4">
@@ -231,21 +212,20 @@ export default function ExpertTab({
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div className="flex flex-wrap gap-2">
               <Select
-                value={payoutStatus}
+                value={statusFilter}
                 onValueChange={(value) => {
-                  setPayoutStatus(value);
+                  setStatusFilter(value);
                   setCurrentPage(1);
                 }}
               >
                 <SelectTrigger className="w-[180px] h-9 text-xs rounded-xl text-gray-500 border-gray-300">
-                  <SelectValue />
+                  <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  {payoutStatuses.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Inactive">Inactive</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -266,7 +246,7 @@ export default function ExpertTab({
               variant="outline"
               size="sm"
               className="h-9 text-xs rounded-xl text-gray-500 border-gray-300 bg-transparent"
-              onClick={() => exportToCSV(filteredPayouts, "expert_payouts")}
+              onClick={() => exportToCSV(filteredExperts, "experts_list")}
             >
               <Download className="h-3 w-3 mr-2" />
               Export CSV
@@ -278,56 +258,39 @@ export default function ExpertTab({
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50/50">
-                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer">
+                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
                     Expert Name
                   </TableHead>
-                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer">
+                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
                     Role
                   </TableHead>
-                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer">
+                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
                     Status
                   </TableHead>
-                  <TableHead
-                    className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer"
-                    onClick={() => requestSort("amount")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Rating
-                      <ArrowUpDown className="w-4 h-4" />
-                      {sortConfig?.key === "amount" &&
-                        (sortConfig.direction === "asc" ? "↑" : "↓")}
-                    </div>
+                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                    Rating
                   </TableHead>
-
-                  <TableHead
-                    className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer"
-                    onClick={() => requestSort("trxId")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Task Involvement
-                      <ArrowUpDown className="w-4 h-4" />
-                      {sortConfig?.key === "trxId" &&
-                        (sortConfig.direction === "asc" ? "↑" : "↓")}
-                    </div>
+                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                    Task Involvement
                   </TableHead>
-                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer">
+                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
                     Action
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedPayouts.length > 0 ? (
-                  paginatedPayouts.map((row) => (
+                {paginatedExperts.length > 0 ? (
+                  paginatedExperts.map((expert: Expert) => (
                     <TableRow
-                      key={row.id}
+                      key={expert.expertId}
                       className="border-b border-gray-100 hover:bg-gray-50/50"
                     >
                       <TableCell className="py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          {row.expertAvatar ? (
+                          {expert.profilePicture ? (
                             <Image
-                              src={row.expertAvatar}
-                              alt={row.expert}
+                              src={expert.profilePicture}
+                              alt={expert.name}
                               width={20}
                               height={20}
                               className="w-5 h-5 rounded-full object-cover"
@@ -335,47 +298,43 @@ export default function ExpertTab({
                           ) : (
                             <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
                               <span className="text-xs font-medium text-purple-600">
-                                {getInitials(row.expert)}
+                                {getInitials(expert.name)}
                               </span>
                             </div>
                           )}
                           <span className="text-gray-700 text-sm">
-                            {row.expert}
+                            {expert.name}
                           </span>
                         </div>
                       </TableCell>
 
                       <TableCell className="py-4 whitespace-nowrap">
                         <span className="text-gray-900 text-sm">
-                          {row.type}
+                          {expert.role}
                         </span>
                       </TableCell>
 
                       <TableCell className="py-4 whitespace-nowrap">
                         <Badge
-                          variant={
-                            row.status === "Paid"
-                              ? "default"
-                              : row.status === "Pending"
-                              ? "secondary"
-                              : "outline"
-                          }
+                          variant="outline"
                           className={`w-20 justify-center ${
-                            statusStyles[
-                              row.status as keyof typeof statusStyles
-                            ]
+                            statusStyles[expert.status as keyof typeof statusStyles] || "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          {row.status}
+                          {expert.status}
                         </Badge>
                       </TableCell>
 
                       <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm flex items-center gap-0.5">
-                        {" "}
-                        <Star size={14} /> 4.6
+                        <Star size={14} /> {expert.rating}
                       </TableCell>
                       <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">
-                        1 project
+                        {expert.taskInvolvement} project{expert.taskInvolvement !== 1 ? 's' : ''}
+                      </TableCell>
+                      <TableCell className="py-4 whitespace-nowrap">
+                        <Button variant="outline" size="sm">
+                          View
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
@@ -385,7 +344,7 @@ export default function ExpertTab({
                       colSpan={6}
                       className="py-4 text-center text-gray-500"
                     >
-                      No payouts found matching your criteria
+                      No experts found matching your criteria
                     </TableCell>
                   </TableRow>
                 )}
@@ -394,16 +353,14 @@ export default function ExpertTab({
           </div>
 
           {/* Pagination */}
-          {filteredPayouts.length > 0 && (
+          {filteredExperts.length > 0 && (
             <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 whitespace-nowrap">
-                  Rows per page
-                </span>
+                <span className="text-sm text-gray-600">Rows per page</span>
                 <Select
-                  value={rowsPerPage.toString()}
+                  value={itemsPerPage.toString()}
                   onValueChange={(value) => {
-                    setRowsPerPage(Number(value));
+                    setItemsPerPage(parseInt(value));
                     setCurrentPage(1);
                   }}
                 >
@@ -420,12 +377,8 @@ export default function ExpertTab({
               </div>
 
               <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600 whitespace-nowrap">
-                  {filteredPayouts.length === 0
-                    ? 0
-                    : (currentPage - 1) * rowsPerPage + 1}
-                  -{Math.min(currentPage * rowsPerPage, filteredPayouts.length)}{" "}
-                  of {filteredPayouts.length}
+                <span className="text-sm text-gray-600">
+                  {currentPage} of {totalPages}
                 </span>
                 <div className="flex items-center gap-1">
                   <Button
@@ -435,7 +388,7 @@ export default function ExpertTab({
                     onClick={handlePreviousPage}
                     disabled={currentPage === 1}
                   >
-                    <ChevronLeft className="h-4 w-4" />
+                    <ChevronLeft className="h-4 w-4 text-gray-400" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -444,7 +397,7 @@ export default function ExpertTab({
                     onClick={handleNextPage}
                     disabled={currentPage === totalPages || totalPages === 0}
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-4 w-4 text-gray-600" />
                   </Button>
                 </div>
               </div>

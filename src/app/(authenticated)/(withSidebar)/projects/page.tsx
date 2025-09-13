@@ -62,97 +62,61 @@ export type Project = {
   experts?: [];
 };
 
-// type ProjectResponse = {
-//   status: boolean;
-//   message: string;
-//   data?: {
-//     currentPage: number;
-//     totalPages: number;
-//     itemsPerPage: number;
-//     totalItems: number;
-//     data: Project[];
-//   };
-// };
-
 const Projects = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState("10");
   const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("all-projects");
-  const [sortFilter, setSortFilter] = useState("sort");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortFilter, setSortFilter] = useState("createdAt");
   const [dateFilter, setDateFilter] = useState("");
 
   const router = useRouter();
-  const { projectList, isLoading } = useGetAllProjects();
+  const { projectList, isLoading } = useGetAllProjects(
+    currentPage,
+    parseInt(rowsPerPage),
+    statusFilter,
+    sortFilter,
+    searchTerm
+  );
 
   // Process and filter data
   const processedData = useMemo(() => {
     if (!projectList?.data) return [];
 
-    let data = projectList.data.data || [];
+    let data = projectList.data || [];
 
-    // Apply search filter
-    if (searchTerm) {
-      data = data.filter((project: Project) =>
-        project.title.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Apply status filter
-    if (statusFilter !== "all-projects") {
-      data = data.filter((project: Project) => project.status === statusFilter);
-    }
-
-    // Apply sorting
-    if (sortFilter === "name") {
-      data.sort((a: Project, b: Project) => a.title.localeCompare(b.title));
-    } else if (sortFilter === "date") {
-      data.sort(
-        (a: Project, b: Project) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    }
-
-    // Apply date filter
+    // Apply date filter on client side since API doesn't support it
     if (dateFilter) {
       const filterDate = new Date(dateFilter).toDateString();
-      data = data.filter(
-        (project: Project) =>
+      data = data?.filter(
+        (project) =>
           (project.dueDate && new Date(project.dueDate).toDateString() === filterDate) ||
           new Date(project.createdAt).toDateString() === filterDate
       );
     }
 
     return data;
-  }, [projectList, searchTerm, statusFilter, sortFilter, dateFilter]);
-
-  // Pagination
-  const totalPages = Math.ceil(processedData.length / parseInt(rowsPerPage));
-  const startIndex = (currentPage - 1) * parseInt(rowsPerPage);
-  const paginatedData = processedData.slice(
-    startIndex,
-    startIndex + parseInt(rowsPerPage)
-  );
+  }, [projectList, dateFilter]);
 
   // Count statuses for the summary cards
   const statusCounts = useMemo(() => {
-    if (!projectList?.data?.data) return { pending: 0, "in-progress": 0, completed: 0 };
+    if (!projectList?.data) return { pending: 0, "in-progress": 0, completed: 0, total: 0 };
 
-    const data = projectList.data.data;
+    const data = projectList.data;
     return {
-      pending: data.filter((project: Project) => project.status === "pending").length,
-      "in-progress": data.filter((project: Project) => project.status === "in-progress").length,
-      completed: data.filter((project: Project) => project.status === "completed").length,
+      pending: data.filter((project) => project.status === "pending").length,
+      "in-progress": data.filter((project) => project.status === "in-progress").length,
+      completed: data.filter((project) => project.status === "completed").length,
+      total: projectList.totalItems,
     };
   }, [projectList]);
 
-  // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, sortFilter, dateFilter, rowsPerPage]);
 
   const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
+    if (newPage >= 1 && newPage <= (projectList?.totalPages || 1)) {
       setCurrentPage(newPage);
     }
   };
@@ -171,23 +135,29 @@ const Projects = () => {
         <div className="flex flex-col gap-2 w-full">
           <span className="text-sm text-[#878A93] font-medium">
             Total Projects:{" "}
-            <span className="text-[#3E4351]">{projectList?.data?.totalItems || 0}</span>
+            <span className="text-[#3E4351]">{statusCounts.total || 0}</span>
           </span>
           
-          <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl grid md:grid-cols-3 w-[400px] gap-6 p-4">
-            <div className="border-b sm:border-b-0 sm:border-r w-full flex flex-col gap-4 border-[#EFF2F3] pb-4 sm:pb-0">
+          <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl grid md:grid-cols-4 w-full max-w-[600px] gap-4 p-4">
+            <div className="border-b sm:border-b-0 sm:border-r w-full flex flex-col gap-2 border-[#EFF2F3] pb-4 sm:pb-0">
+              <span className="text-2xl font-bold text-[#0E1426]">{statusCounts.total}</span>
+              <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-gray-400">
+                Total
+              </span>
+            </div>
+            <div className="border-b sm:border-b-0 sm:border-r w-full flex flex-col gap-2 border-[#EFF2F3] pb-4 sm:pb-0">
               <span className="text-2xl font-bold text-[#0E1426]">{statusCounts.pending}</span>
-              <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary-hover">
+              <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#F2BB05]">
                 Pending
               </span>
             </div>
-            <div className="border-b sm:border-b-0 sm:border-r w-full flex flex-col gap-4 border-[#EFF2F3] pb-4 sm:pb-0">
+            <div className="border-b sm:border-b-0 sm:border-r w-full flex flex-col gap-2 border-[#EFF2F3] pb-4 sm:pb-0">
               <span className="text-2xl font-bold text-[#0E1426]">{statusCounts["in-progress"]}</span>
               <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary">
                 In-Progress
               </span>
             </div>
-            <div className="w-full flex flex-col gap-4">
+            <div className="w-full flex flex-col gap-2">
               <span className="text-2xl font-bold text-[#0E1426]">{statusCounts.completed}</span>
               <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">
                 Completed
@@ -195,13 +165,12 @@ const Projects = () => {
             </div>
           </div>
         </div>
-        {/* <div className="w-full"></div> */}
         <Button className="hover:bg-primary-hover hover:text-black w-full md:w-auto">
           Start a new project
         </Button>
       </div>
 
-      <div className="w-full bg-white overflow-x-auto">
+      <div className="w-full bg-white overflow-x-auto p-6 rounded-lg border border-gray-200">
         {/* Header */}
         <h1 className="text-xl md:text-2xl font-medium text-[#878A93] mb-6">
           Project List
@@ -212,10 +181,10 @@ const Projects = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-[140px] h-9 text-sm border-gray-300">
-                <SelectValue />
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all-projects">All projects</SelectItem>
+                <SelectItem value="all">All projects</SelectItem>
                 <SelectItem value="in-progress">In-Progress</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
@@ -223,13 +192,14 @@ const Projects = () => {
             </Select>
 
             <Select value={sortFilter} onValueChange={setSortFilter}>
-              <SelectTrigger className="w-full sm:w-[100px] h-9 text-sm border-gray-300">
-                <SelectValue />
+              <SelectTrigger className="w-full sm:w-[120px] h-9 text-sm border-gray-300">
+                <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="sort">Sort</SelectItem>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="date">Date</SelectItem>
+                <SelectItem value="createdAt">Date Created</SelectItem>
+                <SelectItem value="title">Name</SelectItem>
+                <SelectItem value="dueDate">Due Date</SelectItem>
+                <SelectItem value="status">Status</SelectItem>
               </SelectContent>
             </Select>
 
@@ -250,6 +220,7 @@ const Projects = () => {
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
               className="w-full sm:w-[140px] h-9 text-sm border-gray-300"
+              placeholder="Filter by date"
             />
           </div>
         </div>
@@ -280,8 +251,8 @@ const Projects = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedData.length > 0 ? (
-                paginatedData.map((project: Project) => (
+              {processedData.length > 0 ? (
+                processedData.map((project) => (
                   <TableRow
                     onClick={() => router.push(`/projects/${project.id}`)}
                     key={project.id}
@@ -388,12 +359,10 @@ const Projects = () => {
 
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">
-              {processedData.length > 0
-                ? `${startIndex + 1}-${Math.min(
-                    startIndex + parseInt(rowsPerPage),
-                    processedData.length
-                  )} of ${processedData.length}`
-                : "0 of 0"}
+              {projectList ? 
+                `Page ${projectList.currentPage} of ${projectList.totalPages}` : 
+                '0 of 0'
+              }
             </span>
             <div className="flex items-center gap-1">
               <Button
@@ -410,7 +379,7 @@ const Projects = () => {
                 size="sm"
                 className="h-8 w-8 p-0"
                 onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages || totalPages === 0}
+                disabled={currentPage === (projectList?.totalPages || 1)}
               >
                 <ChevronRight className="h-4 w-4 text-gray-600" />
               </Button>

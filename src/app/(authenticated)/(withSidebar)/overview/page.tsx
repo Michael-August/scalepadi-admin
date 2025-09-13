@@ -36,7 +36,6 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Project } from "../projects/page";
 import { useGetAllBusiness, useGrowthInsight } from "@/hooks/useBusiness";
 import { BusinessType } from "../business/page";
 import { useGetAllExpert } from "@/hooks/useExpert";
@@ -44,6 +43,7 @@ import { Expert } from "../experts/page";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { useGetAdminByToken } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 const monthNames = [
   "Jan",
@@ -61,6 +61,7 @@ const monthNames = [
 ];
 
 const Overview = () => {
+  const router = useRouter();
   const { admin, isLoading: adminLoading } = useGetAdminByToken();
   const { projectList, isLoading: projectsLoading } = useGetAllProjects();
   const { businessList, isLoading: businessLoading } = useGetAllBusiness(1);
@@ -93,19 +94,16 @@ const Overview = () => {
     insightLoading;
 
   const statusCounts = useMemo(() => {
-    if (!projectList?.data?.data)
+    if (!projectList?.data)
       return { pending: 0, "in-progress": 0, completed: 0 };
 
-    const data = projectList.data.data;
+    const data = projectList?.data;
     return {
-      pending: data.filter((project: Project) => project.status === "pending")
+      pending: data.filter((project) => project.status === "pending").length,
+      "in-progress": data.filter((project) => project.status === "in-progress")
         .length,
-      "in-progress": data.filter(
-        (project: Project) => project.status === "in-progress"
-      ).length,
-      completed: data.filter(
-        (project: Project) => project.status === "completed"
-      ).length,
+      completed: data.filter((project) => project.status === "completed")
+        .length,
     };
   }, [projectList]);
 
@@ -127,8 +125,8 @@ const Overview = () => {
   const activeCount =
     businesses.filter((b: BusinessType) => b.status === "active").length || 0;
 
-  const projects: Project[] = useMemo(
-    () => projectList?.data?.data?.slice(0, 3) ?? [],
+  const projects = useMemo(
+    () => projectList?.data?.slice(0, 3) ?? [],
     [projectList]
   );
 
@@ -297,7 +295,7 @@ const Overview = () => {
               {isLoading ? (
                 <Skeleton className="h-4 w-10 inline-block" />
               ) : (
-                projectList?.data?.totalItems || 0
+                projectList?.totalItems || 0
               )}
             </span>
           </span>
@@ -440,8 +438,9 @@ const Overview = () => {
             ) : projects.length > 0 ? (
               projects.map((project) => (
                 <div
+                  onClick={() => router.push(`/projects/${project.id}`)}
                   key={project.id}
-                  className="w-full flex flex-col gap-2 p-3 mb-4 border-b border-[#EFF2F3] last:border-b-0"
+                  className="w-full cursor-pointer flex flex-col gap-2 p-3 mb-4 border-b border-[#EFF2F3] last:border-b-0"
                 >
                   <div className="flex w-full items-center justify-between">
                     <div className="flex items-center gap-1">
@@ -474,7 +473,7 @@ const Overview = () => {
                   <div className="flex items-center gap-2">
                     <div className="flex items-center">
                       {project.experts && project.experts.length > 0 ? (
-                        project.experts.map((expert: Expert, idx: number) => {
+                        project.experts.map((expert, idx: number) => {
                           const initials = expert.name
                             ? expert.name
                                 .split(" ")
@@ -627,7 +626,19 @@ const Overview = () => {
                   ))
               ) : recentSignups.length > 0 ? (
                 recentSignups.map((user) => (
-                  <TableRow key={user.id} className="hover:bg-gray-50/50">
+                  <TableRow
+                    key={user.id}
+                    onClick={() =>
+                      router.push(
+                        `${
+                          user.accountType === "Business"
+                            ? `/business/${user.id}`
+                            : `/experts/${user.id}`
+                        }`
+                      )
+                    }
+                    className="hover:bg-gray-50/50 cursor-pointer"
+                  >
                     <TableCell className="py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm capitalize">

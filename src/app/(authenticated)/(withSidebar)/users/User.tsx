@@ -132,7 +132,7 @@ export const UserTable = ({
             </>
           ) : data.length > 0 ? (
             data.map((user) => (
-              <TableRow key={user.id} className="hover:bg-gray-50">
+              <TableRow onClick={() => router.push(`/users/${user.id}`)} key={user.id} className="hover:bg-gray-50 cursor-pointer">
                 <TableCell className="whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center">

@@ -9,9 +9,11 @@ import {
   Pin,
   Verified,
   Star,
+  X,
+  CheckCircle,
 } from "lucide-react";
-import { useState } from "react";
-import { useGetProjectById } from "@/hooks/useProjects";
+import { useState, useEffect } from "react";
+import { useGetProjectById, useApproveProject } from "@/hooks/useProjects";
 import { useParams } from "next/navigation";
 import { format } from "date-fns";
 import { ProjectSkeleton } from "@/components/ui/project-skeleton";
@@ -54,11 +56,46 @@ const ProjectDetails = () => {
   const [activeTab, setActiveTab] = useState<"projectOverview" | "taskTracker">(
     "projectOverview"
   );
+  const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState<boolean>(true);
+  const [discount, setDiscount] = useState<number>(0);
+  
   const params = useParams();
   const projectId = params.projectId as string;
 
   const { projectDetails, isLoading } = useGetProjectById(projectId);
-  console.log(projectDetails);
+  const approveProjectMutation = useApproveProject();
+
+  // Reset discount when modal opens or project details change
+  useEffect(() => {
+    if (isApprovalModalOpen) {
+      setDiscount(0);
+    }
+  }, [isApprovalModalOpen, projectDetails]);
+
+  const handleApprove = () => {
+    if (!projectDetails) return;
+    
+    // Ensure discount doesn't make amount negative
+    const finalDiscount = Math.min(discount, projectDetails.proposedTotalCost || 0);
+    
+    approveProjectMutation.mutate({
+      projectId,
+      approved: approvalStatus,
+      totalCost: projectDetails.proposedTotalCost || 0,
+      discount: finalDiscount,
+    }, {
+      onSuccess: () => {
+        setIsApprovalModalOpen(false);
+      }
+    });
+  };
+
+  // Calculate amount ensuring it's never negative
+  const calculatedAmount = Math.max(
+    0, 
+    (projectDetails?.proposedTotalCost || 0) - discount
+  );
 
   if (isLoading) {
     return <ProjectSkeleton />;
@@ -74,6 +111,93 @@ const ProjectDetails = () => {
 
   return (
     <div className="flex w-full flex-col gap-6">
+      {/* Approval Modal */}
+      {isApprovalModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Approve Project</h3>
+              <button 
+                onClick={() => setIsApprovalModalOpen(false)}
+                className="p-1 rounded-full hover:bg-gray-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Approval Status
+                </label>
+                <select
+                  value={approvalStatus.toString()}
+                  onChange={(e) => setApprovalStatus(e.target.value === "true")}
+                  className="w-full p-2 border border-gray-300 rounded-lg"
+                >
+                  <option value="true">Approve</option>
+                  <option value="false">Reject</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Proposed Total Cost
+                </label>
+                <div className="p-2 bg-gray-100 rounded-lg">
+                  ${projectDetails.proposedTotalCost?.toLocaleString() || "0"}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Discount ($)
+                </label>
+                <input
+                  type="number"
+                  value={discount}
+                  onChange={(e) => {
+                    const newDiscount = Number(e.target.value);
+                    // Ensure discount doesn't exceed proposed total cost
+                    const maxDiscount = projectDetails.proposedTotalCost || 0;
+                    setDiscount(Math.min(newDiscount, maxDiscount));
+                  }}
+                  min="0"
+                  max={projectDetails.proposedTotalCost || 0}
+                  className="w-full p-2 border border-gray-300 rounded-lg"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Final Amount
+                </label>
+                <div className="p-2 bg-gray-100 rounded-lg font-medium">
+                  ${calculatedAmount.toLocaleString()}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setIsApprovalModalOpen(false)}
+                disabled={approveProjectMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleApprove}
+                disabled={approveProjectMutation.isPending}
+                className="bg-primary text-white hover:bg-primary-hover"
+              >
+                {approveProjectMutation.isPending ? "Processing..." : "Confirm"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-4 border-b border-[#EDEEF3] pb-4">
         <div className="flex flex-col sm:flex-row w-full items-start sm:items-center justify-between gap-4">
           {/* Left section */}
@@ -131,6 +255,23 @@ const ProjectDetails = () => {
             <Button className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full sm:w-auto">
               Change Status
             </Button>
+            
+            {projectDetails.adminApproved ? (
+              <Button 
+                disabled
+                className="bg-green-100 text-green-700 rounded-[14px] w-full sm:w-auto flex items-center gap-2"
+              >
+                <CheckCircle className="w-4 h-4" />
+                Approved
+              </Button>
+            ) : (
+              <Button 
+                onClick={() => setIsApprovalModalOpen(true)}
+                className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full sm:w-auto"
+              >
+                Approve
+              </Button>
+            )}
           </div>
         </div>
 

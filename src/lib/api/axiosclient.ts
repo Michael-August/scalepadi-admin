@@ -18,7 +18,10 @@ axiosClient.interceptors.request.use(
 
         const token = localStorage.getItem("token");
 
-        if(!token) throw new Error("No access token found in session");
+        if (!token) {
+            window.location.href = "/"; // forces a redirect on the client
+            return Promise.reject(new Error("No access token found in session"));
+          }          
 
         if (token && config.headers) {
             config.headers["scale-padi-token"] = `${token}`;
