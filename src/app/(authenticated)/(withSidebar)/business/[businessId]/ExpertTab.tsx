@@ -1,14 +1,13 @@
 "use client";
 
 import {
-  ArrowUpDown,
   Download,
   Search,
   ChevronLeft,
   ChevronRight,
   Star,
 } from "lucide-react";
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import {
   Select,
   SelectContent,
@@ -28,134 +27,98 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { expertPayoutData, payoutStatuses, statusStyles } from "@/app/data";
+import { useGetExpertsCount } from "@/hooks/useExpert";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 
-interface ExpertPayoutsProps {
+interface Expert {
+  expertId: string;
+  name: string;
+  email: string;
+  profilePicture?: string;
+  count: number;
+  role?: string;
+  status?: string;
+  rating?: number;
+  taskInvolvement?: number;
+}
+
+interface ExpertTabProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   currentPage: number;
+  itemsPerPage: number;
   setCurrentPage: (page: number) => void;
-  rowsPerPage: number;
-  setRowsPerPage: (rows: number) => void;
+  setItemsPerPage: (rows: number) => void;
+  statusFilter: string;
+  setStatusFilter: (status: string) => void;
+  sortBy: string;
+  businessId: string;
 }
 
 export default function ExpertTab({
   searchQuery,
   setSearchQuery,
   currentPage,
+  itemsPerPage,
   setCurrentPage,
-  rowsPerPage,
-  setRowsPerPage,
-}: ExpertPayoutsProps) {
-  const [payoutStatus, setPayoutStatus] = useState("All statuses");
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "asc" | "desc";
-  } | null>(null);
+  setItemsPerPage,
+  statusFilter,
+  setStatusFilter,
+  sortBy,
+  businessId,
+}: ExpertTabProps) {
+  const { expertsCount, isLoading, error } = useGetExpertsCount(
+    businessId,
+    currentPage, 
+    itemsPerPage,
+    statusFilter,
+    sortBy,
+    searchQuery
+  );
 
-  const filteredPayouts = useMemo(() => {
-    let filtered = expertPayoutData.filter((payout) => {
+  const expertsData = useMemo(() => {
+    if (!expertsCount) return [];
+    
+    // Check if expertsCount is an array or has a data property with array
+    const expertsArray = Array.isArray(expertsCount) 
+      ? expertsCount 
+      : (expertsCount as any)?.data && Array.isArray((expertsCount as any).data)
+        ? (expertsCount as any).data
+        : [];
+    
+    return expertsArray.map((expert: any) => ({
+      expertId: expert.expertId || expert.id || "",
+      name: expert.name || "",
+      email: expert.email || "",
+      profilePicture: expert.profilePicture,
+      count: expert.count || 0,
+      role: expert.role || "Expert",
+      status: expert.status || "Active",
+      rating: expert.rating || 4.6,
+      taskInvolvement: expert.taskInvolvement || expert.count || 0,
+    }));
+  }, [expertsCount]);
+
+  const filteredExperts = useMemo(() => {
+    return expertsData.filter((expert: Expert) => {
       const matchesStatus =
-        payoutStatus === "All statuses" || payout.status === payoutStatus;
+        statusFilter === "all" || expert.status === statusFilter;
       const matchesSearch =
         searchQuery === "" ||
-        payout.expert.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        payout.trxId.toLowerCase().includes(searchQuery.toLowerCase());
+        expert.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        expert.email.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesStatus && matchesSearch;
     });
+  }, [statusFilter, searchQuery, expertsData]);
 
-    if (sortConfig) {
-      filtered = [...filtered].sort((a, b) => {
-        const { key, direction } = sortConfig;
-        // Only allow sorting by known keys
-        type PayoutKey =
-          | "expert"
-          | "amount"
-          | "trxId"
-          | "status"
-          | "date"
-          | "type"
-          | "method";
-        if (
-          ![
-            "expert",
-            "amount",
-            "trxId",
-            "status",
-            "date",
-            "type",
-            "method",
-          ].includes(key)
-        )
-          return 0;
-
-        const aValue = (a as Record<PayoutKey, unknown>)[key as PayoutKey];
-        const bValue = (b as Record<PayoutKey, unknown>)[key as PayoutKey];
-        let aSort = aValue;
-        let bSort = bValue;
-
-        // Handle numeric sort for amount
-        if (key === "amount") {
-          aSort =
-            typeof aSort === "string"
-              ? parseFloat(aSort.replace(/[^\d.]/g, ""))
-              : aSort;
-          bSort =
-            typeof bSort === "string"
-              ? parseFloat(bSort.replace(/[^\d.]/g, ""))
-              : bSort;
-        }
-
-        // Handle date sort for date
-        if (key === "date") {
-          aSort = typeof aSort === "string" ? new Date(aSort) : aSort;
-          bSort = typeof bSort === "string" ? new Date(bSort) : bSort;
-        }
-
-        if (typeof aSort === "string" && typeof bSort === "string") {
-          if (aSort < bSort) return direction === "asc" ? -1 : 1;
-          if (aSort > bSort) return direction === "asc" ? 1 : -1;
-          return 0;
-        }
-
-        if (typeof aSort === "number" && typeof bSort === "number") {
-          return direction === "asc" ? aSort - bSort : bSort - aSort;
-        }
-
-        if (aSort instanceof Date && bSort instanceof Date) {
-          return direction === "asc"
-            ? aSort.getTime() - bSort.getTime()
-            : bSort.getTime() - aSort.getTime();
-        }
-
-        return 0;
-      });
-    }
-
-    return filtered;
-  }, [payoutStatus, searchQuery, sortConfig]);
-
-  const paginatedPayouts = useMemo(() => {
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    return filteredPayouts.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredPayouts, currentPage, rowsPerPage]);
+  const paginatedExperts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredExperts.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredExperts, currentPage, itemsPerPage]);
 
   const totalPages = useMemo(() => {
-    return Math.ceil(filteredPayouts.length / rowsPerPage);
-  }, [filteredPayouts, rowsPerPage]);
-
-  const requestSort = (key: string) => {
-    let direction: "asc" | "desc" = "asc";
-    if (
-      sortConfig &&
-      sortConfig.key === key &&
-      sortConfig.direction === "asc"
-    ) {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-    setCurrentPage(1);
-  };
+    return Math.ceil(filteredExperts.length / itemsPerPage);
+  }, [filteredExperts, itemsPerPage]);
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
@@ -212,236 +175,236 @@ export default function ExpertTab({
       .toUpperCase();
   }
 
+  const statusStyles = {
+    Active: "bg-green-100 text-green-800",
+    Inactive: "bg-gray-100 text-gray-800",
+    Pending: "bg-yellow-100 text-yellow-800",
+  };
+
+  if (isLoading) {
+    return <TableSkeleton 
+      columns={6} 
+      rows={5} 
+      headers={["Expert Name", "Role", "Status", "Rating", "Task Involvement", "Action"]}
+    />;
+  }
+
+  if (error) {
+    return <div className="p-4 text-center text-red-500">Error loading experts: {(error as Error).message}</div>;
+  }
+
   return (
-    <section aria-labelledby="expert-list-heading">
-      <h2 id="expert-list-heading" className="sr-only">
-        Expert Payouts
-      </h2>
-            {/* Header */}
-      <h1 className="text-2xl font-medium text-[#878A93] my-4">Experts list</h1>
-      <p className="mb-4 font-montserrat text-sm">
-        List of all experts who have worked with the business.
-      </p>
+    <div className="flex flex-col gap-4 my-4">
+      <div className="flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-3">
+        <section aria-labelledby="expert-list-heading">
+          <h2 id="expert-list-heading" className="sr-only">
+            Expert List
+          </h2>
+          {/* Header */}
+          <h1 className="text-2xl font-medium text-[#878A93] my-4">
+            Experts list
+          </h1>
+          <p className="mb-4 font-montserrat text-sm">
+            List of all experts who have worked with the business.
+          </p>
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div className="flex flex-wrap gap-2">
-          <Select
-            value={payoutStatus}
-            onValueChange={(value) => {
-              setPayoutStatus(value);
-              setCurrentPage(1);
-            }}
-          >
-            <SelectTrigger className="w-[180px] h-9 text-xs rounded-xl text-gray-500 border-gray-300">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {payoutStatuses.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {status}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Filters */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div className="flex flex-wrap gap-2">
+              <Select
+                value={statusFilter}
+                onValueChange={(value) => {
+                  setStatusFilter(value);
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-[180px] h-9 text-xs rounded-xl text-gray-500 border-gray-300">
+                  <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Inactive">Inactive</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                </SelectContent>
+              </Select>
 
-          <div className="relative w-full md:w-[200px]">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="pl-10 w-full h-9 text-xs rounded-xl text-gray-500 border-gray-300"
-            />
+              <div className="relative w-full md:w-[200px]">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="pl-10 w-full h-9 text-xs rounded-xl text-gray-500 border-gray-300"
+                />
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 text-xs rounded-xl text-gray-500 border-gray-300 bg-transparent"
+              onClick={() => exportToCSV(filteredExperts, "experts_list")}
+            >
+              <Download className="h-3 w-3 mr-2" />
+              Export CSV
+            </Button>
           </div>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-9 text-xs rounded-xl text-gray-500 border-gray-300 bg-transparent"
-          onClick={() => exportToCSV(filteredPayouts, "expert_payouts")}
-        >
-          <Download className="h-3 w-3 mr-2" />
-          Export CSV
-        </Button>
-      </div>
 
-      {/* Table */}
-      <div className="rounded-lg overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50/50">
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer">
-                Expert Name
-              </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer">
-                Role
-              </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer">
-                Status
-              </TableHead>
-              <TableHead
-                className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer"
-                onClick={() => requestSort("amount")}
-              >
-                <div className="flex items-center gap-1">
-                  Rating
-                  <ArrowUpDown className="w-4 h-4" />
-                  {sortConfig?.key === "amount" &&
-                    (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </div>
-              </TableHead>
-
-              <TableHead
-                className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer"
-                onClick={() => requestSort("trxId")}
-              >
-                <div className="flex items-center gap-1">
-                  Task Involvement
-                  <ArrowUpDown className="w-4 h-4" />
-                  {sortConfig?.key === "trxId" &&
-                    (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </div>
-              </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer">
-                Action
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedPayouts.length > 0 ? (
-              paginatedPayouts.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="border-b border-gray-100 hover:bg-gray-50/50"
-                >
-                  <TableCell className="py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      {row.expertAvatar ? (
-                        <Image
-                          src={row.expertAvatar}
-                          alt={row.expert}
-                          width={20}
-                          height={20}
-                          className="w-5 h-5 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                          <span className="text-xs font-medium text-purple-600">
-                            {getInitials(row.expert)}
+          {/* Table */}
+          <div className="rounded-lg overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50/50">
+                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                    Expert Name
+                  </TableHead>
+                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                    Role
+                  </TableHead>
+                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                    Status
+                  </TableHead>
+                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                    Rating
+                  </TableHead>
+                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                    Task Involvement
+                  </TableHead>
+                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                    Action
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedExperts.length > 0 ? (
+                  paginatedExperts.map((expert: Expert) => (
+                    <TableRow
+                      key={expert.expertId}
+                      className="border-b border-gray-100 hover:bg-gray-50/50"
+                    >
+                      <TableCell className="py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          {expert.profilePicture ? (
+                            <Image
+                              src={expert.profilePicture}
+                              alt={expert.name}
+                              width={20}
+                              height={20}
+                              className="w-5 h-5 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
+                              <span className="text-xs font-medium text-purple-600">
+                                {getInitials(expert.name)}
+                              </span>
+                            </div>
+                          )}
+                          <span className="text-gray-700 text-sm">
+                            {expert.name}
                           </span>
                         </div>
-                      )}
-                      <span className="text-gray-700 text-sm">
-                        {row.expert}
-                      </span>
-                    </div>
-                  </TableCell>
+                      </TableCell>
 
-                  <TableCell className="py-4 whitespace-nowrap">
-                    <span className="text-gray-900 text-sm">{row.type}</span>
-                  </TableCell>
+                      <TableCell className="py-4 whitespace-nowrap">
+                        <span className="text-gray-900 text-sm">
+                          {expert.role}
+                        </span>
+                      </TableCell>
 
-                  <TableCell className="py-4 whitespace-nowrap">
-                    <Badge
-                      variant={
-                        row.status === "Paid"
-                          ? "default"
-                          : row.status === "Pending"
-                          ? "secondary"
-                          : "outline"
-                      }
-                      className={
-                        statusStyles[row.status as keyof typeof statusStyles]
-                      }
+                      <TableCell className="py-4 whitespace-nowrap">
+                        <Badge
+                          variant="outline"
+                          className={`w-20 justify-center ${
+                            statusStyles[expert.status as keyof typeof statusStyles] || "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {expert.status}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm flex items-center gap-0.5">
+                        <Star size={14} /> {expert.rating}
+                      </TableCell>
+                      <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">
+                        {expert.taskInvolvement} project{expert.taskInvolvement !== 1 ? 's' : ''}
+                      </TableCell>
+                      <TableCell className="py-4 whitespace-nowrap">
+                        <Button variant="outline" size="sm">
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="py-4 text-center text-gray-500"
                     >
-                      {row.status}
-                    </Badge>
-                  </TableCell>
+                      No experts found matching your criteria
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
-                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm flex items-center gap-0.5">
-                    {" "}
-                    <Star size={14} /> 4.6
-                  </TableCell>
-                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">
-                    1 project
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="py-4 text-center text-gray-500"
+          {/* Pagination */}
+          {filteredExperts.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Rows per page</span>
+                <Select
+                  value={itemsPerPage.toString()}
+                  onValueChange={(value) => {
+                    setItemsPerPage(parseInt(value));
+                    setCurrentPage(1);
+                  }}
                 >
-                  No payouts found matching your criteria
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                  <SelectTrigger className="w-16 h-8 text-sm border-gray-300">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-      {/* Pagination */}
-      {filteredPayouts.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600 whitespace-nowrap">
-              Rows per page
-            </span>
-            <Select
-              value={rowsPerPage.toString()}
-              onValueChange={(value) => {
-                setRowsPerPage(Number(value));
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger className="w-16 h-8 text-sm border-gray-300">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="5">5</SelectItem>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="25">25</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600 whitespace-nowrap">
-              {filteredPayouts.length === 0
-                ? 0
-                : (currentPage - 1) * rowsPerPage + 1}
-              -{Math.min(currentPage * rowsPerPage, filteredPayouts.length)} of{" "}
-              {filteredPayouts.length}
-            </span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={handlePreviousPage}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages || totalPages === 0}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600">
+                  {currentPage} of {totalPages}
+                </span>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4 text-gray-400" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                  >
+                    <ChevronRight className="h-4 w-4 text-gray-600" />
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-    </section>
+          )}
+        </section>
+      </div>
+    </div>
   );
 }

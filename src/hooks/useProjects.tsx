@@ -3,13 +3,70 @@ import { axiosClient } from "@/lib/api/axiosclient";
 import { useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
+// import { Project } from "@/app/(authenticated)/(withSidebar)/projects/page";
 
-export const useGetAllProjects = () => {
-  const { data, isLoading } = useQuery({
-    queryKey: ["projects"],
+export type Project = {
+  id: string;
+  title: string;
+  status: "pending" | "in-progress" | "completed";
+  createdAt: string;
+  dueDate?: string;
+  brief?: string;
+  goal?: string;
+  resources?: string[];
+  proposedTotalCost?: number;
+  paymentStatus?: string;
+  adminApproved?: boolean;
+  requestSupervisor?: boolean;
+  businessId?: {
+    name: string;
+    title?: string;
+    email?: string;
+    phone?: string;
+    verified?: boolean;
+    status?: string;
+    id: string;
+  };
+  experts?: { id: string; name: string, image: string }[];
+};
+
+export const useGetAllProjects = (
+  currentPage: number = 1, 
+  itemsPerPage: number = 10, 
+  statusFilter: string = "all", 
+  sortBy: string = "createdAt", 
+  searchQuery: string = ""
+) => {
+  const { data, isLoading, error } = useQuery<{
+    status: boolean;
+    message: string;
+    data: {
+      currentPage: number;
+      totalPages: number;
+      itemsPerPage: number;
+      totalItems: number;
+      data: Project[];
+    };
+  }>({
+    queryKey: ["projects", currentPage, itemsPerPage, statusFilter, sortBy, searchQuery],
     queryFn: async () => {
       try {
-        const response = await axiosClient.get(`/projects/admin`);
+        // Build query parameters
+        const params = new URLSearchParams();
+        params.append("page", currentPage.toString());
+        params.append("limit", itemsPerPage.toString());
+        params.append("sort", sortBy);
+        
+        if (statusFilter && statusFilter !== "all") {
+          params.append("status", statusFilter);
+        }
+        
+        if (searchQuery) {
+          params.append("search", searchQuery);
+        }
+
+        const response = await axiosClient.get(`/projects/admin?${params.toString()}`);
+        
         if (response.data?.status === false) {
           throw new Error(
             response.data?.message || "Failed to fetch projects."
@@ -24,13 +81,14 @@ export const useGetAllProjects = () => {
         } else if (error instanceof Error) {
           toast.error(error.message);
         } else {
-          toast.error("An unexpected error occured while fetching projects.");
+          toast.error("An unexpected error occurred while fetching projects.");
         }
         throw error;
       }
     },
   });
-  return { projectList: data, isLoading };
+
+  return { projectList: data?.data, isLoading, error };
 };
 
 export const useGetProjectById = (id: string) => {
@@ -119,7 +177,7 @@ export const useApproveProject = () => {
       discount: number;
     }) => {
       try {
-        const response = await axiosClient.post(
+        const response = await axiosClient.patch(
           `/project/${projectId}/approve`,
           { approved, totalCost, discount }
         );
@@ -160,7 +218,7 @@ export const useInviteExperts = () => {
       expertIds: string[];
     }) => {
       try {
-        const response = await axiosClient.post(
+        const response = await axiosClient.patch(
           `/project/${projectId}/invite-experts`,
           { expertIds }
         );

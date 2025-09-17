@@ -13,7 +13,7 @@ import {
   Tag,
   User,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,8 +42,8 @@ import PaymentsTab from "./PaymentAndBilling";
 import ExpertTab from "./ExpertTab";
 import { ProjectSkeleton } from "@/components/ui/project-skeleton";
 import { useGetBusinessById } from "@/hooks/useBusiness";
+import { useGetAllBusinessProjects } from "@/hooks/useExpert";
 
-// types/business.ts
 export interface BusinessDetails {
   id: string;
   name: string;
@@ -60,108 +60,17 @@ export interface BusinessDetails {
 }
 
 export interface Project {
-  id: number;
-  name: string;
-  owner: string;
-  email: string;
-  status: "Verified" | "Pending";
-  dateJoined: string;
-  avatar: string;
+  id: string;
+  title: string;
+  status: "active" | "pending" | "completed";
+  dueDate: string;
+  brief: string;
+  goal: string;
+  proposedTotalCost: number;
+  experts: any[];
+  paymentStatus: string;
+  createdAt: string;
 }
-
-const projectData: Project[] = [
-  {
-    id: 1,
-    name: "GreenMart",
-    owner: "James Peterson",
-    email: "tanya.hill@exple.com",
-    status: "Verified",
-    dateJoined: "Feb 2, 2019 19:28",
-    avatar: "🌱",
-  },
-  {
-    id: 2,
-    name: "TrewCruz",
-    owner: "Asara Cruz",
-    email: "stcruz@example.com",
-    status: "Verified",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "🔵",
-  },
-  {
-    id: 3,
-    name: "XTRAbidial",
-    owner: "sandra Abidial",
-    email: "kandra@hotmail.com",
-    status: "Pending",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "👤",
-  },
-  {
-    id: 4,
-    name: "Bill Sanders",
-    owner: "Bill Sanders",
-    email: "bill.saers@emple.com",
-    status: "Pending",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "🔥",
-  },
-  {
-    id: 5,
-    name: "kasandra Abidial",
-    owner: "sandra Abidial",
-    email: "kandra@hotmail.com",
-    status: "Verified",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "👤",
-  },
-  {
-    id: 6,
-    name: "kasandra Abidial",
-    owner: "sandra Abidial",
-    email: "kandra@hotmail.com",
-    status: "Verified",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "👤",
-  },
-  {
-    id: 7,
-    name: "kasandra Abidial",
-    owner: "sandra Abidial",
-    email: "kandra@hotmail.com",
-    status: "Pending",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "👤",
-  },
-  {
-    id: 8,
-    name: "GreenMart",
-    owner: "James Peterson",
-    email: "tanya.hill@exple.com",
-    status: "Verified",
-    dateJoined: "Feb 2, 2019 19:28",
-    avatar: "🌱",
-  },
-  {
-    id: 9,
-    name: "kasandra Abidial",
-    owner: "sandra Abidial",
-    email: "kandra@hotmail.com",
-    status: "Verified",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "👤",
-  },
-  {
-    id: 10,
-    name: "Bill Sanders",
-    owner: "Bill Sanders",
-    email: "bill.saers@emple.com",
-    status: "Pending",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "🔥",
-  },
-];
-
 
 const BusinessId = () => {
   const [activeTab, setActiveTab] = useState<
@@ -170,13 +79,64 @@ const BusinessId = () => {
   const params = useParams();
   const businessId = params.businessId as string;
   const [searchQuery, setSearchQuery] = useState("");
+  const [tempSearchQuery, setTempSearchQuery] = useState(""); // New state for input value
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [rowPerPage, setRowPerPage] = useState("5");
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("title");
 
   const router = useRouter();
   const { businessDetails, isLoading } = useGetBusinessById(businessId);
- 
+  const { AllBusinessProjects, isLoading: projectsLoading } =
+    useGetAllBusinessProjects(
+      businessId,
+      currentPage,
+      itemsPerPage,
+      statusFilter,
+      sortBy,
+      searchQuery
+    );
+  console.log(AllBusinessProjects);
+
+  const handleSearch = () => {
+    setSearchQuery(tempSearchQuery);
+    setCurrentPage(1);
+  };
+
+  const projects = useMemo(() => {
+    if (!AllBusinessProjects?.data) return [];
+
+    if (AllBusinessProjects.data && Array.isArray(AllBusinessProjects.data)) {
+      return AllBusinessProjects.data;
+    }
+
+    if (Array.isArray(AllBusinessProjects)) {
+      return AllBusinessProjects;
+    }
+
+    return [];
+  }, [AllBusinessProjects]);
+
+  const paginationInfo = useMemo(() => {
+    if (!AllBusinessProjects)
+      return { currentPage: 1, totalPages: 1, itemsPerPage: 10, totalItems: 0 };
+
+    if (AllBusinessProjects.currentPage !== undefined) {
+      return {
+        currentPage: AllBusinessProjects.currentPage,
+        totalPages: AllBusinessProjects.totalPages,
+        itemsPerPage: AllBusinessProjects.itemsPerPage,
+        totalItems: AllBusinessProjects.totalItems,
+      };
+    }
+
+    return {
+      currentPage: 1,
+      totalPages: 1,
+      itemsPerPage: 10,
+      totalItems: projects.length,
+    };
+  }, [AllBusinessProjects, projects]);
 
   if (isLoading) {
     return <ProjectSkeleton />;
@@ -199,6 +159,10 @@ const BusinessId = () => {
     });
   };
 
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
   return (
     <div className="flex w-full flex-col gap-6">
       <div className="flex flex-col gap-4 border-b border-[#EDEEF3] pb-4">
@@ -216,19 +180,21 @@ const BusinessId = () => {
           <span className="text-[#CFD0D4] text-sm">/</span>
         </div>
 
-        <div className="flex flex-col lg:flex-row w-full items-start lg:items-center justify-between gap-4">
+        <div className="flex flex-col xl:flex-row w-full items-start xl:items-center justify-between gap-4">
+          {/* Left section */}
           <div className="top flex flex-col gap-4 w-full">
+            {/* Business Info Header */}
             <div className="w-full flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <div className="bg-[#CDFAE0] flex items-center justify-center p-[8.22px] text-[#1A1A1A] text-xs h-[76px] w-[79.77px] rounded-[16.43px]">
                 {businessDetails.name.substring(0, 8)}
               </div>
               <div className="flex flex-col gap-2">
-                <span className="text-lg sm:text-[20px] text-[#3E4351] font-semibold">
+                <span className="text-lg sm:text-[20px] text-[#3E4351] font-semibold break-words">
                   {businessDetails.title}
                 </span>
                 <div className="items-center gap-2 flex flex-wrap">
-                  <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
-                    <User className="w-4 h-4" />
+                  <span className="flex items-center gap-[4px] text-sm text-[#878A93]">
+                    <User className="w-4 h-4 shrink-0" />
                     Contact Person:{" "}
                     <span className="text-[#121217]">
                       {businessDetails.name}{" "}
@@ -241,43 +207,47 @@ const BusinessId = () => {
                 </div>
               </div>
             </div>
-            <div className="items-center gap-2 flex flex-wrap">
-              <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
-                <Calendar className="w-4 h-4" />
+
+            {/* Meta details */}
+            <div className="items-center gap-3 flex flex-wrap">
+              <span className="flex items-center gap-[4px] text-sm text-[#878A93]">
+                <Calendar className="w-4 h-4 shrink-0" />
                 Joined Date:{" "}
                 <span className="text-[#121217]">
                   {formatDate(businessDetails.createdAt)}
                 </span>
               </span>
-              <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
-                <Clock className="w-4 h-4" />
+              <span className="flex items-center gap-[4px] text-sm text-[#878A93]">
+                <Clock className="w-4 h-4 shrink-0" />
                 Account status:{" "}
                 <span className="text-[#121217]">
                   {businessDetails.verified ? "Verified" : "Pending"}
                 </span>
               </span>
-              <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
-                <Clock className="w-4 h-4" />
+              <span className="flex items-center gap-[4px] text-sm text-[#878A93]">
+                <Clock className="w-4 h-4 shrink-0" />
                 Activity status:{" "}
                 <span className="text-[#121217] capitalize">
                   {businessDetails.status}
                 </span>
               </span>
-              <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
-                <Tag className="w-4 h-4" />
+              <span className="flex items-center gap-[4px] text-sm text-[#878A93]">
+                <Tag className="w-4 h-4 shrink-0" />
                 Current Plan: <span className="text-[#121217]">Padi Pro</span>
               </span>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-3 w-full lg:w-auto">
-            <Button className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black">
+
+          {/* Right section */}
+          <div className="flex items-center justify-end gap-3 w-full xl:w-auto">
+            <Button className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full sm:w-auto">
               <MessageCircle className="w-4 h-4 mr-2" />
               Chat
             </Button>
           </div>
         </div>
       </div>
-      <div className="project-details w-full lg:w-full xl:w-[895px] pb-10">
+      <div className="project-details w-full">
         <div className="tab pt-2 w-full flex items-center gap-2 sm:gap-5 bg-[#F9FAFB] overflow-x-auto">
           <div
             className={`flex cursor-pointer w-full items-center justify-center border-b-2 pb-3 min-w-max
@@ -314,7 +284,7 @@ const BusinessId = () => {
                         }`}
             onClick={() => setActiveTab("projects")}
           >
-            <span className="text-sm">Projects (2)</span>
+            <span className="text-sm">Projects ({projects.length})</span>
           </div>
           <div
             className={`flex cursor-pointer w-full items-center justify-center border-b-2 pb-3 min-w-max
@@ -343,8 +313,8 @@ const BusinessId = () => {
         </div>
 
         {activeTab === "about" && (
-          <div className="flex flex-col gap-4">
-            <div className="about flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
+          <div className="flex flex-col gap-4 my-3">
+            <div className="about flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-3">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-lg sm:text-[20px] text-primary">
                   Business Summary
@@ -468,8 +438,8 @@ const BusinessId = () => {
         )}
 
         {activeTab === "aiusage" && (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
+          <div className="flex flex-col gap-4 my-4">
+            <div className="flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-3">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-sm text-[#0E1426]">
                   AI Assistant Usage Overview
@@ -565,10 +535,11 @@ const BusinessId = () => {
             </div>
           </div>
         )}
+
         {activeTab === "projects" && (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
-              <div className="w-full p-4 md:p-6 bg-white">
+          <div className="flex flex-col gap-4 my-4">
+            <div className="flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-3">
+              <div className="bg-white">
                 {/* Header */}
                 <h1 className="text-xl md:text-2xl font-medium text-[#878A93] mb-6">
                   Project List
@@ -577,39 +548,59 @@ const BusinessId = () => {
                 {/* Controls */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                   <div className="flex items-center gap-4 flex-wrap">
-                    <Select value="all-projects" defaultValue="all-projects">
+                    <Select
+                      value={statusFilter}
+                      onValueChange={(value) => {
+                        setStatusFilter(value);
+                        setCurrentPage(1);
+                      }}
+                    >
                       <SelectTrigger className="w-[140px] h-9 text-sm border-gray-300">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all-projects">
-                          All projects
-                        </SelectItem>
-                        <SelectItem value="in-progress">In-Progress</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="all">All projects</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
                         <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
                       </SelectContent>
                     </Select>
 
-                    <Select defaultValue="sort">
+                    <Select
+                      value={sortBy}
+                      onValueChange={(value) => {
+                        setSortBy(value);
+                        setCurrentPage(1);
+                      }}
+                    >
                       <SelectTrigger className="w-[80px] h-9 text-sm border-gray-300">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="sort">Sort</SelectItem>
-                        <SelectItem value="name">Name</SelectItem>
-                        <SelectItem value="date">Date</SelectItem>
+                        <SelectItem value="title">Title</SelectItem>
+                        <SelectItem value="dueDate">Date</SelectItem>
+                        <SelectItem value="status">Status</SelectItem>
                       </SelectContent>
                     </Select>
 
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <div className="relative flex items-center">
                       <Input
                         placeholder="Search by project"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 w-[200px] h-9 text-sm border-gray-300"
+                        value={tempSearchQuery}
+                        onChange={(e) => setTempSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleSearch();
+                          }
+                        }}
+                        className="w-[200px] h-9 text-sm border-gray-300 pr-2"
                       />
+                      <Button
+                        onClick={handleSearch}
+                        className="ml-2 h-9 text-sm bg-primary text-white hover:bg-primary-hover"
+                      >
+                        <Search className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
 
@@ -635,7 +626,7 @@ const BusinessId = () => {
                           Experts
                         </TableHead>
                         <TableHead className="text-[#878A93] font-medium text-sm py-4">
-                          Total Task
+                          Total Cost
                         </TableHead>
                         <TableHead className="text-[#878A93] font-medium text-sm py-4">
                           Status
@@ -649,75 +640,122 @@ const BusinessId = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {projectData.map((business) => (
-                        <TableRow
-                          onClick={() => router.push("/projects/1")}
-                          key={business.id}
-                          className="border-b border-gray-100 cursor-pointer hover:bg-gray-50/50"
-                        >
-                          <TableCell className="py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm">
-                                <FolderOpen
-                                  className={
-                                    business.status === "Verified"
-                                      ? "text-[#04E762]"
-                                      : "text-[#F2BB05]"
-                                  }
-                                />
+                      {projectsLoading ? (
+                        // Loading state
+                        Array.from({ length: 3 }).map((_, index) => (
+                          <TableRow key={index}>
+                            <TableCell colSpan={6} className="py-4">
+                              <div className="flex items-center space-x-4">
+                                <div className="rounded-full bg-gray-200 h-10 w-10 animate-pulse"></div>
+                                <div className="space-y-2">
+                                  <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                                </div>
                               </div>
-                              <span className="text-gray-900 text-sm">
-                                {business.name}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-gray-700 text-sm py-4">
-                            {business.owner}
-                          </TableCell>
-                          <TableCell className="text-gray-700 text-sm py-4">
-                            {business.email}
-                          </TableCell>
-                          <TableCell className="py-4">
-                            <Badge
-                              variant={
-                                business.status === "Verified"
-                                  ? "default"
-                                  : "secondary"
-                              }
-                              className={
-                                business.status === "Verified"
-                                  ? "border border-[#04E762] text-[#04E762] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
-                                  : "border border-[#F2BB05] text-[#F2BB05] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
-                              }
-                            >
-                              {business.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-gray-700 text-sm py-4">
-                            {business.dateJoined}
-                          </TableCell>
-                          <TableCell className="py-4">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : projects.length > 0 ? (
+                        projects.map((project) => (
+                          <TableRow
+                            onClick={() =>
+                              router.push(`/projects/${project.id}`)
+                            }
+                            key={project.id}
+                            className="border-b border-gray-100 cursor-pointer hover:bg-gray-50/50"
+                          >
+                            <TableCell className="py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm">
+                                  <FolderOpen
+                                    className={
+                                      project.status === "active"
+                                        ? "text-[#04E762]"
+                                        : "text-[#F2BB05]"
+                                    }
+                                  />
+                                </div>
+                                <span className="text-gray-900 text-sm">
+                                  {project.title}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-gray-700 text-sm py-4">
+                              {project.experts && project.experts.length > 0
+                                ? project.experts.length
+                                : "Not assigned"}
+                            </TableCell>
+                            <TableCell className="text-gray-700 text-sm py-4">
+                              {project.proposedTotalCost
+                                ? `₦${project.proposedTotalCost.toLocaleString()}`
+                                : "Not specified"}
+                            </TableCell>
+                            <TableCell className="py-4">
+                              <Badge
+                                variant={
+                                  project.status === "active"
+                                    ? "default"
+                                    : project.status === "pending"
+                                    ? "secondary"
+                                    : "outline"
+                                }
+                                className={
+                                  project.status === "active"
+                                    ? "border border-[#04E762] text-[#04E762] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
+                                    : project.status === "pending"
+                                    ? "border border-[#F2BB05] text-[#F2BB05] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
+                                    : "border border-gray-300 text-gray-500 text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
+                                }
+                              >
+                                {project.status?.charAt(0).toUpperCase() +
+                                  project.status?.slice(1)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-gray-700 text-sm py-4">
+                              {project.dueDate
+                                ? formatDate(project.dueDate)
+                                : "Not set"}
+                            </TableCell>
+                            <TableCell className="py-4">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger
+                                  asChild
+                                  onClick={(e) => e.stopPropagation()}
                                 >
-                                  <MoreHorizontal className="h-4 w-4 text-gray-400" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>View</DropdownMenuItem>
-                                <DropdownMenuItem>Edit</DropdownMenuItem>
-                                <DropdownMenuItem className="text-red-600">
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      router.push(`/projects/${project.id}`)
+                                    }
+                                  >
+                                    View
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>Edit</DropdownMenuItem>
+                                  <DropdownMenuItem className="text-red-600">
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell
+                            colSpan={6}
+                            className="text-center py-8 text-gray-500"
+                          >
+                            No projects found
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </div>
@@ -726,13 +764,19 @@ const BusinessId = () => {
                 <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-600">Rows per page</span>
-                    <Select value={rowPerPage} onValueChange={setRowPerPage}>
+                    <Select
+                      value={itemsPerPage.toString()}
+                      onValueChange={(value) => {
+                        setItemsPerPage(parseInt(value));
+                        setCurrentPage(1);
+                      }}
+                    >
                       <SelectTrigger className="w-16 h-8 text-sm border-gray-300">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="5">5</SelectItem>
                         <SelectItem value="10">10</SelectItem>
-                        <SelectItem value="13">13</SelectItem>
                         <SelectItem value="25">25</SelectItem>
                         <SelectItem value="50">50</SelectItem>
                       </SelectContent>
@@ -740,17 +784,27 @@ const BusinessId = () => {
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <span className="text-sm text-gray-600">1 of 1000</span>
+                    <span className="text-sm text-gray-600">
+                      {paginationInfo.currentPage} of{" "}
+                      {paginationInfo.totalPages}
+                    </span>
                     <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0"
-                        disabled
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
                       >
                         <ChevronLeft className="h-4 w-4 text-gray-400" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === paginationInfo.totalPages}
+                      >
                         <ChevronRight className="h-4 w-4 text-gray-600" />
                       </Button>
                     </div>
@@ -766,9 +820,13 @@ const BusinessId = () => {
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
             setCurrentPage={setCurrentPage}
-            rowsPerPage={rowsPerPage}
-            setRowsPerPage={setRowsPerPage}
+            setItemsPerPage={setItemsPerPage}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            sortBy={sortBy}
+            businessId={businessId}
           />
         )}
         {activeTab === "payments" && (
@@ -777,8 +835,8 @@ const BusinessId = () => {
             setSearchQuery={setSearchQuery}
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
-            rowsPerPage={rowsPerPage}
-            setRowsPerPage={setRowsPerPage}
+            rowsPerPage={itemsPerPage}
+            setRowsPerPage={setItemsPerPage}
           />
         )}
       </div>

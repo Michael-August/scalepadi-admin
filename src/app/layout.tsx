@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Montserrat  } from "next/font/google";
+import { Inter  } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/wrappers/providers";
 
 const inter = Inter({ subsets: ["latin"] });
-
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-montserrat",
-});
 
 export const metadata: Metadata = {
   title: "ScalePadi for Business",
@@ -24,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} lg:w-[1440px] lg:max-w-[1440px] lg:mx-auto w-screen`}>
+      <body className={`${inter.className} lg:mx-auto w-screen`}>
         <Toaster richColors />
         <Providers>
           <div className="flex flex-col">

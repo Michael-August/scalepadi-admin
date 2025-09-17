@@ -198,280 +198,294 @@ export default function PaymentsTab({
   }
 
   return (
-    <section aria-labelledby="transactions-heading">
-      <h2 id="transactions-heading" className="sr-only">
-        Transactions
-      </h2>
-      {/* Header */}
-      <h1 className="text-2xl font-medium text-[#878A93] my-4">All transactions</h1>
-      <p className="mb-4 font-montserrat text-sm">
-        Track business subscriptions and renewal status.
-      </p>
+    <div className="flex flex-col gap-4 my-4">
+      <div className="flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-3">
+        <section aria-labelledby="transactions-heading">
+          <h2 id="transactions-heading" className="sr-only">
+            Transactions
+          </h2>
+          {/* Header */}
+          <h1 className="text-2xl font-medium text-[#878A93] my-4">
+            All transactions
+          </h1>
+          <p className="mb-4 font-montserrat text-sm">
+            Track business subscriptions and renewal status.
+          </p>
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div className="flex flex-wrap gap-2">
-          <Select
-            value={subscriptionStatus}
-            onValueChange={(value) => {
-              setSubscriptionStatus(value);
-              setCurrentPage(1);
-            }}
-          >
-            <SelectTrigger className="w-[180px] h-9 text-xs rounded-xl text-gray-500 border-gray-300">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {subscriptionStatuses.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {status}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <div className="relative w-full md:w-[200px]">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="pl-10 w-full h-9 text-xs rounded-xl text-gray-500 border-gray-300"
-            />
-          </div>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-9 text-xs rounded-xl text-gray-500 border-gray-300 bg-transparent"
-          onClick={() => exportToCSV(filteredSubscriptions, "subscriptions")}
-        >
-          <Download className="h-3 w-3 mr-2" />
-          Export CSV
-        </Button>
-      </div>
-
-      {/* Table */}
-      <div className="rounded-lg overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50/50">
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
-                Business
-              </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
-                Subscription Plan
-              </TableHead>
-              <TableHead
-                className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer"
-                onClick={() => requestSort("amount")}
+          {/* Filters */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div className="flex flex-wrap gap-2">
+              <Select
+                value={subscriptionStatus}
+                onValueChange={(value) => {
+                  setSubscriptionStatus(value);
+                  setCurrentPage(1);
+                }}
               >
-                <div className="flex items-center gap-1">
-                  Amount
-                  <ArrowUpDown className="w-4 h-4" />
-                  {sortConfig?.key === "amount" &&
-                    (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </div>
-              </TableHead>
-              <TableHead
-                className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer"
-                onClick={() => requestSort("renewal")}
-              >
-                <div className="flex items-center gap-1">
-                  Next Renewal
-                  <ArrowUpDown className="w-4 h-4" />
-                  {sortConfig?.key === "renewal" &&
-                    (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </div>
-              </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
-                Status
-              </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
-                Action
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedSubscriptions.length > 0 ? (
-              paginatedSubscriptions.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="border-b border-gray-100 hover:bg-gray-50/50"
-                >
-                  <TableCell className="py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      {row.avatar ? (
-                        <Image
-                          src={row.avatar}
-                          alt={row.business}
-                          width={20}
-                          height={20}
-                          className="w-5 h-5 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                          <span className="text-xs font-medium text-blue-600">
-                            {getInitials(row.business)}
-                          </span>
-                        </div>
-                      )}
-                      <span className="text-gray-900 text-sm">
-                        {row.business}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <div className=" flex items-center justify-center">
-                        <span
-                          className={`text-xs font-medium p-2 rounded-full ${
-                            row.plan === "Padi Pro"
-                              ? "bg-blue-500"
-                              : row.plan === "Padi Yakata"
-                              ? "bg-yellow-500"
-                              : row.plan === "Padi Basic"
-                              ? "bg-green-500"
-                              : "bg-purple-500" // Default color for other plans
-                          }`}
-                        >
-                          {/* {row.plan[0]} */}
-                        </span>
-                      </div>
-                      <span className="text-gray-700 text-sm">{row.plan}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">
-                    {row.amount}
-                  </TableCell>
-                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">
-                    {row.renewal}
-                  </TableCell>
-                  <TableCell className="py-4 whitespace-nowrap">
-                    <Badge
-                      variant={
-                        row.status === "Active"
-                          ? "default"
-                          : row.status === "Expired"
-                          ? "secondary"
-                          : "outline"
-                      }
-                      className={
-                        statusStyles[row.status as keyof typeof statusStyles]
-                      }
-                    >
-                      {row.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="py-4 whitespace-nowrap">
-                    {row.status === "Active" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-xs rounded-xl text-gray-500"
-                      >
-                        Pause
-                      </Button>
-                    )}
-                    {row.status === "Expired" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-xs rounded-xl text-gray-500"
-                      >
-                        Renew
-                      </Button>
-                    )}
-                    {row.status === "Trial" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-xs rounded-xl text-gray-500"
-                      >
-                        Upgrade
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="py-4 text-center text-gray-500"
-                >
-                  No subscriptions found matching your criteria
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                <SelectTrigger className="w-[180px] h-9 text-xs rounded-xl text-gray-500 border-gray-300">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {subscriptionStatuses.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-      {/* Pagination */}
-      {filteredSubscriptions.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600 whitespace-nowrap">
-              Rows per page
-            </span>
-            <Select
-              value={rowsPerPage.toString()}
-              onValueChange={(value) => {
-                setRowsPerPage(Number(value));
-                setCurrentPage(1);
-              }}
+              <div className="relative w-full md:w-[200px]">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="pl-10 w-full h-9 text-xs rounded-xl text-gray-500 border-gray-300"
+                />
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 text-xs rounded-xl text-gray-500 border-gray-300 bg-transparent"
+              onClick={() =>
+                exportToCSV(filteredSubscriptions, "subscriptions")
+              }
             >
-              <SelectTrigger className="w-16 h-8 text-sm border-gray-300">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="5">5</SelectItem>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="25">25</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
+              <Download className="h-3 w-3 mr-2" />
+              Export CSV
+            </Button>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600 whitespace-nowrap">
-              {filteredSubscriptions.length === 0
-                ? 0
-                : (currentPage - 1) * rowsPerPage + 1}
-              -
-              {Math.min(
-                currentPage * rowsPerPage,
-                filteredSubscriptions.length
-              )}{" "}
-              of {filteredSubscriptions.length}
-            </span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={handlePreviousPage}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages || totalPages === 0}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+          {/* Table */}
+          <div className="rounded-lg overflow-hidden">
+            <div className="overflow-x-auto w-full">
+              <Table className="">
+                <TableHeader>
+                  <TableRow className="bg-gray-50/50">
+                    <TableHead className="text-[#878A93] font-medium text-sm py-4 ">
+                      Business
+                    </TableHead>
+                    <TableHead className="text-[#878A93] font-medium text-sm py-4 line-clamp-1 ">
+                      Subscription Plan
+                    </TableHead>
+                    <TableHead
+                      className="text-[#878A93] font-medium text-sm py-4 cursor-pointer"
+                      onClick={() => requestSort("amount")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Amount
+                        <ArrowUpDown className="w-4 h-4" />
+                        {sortConfig?.key === "amount" &&
+                          (sortConfig.direction === "asc" ? "↑" : "↓")}
+                      </div>
+                    </TableHead>
+                    <TableHead
+                      className="text-[#878A93] font-medium text-sm py-4 line-clamp-1 cursor-pointer"
+                      onClick={() => requestSort("renewal")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Next Renewal
+                        <ArrowUpDown className="w-4 h-4" />
+                        {sortConfig?.key === "renewal" &&
+                          (sortConfig.direction === "asc" ? "↑" : "↓")}
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                      Status
+                    </TableHead>
+                    <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                      Action
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedSubscriptions.length > 0 ? (
+                    paginatedSubscriptions.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        className="border-b border-gray-100 hover:bg-gray-50/50"
+                      >
+                        <TableCell className="py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            {row.avatar ? (
+                              <Image
+                                src={row.avatar}
+                                alt={row.business}
+                                width={20}
+                                height={20}
+                                className="w-5 h-5 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                                <span className="text-xs font-medium text-blue-600">
+                                  {getInitials(row.business)}
+                                </span>
+                              </div>
+                            )}
+                            <span className="text-gray-900 text-sm">
+                              {row.business}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <div className=" flex items-center justify-center">
+                              <span
+                                className={`text-xs font-medium p-2 rounded-full ${
+                                  row.plan === "Padi Pro"
+                                    ? "bg-blue-500"
+                                    : row.plan === "Padi Yakata"
+                                    ? "bg-yellow-500"
+                                    : row.plan === "Padi Basic"
+                                    ? "bg-green-500"
+                                    : "bg-purple-500" // Default color for other plans
+                                }`}
+                              >
+                                {/* {row.plan[0]} */}
+                              </span>
+                            </div>
+                            <span className="text-gray-700 text-sm">
+                              {row.plan}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">
+                          {row.amount}
+                        </TableCell>
+                        <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">
+                          {row.renewal}
+                        </TableCell>
+                        <TableCell className="py-4 whitespace-nowrap">
+                          <Badge
+                            variant={
+                              row.status === "Active"
+                                ? "default"
+                                : row.status === "Expired"
+                                ? "secondary"
+                                : "outline"
+                            }
+                            className={`w-16 justify-center
+                              ${statusStyles[
+                                row.status as keyof typeof statusStyles
+                              ]}
+                            `}
+                          >
+                            {row.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-4 whitespace-nowrap">
+                          {row.status === "Active" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-20 justify-center text-xs rounded-xl text-gray-500"
+                            >
+                              Pause
+                            </Button>
+                          )}
+                          {row.status === "Expired" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-20 justify-center text-xs rounded-xl text-gray-500"
+                            >
+                              Renew
+                            </Button>
+                          )}
+                          {row.status === "Trial" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-20 justify-center text-xs rounded-xl text-gray-500"
+                            >
+                              Upgrade
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={6}
+                        className="py-4 text-center text-gray-500"
+                      >
+                        No subscriptions found matching your criteria
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
           </div>
-        </div>
-      )}
-    </section>
+
+          {/* Pagination */}
+          {filteredSubscriptions.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600 whitespace-nowrap">
+                  Rows per page
+                </span>
+                <Select
+                  value={rowsPerPage.toString()}
+                  onValueChange={(value) => {
+                    setRowsPerPage(Number(value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-16 h-8 text-sm border-gray-300">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600 whitespace-nowrap">
+                  {filteredSubscriptions.length === 0
+                    ? 0
+                    : (currentPage - 1) * rowsPerPage + 1}
+                  -
+                  {Math.min(
+                    currentPage * rowsPerPage,
+                    filteredSubscriptions.length
+                  )}{" "}
+                  of {filteredSubscriptions.length}
+                </span>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
   );
-};
+}

@@ -249,7 +249,7 @@ export default function Subscriptions({
       </div>
 
       {/* Table */}
-      <div className="rounded-lg overflow-x-auto">
+      <div className="rounded-lg overflow-x-auto lg:w-[99%] xl:w-full">
         {isLoading ? (
           <div className="py-8 text-center text-gray-500">Loading subscriptions...</div>
         ) : (
@@ -350,11 +350,11 @@ export default function Subscriptions({
                           ? "secondary"
                           : "outline"
                       }
-                      className={
-                        statusStyles[
-                          row.status as keyof typeof statusStyles
-                        ]
-                      }
+                      className={`w-16 justify-center
+                                              ${statusStyles[
+                                                row.status as keyof typeof statusStyles
+                                              ]}`
+                                            }
                     >
                       {row.status}
                     </Badge>
@@ -364,7 +364,7 @@ export default function Subscriptions({
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 text-xs rounded-xl text-gray-500"
+                        className="h-8 w-16 justify-center text-xs rounded-xl text-gray-500"
                       >
                         Pause
                       </Button>
@@ -373,7 +373,7 @@ export default function Subscriptions({
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 text-xs rounded-xl text-gray-500"
+                        className="h-8 w-16 justify-center text-xs rounded-xl text-gray-500"
                       >
                         Renew
                       </Button>
@@ -382,7 +382,7 @@ export default function Subscriptions({
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 text-xs rounded-xl text-gray-500"
+                        className="h-8 w-16 justify-center text-xs rounded-xl text-gray-500"
                       >
                         Upgrade
                       </Button>

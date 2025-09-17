@@ -99,7 +99,7 @@ export const UserTable = ({
   );
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+    <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm lg:w-[88%] xl:w-full">
       <Table>
         <TableHeader>
           <TableRow className="bg-gray-50">
@@ -132,7 +132,7 @@ export const UserTable = ({
             </>
           ) : data.length > 0 ? (
             data.map((user) => (
-              <TableRow key={user.id} className="hover:bg-gray-50">
+              <TableRow onClick={() => router.push(`/users/${user.id}`)} key={user.id} className="hover:bg-gray-50 cursor-pointer">
                 <TableCell className="whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center">
@@ -155,12 +155,12 @@ export const UserTable = ({
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <span
-                    className={`px-2.5 py-1.5 inline-flex text-[13px] capitalize leading-5 font-semibold rounded-full ${
+                    className={`w-28 justify-center px-2.5 py-1.5 inline-flex text-[13px] capitalize leading-5 font-semibold rounded-full ${
                       roleStyles[user.role as keyof typeof roleStyles] ||
                       "bg-gray-100 text-gray-800 border border-gray-900"
                     }`}
                   >
-                    {user.role}
+                    {user.role} admin
                   </span>
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-sm text-gray-500">
@@ -168,7 +168,7 @@ export const UserTable = ({
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <span
-                    className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold capitalize rounded-full ${
+                    className={`w-16 justify-center px-2 py-1 inline-flex text-xs leading-5 font-semibold capitalize rounded-full ${
                       statusStyles[user.status as keyof typeof statusStyles]
                     }`}
                   >

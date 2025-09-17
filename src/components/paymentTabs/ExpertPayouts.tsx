@@ -222,7 +222,7 @@ export default function ExpertPayouts({
       </div>
 
       {/* Table */}
-      <div className="rounded-lg overflow-x-auto">
+      <div className="rounded-lg overflow-x-auto lg:w-[80%] xl:w-full">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50/50">
@@ -364,10 +364,10 @@ export default function ExpertPayouts({
                           ? "secondary"
                           : "outline"
                       }
-                      className={
-                        statusStyles[
+                      className={`w-20 justify-center
+                        ${statusStyles[
                           row.status as keyof typeof statusStyles
-                        ]
+                        ]}`
                       }
                     >
                       {row.status}
