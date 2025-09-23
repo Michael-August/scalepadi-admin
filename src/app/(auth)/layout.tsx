@@ -7,7 +7,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
     return (
-        <main className="flex flex-col lg:w-[1440px] lg:max-w-[1440px] lg:mx-auto w-screen">
+        <main className="flex flex-col">
             <AuthNav />
             {children}
             <Footer />

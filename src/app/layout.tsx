@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} lg:mx-auto w-screen`}>
+      <body className={`${inter.className}`}>
         <Toaster richColors />
         <Providers>
           <div className="flex flex-col">

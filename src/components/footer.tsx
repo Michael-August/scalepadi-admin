@@ -21,7 +21,7 @@ const licence = [
 
 export default function Footer() {
     return (
-        <footer className="lg:w-[1440px] lg:max-w-[1440px] lg:mx-auto w-screen flex flex-col gap-10 bg-primary text-white px-4 lg:px-14 py-12">
+        <footer className="flex flex-col gap-10 bg-primary text-white px-4 lg:px-14 py-12">
             <div className="scale bg-[#020609] rounded-[32px] w-full flex flex-wrap items-center justify-between px-8 py-4 gap-5 lg:px-16 lg:py-8 lg:mb-16">
                 <span className="font-semibold text-4xl lg:text-6xl leading-[130%] lg:w-[750px]">Looking to Scale your Business?</span>
                 <Button className="flex items-center gap-2 bg-primary text-white">
