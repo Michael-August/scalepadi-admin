@@ -96,6 +96,8 @@ const ExpertDetails = () => {
     "createdAt",
     projectSearchTerm
   );
+
+  // console.log(expertDetails)
   const { mutate: inviteExperts } = useInviteExperts();
 
 

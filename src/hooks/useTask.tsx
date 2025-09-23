@@ -113,6 +113,7 @@ export const useGetProjectTasks = (
             response.data?.message || "Failed to fetch project tasks."
           );
         }
+        console.log(response.data);
         return response.data;
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
@@ -144,6 +145,7 @@ export const useGetTaskById = (taskId: string) => {
         if (response.data?.status === false) {
           throw new Error(response.data?.message || "Failed to fetch task.");
         }
+        console.log(response.data);
         return response?.data?.data;
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
@@ -266,7 +268,7 @@ export const useAssignTask = (options?: {
     }) => {
       try {
         const response = await axiosClient.put(`/task/assign/${taskId}`, {
-          assignedTo: expertId,
+          expertId: expertId,
         });
         if (response.data?.status === false) {
           throw new Error(response.data?.message || "Failed to assign task.");

@@ -52,6 +52,12 @@ type Task = {
     email?: string;
     profilePicture?: string;
   };
+  assignedTo?: {
+    id: string;
+    name: string;
+    email?: string;
+    profilePicture?: string;
+  };
   createdAt: string;
   updatedAt: string;
 };
@@ -198,6 +204,7 @@ const ProjectDetails = () => {
   const { projectDetails, isLoading } = useGetProjectById(projectId);
   const { projectTasks, isLoading: tasksLoading } =
     useGetProjectTasks(projectId);
+    // console.log(projectDetails)
   const { expertList, isLoading: expertsLoading } = useGetAllExpert();
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
@@ -1349,27 +1356,27 @@ const ProjectDetails = () => {
                       </div>
                     </div>
 
-                    {task.assignee && (
+                    {task.assignedTo && (
                       <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 relative rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                            {task.assignee.profilePicture ? (
+                            {task.assignedTo.profilePicture ? (
                               <Image
-                                src={task.assignee.profilePicture}
+                                src={task.assignedTo.profilePicture}
                                 alt="Expert Profile"
                                 layout="fill"
                                 objectFit="cover"
                               />
                             ) : (
                               <span className="text-lg font-medium">
-                                {task.assignee.name?.charAt(0) || "E"}
+                                {task.assignedTo.name?.charAt(0) || "E"}
                               </span>
                             )}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="text-[#1A1A1A] font-medium text-base">
-                                {task.assignee.name}
+                                {task.assignedTo.name}
                               </span>
                               <div className="flex items-center gap-1">
                                 <Star className="w-3 h-3 text-[#F2BB05] fill-[#F6CF50]" />

@@ -38,7 +38,11 @@ import { format } from "date-fns";
 import { useGetAllProjects } from "@/hooks/useProjects";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import Image from "next/image";
-import { useGetAllExpert, useInviteExperts, useSearchExpert } from "@/hooks/useExpert";
+import {
+  useGetAllExpert,
+  useInviteExperts,
+  useSearchExpert,
+} from "@/hooks/useExpert";
 
 export type Project = {
   id: string;
@@ -101,12 +105,14 @@ export interface Expert {
   createdAt?: string;
 }
 
-
 const ExpertTableSkeleton = ({ rows = 5 }: { rows?: number }) => {
   return (
     <div className="space-y-3">
       {Array.from({ length: rows }).map((_, index) => (
-        <div key={index} className="flex items-center space-x-4 p-3 border rounded-lg animate-pulse">
+        <div
+          key={index}
+          className="flex items-center space-x-4 p-3 border rounded-lg animate-pulse"
+        >
           <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
           <div className="flex-1 space-y-2">
             <div className="h-4 bg-gray-200 rounded w-1/4"></div>
@@ -118,7 +124,6 @@ const ExpertTableSkeleton = ({ rows = 5 }: { rows?: number }) => {
     </div>
   );
 };
-
 
 const ExpertSelectionRow = ({
   expert,
@@ -132,7 +137,7 @@ const ExpertSelectionRow = ({
   onSelect: (expertId: string) => void;
 }) => {
   return (
-    <tr 
+    <tr
       className={`border-b hover:bg-gray-50 transition-colors ${
         isSelected ? "bg-blue-50 border-blue-200" : "border-gray-200"
       } ${isAlreadyAssigned ? "opacity-60" : ""}`}
@@ -142,8 +147,8 @@ const ExpertSelectionRow = ({
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-medium">
             {expert.image ? (
-              <Image 
-                src={expert.image} 
+              <Image
+                src={expert.image}
                 alt={expert.name}
                 width={32}
                 height={32}
@@ -159,7 +164,7 @@ const ExpertSelectionRow = ({
               <Badge
                 variant="secondary"
                 className={
-                  expert.status === "active" 
+                  expert.status === "active"
                     ? "bg-green-100 text-green-800 border-green-200 text-xs"
                     : "bg-red-100 text-red-800 border-red-200 text-xs"
                 }
@@ -167,7 +172,10 @@ const ExpertSelectionRow = ({
                 {expert.status}
               </Badge>
               {isAlreadyAssigned && (
-                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200 text-xs">
+                <Badge
+                  variant="outline"
+                  className="bg-yellow-100 text-yellow-800 border-yellow-200 text-xs"
+                >
                   Already Assigned
                 </Badge>
               )}
@@ -178,7 +186,9 @@ const ExpertSelectionRow = ({
       </td>
       <td className="p-3">
         {expert.role && expert.role.length > 0 ? (
-          <span className="text-sm text-gray-700">{expert.role.join(", ")}</span>
+          <span className="text-sm text-gray-700">
+            {expert.role.join(", ")}
+          </span>
         ) : (
           <span className="text-sm text-gray-400">No role</span>
         )}
@@ -187,7 +197,10 @@ const ExpertSelectionRow = ({
         {expert.skills && expert.skills.length > 0 ? (
           <div className="flex flex-wrap gap-1 max-w-[200px]">
             {expert.skills.slice(0, 3).map((skill, index) => (
-              <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+              <span
+                key={index}
+                className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
+              >
                 {skill}
               </span>
             ))}
@@ -204,7 +217,9 @@ const ExpertSelectionRow = ({
       <td className="p-3 text-right">
         <Button
           size="sm"
-          variant={isSelected ? "default" : isAlreadyAssigned ? "ghost" : "outline"}
+          variant={
+            isSelected ? "default" : isAlreadyAssigned ? "ghost" : "outline"
+          }
           disabled={isAlreadyAssigned}
           className="min-w-[100px]"
           onClick={(e) => {
@@ -212,7 +227,11 @@ const ExpertSelectionRow = ({
             !isAlreadyAssigned && onSelect(expert.id);
           }}
         >
-          {isAlreadyAssigned ? "Already Assigned" : isSelected ? "Selected" : "Select"}
+          {isAlreadyAssigned
+            ? "Already Assigned"
+            : isSelected
+            ? "Selected"
+            : "Select"}
         </Button>
       </td>
     </tr>
@@ -253,29 +272,42 @@ const AssignExpertModal = ({
   assignedExpertIds?: string[]; // Array of expert IDs already assigned to the project
 }) => {
   // Ensure experts is always an array
-  const safeExperts = useMemo(() => Array.isArray(experts) ? experts : [], [experts]);
+  const safeExperts = useMemo(
+    () => (Array.isArray(experts) ? experts : []),
+    [experts]
+  );
 
-  const handleExpertSelect = useCallback((expertId: string) => {
-    // Don't allow selection of already assigned experts
-    if (assignedExpertIds.includes(expertId)) return;
-    
-    const newSelectedExpertIds = selectedExpertIds.includes(expertId)
-      ? selectedExpertIds.filter(id => id !== expertId)
-      : [...selectedExpertIds, expertId];
-    
-    onExpertSelectionChange(newSelectedExpertIds);
-  }, [selectedExpertIds, assignedExpertIds, onExpertSelectionChange]);
+  const handleExpertSelect = useCallback(
+    (expertId: string) => {
+      // Don't allow selection of already assigned experts
+      if (assignedExpertIds.includes(expertId)) return;
+
+      const newSelectedExpertIds = selectedExpertIds.includes(expertId)
+        ? selectedExpertIds.filter((id) => id !== expertId)
+        : [...selectedExpertIds, expertId];
+
+      onExpertSelectionChange(newSelectedExpertIds);
+    },
+    [selectedExpertIds, assignedExpertIds, onExpertSelectionChange]
+  );
 
   const handleSelectAll = useCallback(() => {
     // Only select experts that are not already assigned
-    const selectableExperts = safeExperts.filter(expert => !assignedExpertIds.includes(expert.id));
-    
+    const selectableExperts = safeExperts.filter(
+      (expert) => !assignedExpertIds.includes(expert.id)
+    );
+
     if (selectedExpertIds.length === selectableExperts.length) {
       onExpertSelectionChange([]);
     } else {
-      onExpertSelectionChange(selectableExperts.map(expert => expert.id));
+      onExpertSelectionChange(selectableExperts.map((expert) => expert.id));
     }
-  }, [safeExperts, assignedExpertIds, selectedExpertIds, onExpertSelectionChange]);
+  }, [
+    safeExperts,
+    assignedExpertIds,
+    selectedExpertIds,
+    onExpertSelectionChange,
+  ]);
 
   const handleAssign = () => {
     if (selectedExpertIds.length > 0) {
@@ -290,8 +322,11 @@ const AssignExpertModal = ({
   };
 
   // Filter out already assigned experts from selectable count
-  const selectableExperts = safeExperts.filter(expert => !assignedExpertIds.includes(expert.id));
-  const allSelectableSelected = selectableExperts.length > 0 && 
+  const selectableExperts = safeExperts.filter(
+    (expert) => !assignedExpertIds.includes(expert.id)
+  );
+  const allSelectableSelected =
+    selectableExperts.length > 0 &&
     selectedExpertIds.length === selectableExperts.length;
 
   if (!isOpen) return null;
@@ -318,24 +353,42 @@ const AssignExpertModal = ({
         <div className="p-6 space-y-6 overflow-y-auto max-h-[60vh]">
           {/* Project Info */}
           <div className="space-y-3">
-            <h3 className="text-lg font-medium text-gray-900">Project Details</h3>
+            <h3 className="text-lg font-medium text-gray-900">
+              Project Details
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
               <div>
-                <span className="text-sm font-medium text-gray-500">Project Name:</span>
-                <p className="text-sm text-gray-900 mt-1">{project?.title || "N/A"}</p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-500">Business:</span>
-                <p className="text-sm text-gray-900 mt-1">{project?.businessId?.name || "N/A"}</p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-500">Status:</span>
-                <p className="text-sm text-gray-900 mt-1 capitalize">{project?.status || "N/A"}</p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-500">Due Date:</span>
+                <span className="text-sm font-medium text-gray-500">
+                  Project Name:
+                </span>
                 <p className="text-sm text-gray-900 mt-1">
-                  {project?.dueDate ? format(new Date(project.dueDate), "MMM d, yyyy") : "N/A"}
+                  {project?.title || "N/A"}
+                </p>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-500">
+                  Business:
+                </span>
+                <p className="text-sm text-gray-900 mt-1">
+                  {project?.businessId?.name || "N/A"}
+                </p>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-500">
+                  Status:
+                </span>
+                <p className="text-sm text-gray-900 mt-1 capitalize">
+                  {project?.status || "N/A"}
+                </p>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-500">
+                  Due Date:
+                </span>
+                <p className="text-sm text-gray-900 mt-1">
+                  {project?.dueDate
+                    ? format(new Date(project.dueDate), "MMM d, yyyy")
+                    : "N/A"}
                 </p>
               </div>
             </div>
@@ -345,7 +398,9 @@ const AssignExpertModal = ({
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="flex items-center space-x-4">
-                <h3 className="text-lg font-medium text-gray-900">Select Experts</h3>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Select Experts
+                </h3>
                 {safeExperts.length > 0 && selectableExperts.length > 0 && (
                   <Button
                     variant="outline"
@@ -367,19 +422,25 @@ const AssignExpertModal = ({
                 />
               </div>
             </div>
-            
+
             {/* Selection Summary */}
             <div className="flex flex-wrap gap-4 items-center text-sm text-gray-600">
               {selectedExpertIds.length > 0 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-                  <span className="font-medium text-blue-800">{selectedExpertIds.length}</span>
-                  {selectedExpertIds.length === 1 ? " expert" : " experts"} selected for assignment
+                  <span className="font-medium text-blue-800">
+                    {selectedExpertIds.length}
+                  </span>
+                  {selectedExpertIds.length === 1 ? " expert" : " experts"}{" "}
+                  selected for assignment
                 </div>
               )}
               {assignedExpertIds.length > 0 && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
-                  <span className="font-medium text-yellow-800">{assignedExpertIds.length}</span>
-                  {assignedExpertIds.length === 1 ? " expert" : " experts"} already assigned
+                  <span className="font-medium text-yellow-800">
+                    {assignedExpertIds.length}
+                  </span>
+                  {assignedExpertIds.length === 1 ? " expert" : " experts"}{" "}
+                  already assigned
                 </div>
               )}
             </div>
@@ -393,7 +454,9 @@ const AssignExpertModal = ({
                 </div>
                 <p className="text-sm">No experts found</p>
                 {expertSearchTerm && (
-                  <p className="text-xs text-gray-400 mt-1">Try adjusting your search terms</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Try adjusting your search terms
+                  </p>
                 )}
               </div>
             ) : (
@@ -401,10 +464,18 @@ const AssignExpertModal = ({
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700">Expert</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700">Role</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700">Skills</th>
-                      <th className="p-3 text-right text-sm font-medium text-gray-700">Action</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">
+                        Expert
+                      </th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">
+                        Role
+                      </th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">
+                        Skills
+                      </th>
+                      <th className="p-3 text-right text-sm font-medium text-gray-700">
+                        Action
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -413,7 +484,9 @@ const AssignExpertModal = ({
                         key={expert.id}
                         expert={expert}
                         isSelected={selectedExpertIds.includes(expert.id)}
-                        isAlreadyAssigned={assignedExpertIds.includes(expert.id)}
+                        isAlreadyAssigned={assignedExpertIds.includes(
+                          expert.id
+                        )}
                         onSelect={handleExpertSelect}
                       />
                     ))}
@@ -460,22 +533,22 @@ const AssignExpertModal = ({
           <div className="text-sm text-gray-600">
             {selectedExpertIds.length > 0 ? (
               <span>
-                {selectedExpertIds.length} {selectedExpertIds.length === 1 ? 'expert' : 'experts'} ready for assignment
-                {assignedExpertIds.length > 0 && ` (${assignedExpertIds.length} already assigned)`}
+                {selectedExpertIds.length}{" "}
+                {selectedExpertIds.length === 1 ? "expert" : "experts"} ready
+                for assignment
+                {assignedExpertIds.length > 0 &&
+                  ` (${assignedExpertIds.length} already assigned)`}
               </span>
             ) : (
               <span>
                 No experts selected
-                {assignedExpertIds.length > 0 && ` (${assignedExpertIds.length} already assigned)`}
+                {assignedExpertIds.length > 0 &&
+                  ` (${assignedExpertIds.length} already assigned)`}
               </span>
             )}
           </div>
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={isAssigning}
-            >
+            <Button variant="outline" onClick={onClose} disabled={isAssigning}>
               Cancel
             </Button>
             <Button
@@ -489,7 +562,11 @@ const AssignExpertModal = ({
                   Assigning...
                 </>
               ) : (
-                `Assign ${selectedExpertIds.length > 0 ? `(${selectedExpertIds.length})` : ''}`
+                `Assign ${
+                  selectedExpertIds.length > 0
+                    ? `(${selectedExpertIds.length})`
+                    : ""
+                }`
               )}
             </Button>
           </div>
@@ -509,8 +586,7 @@ const Projects = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
-  
-  // Modal-specific states
+
   const [expertCurrentPage, setExpertCurrentPage] = useState(1);
   const [expertSearchTerm, setExpertSearchTerm] = useState("");
   const [expertRowsPerPage, setExpertRowsPerPage] = useState("10");
@@ -525,34 +601,36 @@ const Projects = () => {
     searchTerm
   );
 
-  const { expertList: allExperts, isLoading: isLoadingAllExperts } = useGetAllExpert(
-    expertCurrentPage,
-    parseInt(expertRowsPerPage)
-  );
-  
-  const { expertList: searchResults, isLoading: isLoadingExperts } = useSearchExpert(
-    expertSearchTerm,
-    expertCurrentPage,
-    parseInt(expertRowsPerPage)
-  );
+  const { expertList: allExperts, isLoading: isLoadingAllExperts } =
+    useGetAllExpert(expertCurrentPage, parseInt(expertRowsPerPage));
 
-  const expertsToDisplay = expertSearchTerm ? searchResults?.data : allExperts?.data;
-  const isLoadingExpertsToDisplay = expertSearchTerm ? isLoadingExperts : isLoadingAllExperts;
-  
+  const { expertList: searchResults, isLoading: isLoadingExperts } =
+    useSearchExpert(
+      expertSearchTerm,
+      expertCurrentPage,
+      parseInt(expertRowsPerPage)
+    );
+
+  const expertsToDisplay = expertSearchTerm
+    ? searchResults?.data
+    : allExperts?.data;
+  const isLoadingExpertsToDisplay = expertSearchTerm
+    ? isLoadingExperts
+    : isLoadingAllExperts;
+
   const { mutate: inviteExperts } = useInviteExperts();
 
-  // Process and filter data
   const processedData = useMemo(() => {
     if (!projectList?.data) return [];
 
     let data = projectList.data || [];
 
-    // Apply date filter on client side since API doesn't support it
     if (dateFilter) {
       const filterDate = new Date(dateFilter).toDateString();
       data = data?.filter(
         (project) =>
-          (project.dueDate && new Date(project.dueDate).toDateString() === filterDate) ||
+          (project.dueDate &&
+            new Date(project.dueDate).toDateString() === filterDate) ||
           new Date(project.createdAt).toDateString() === filterDate
       );
     }
@@ -560,30 +638,31 @@ const Projects = () => {
     return data;
   }, [projectList, dateFilter]);
 
-  // Count statuses for the summary cards
+  
   const statusCounts = useMemo(() => {
-    if (!projectList?.data) return { pending: 0, "in-progress": 0, completed: 0, total: 0 };
+    if (!projectList?.data)
+      return { pending: 0, "in-progress": 0, completed: 0, total: 0 };
 
     const data = projectList.data;
     return {
       pending: data.filter((project) => project.status === "pending").length,
-      "in-progress": data.filter((project) => project.status === "in-progress").length,
-      completed: data.filter((project) => project.status === "completed").length,
+      "in-progress": data.filter((project) => project.status === "in-progress")
+        .length,
+      completed: data.filter((project) => project.status === "completed")
+        .length,
       total: projectList.totalItems,
     };
   }, [projectList]);
-
-  // Get assigned expert IDs for the selected project
+  
   const assignedExpertIds = useMemo(() => {
-    return selectedProject?.experts?.map(expert => expert.id) || [];
+    return selectedProject?.experts?.map((expert) => expert.id) || [];
   }, [selectedProject]);
 
-  // Reset pagination when filters change
+  
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, sortFilter, dateFilter, rowsPerPage]);
 
-  // Reset expert states when modal opens/closes
   useEffect(() => {
     if (isModalOpen) {
       setExpertCurrentPage(1);
@@ -592,11 +671,14 @@ const Projects = () => {
     }
   }, [isModalOpen]);
 
-  const handlePageChange = useCallback((newPage: number) => {
-    if (newPage >= 1 && newPage <= (projectList?.totalPages || 1)) {
-      setCurrentPage(newPage);
-    }
-  }, [projectList?.totalPages]);
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      if (newPage >= 1 && newPage <= (projectList?.totalPages || 1)) {
+        setCurrentPage(newPage);
+      }
+    },
+    [projectList?.totalPages]
+  );
 
   const handleAssignExpert = useCallback((project: Project) => {
     setSelectedProject(project);
@@ -611,23 +693,26 @@ const Projects = () => {
     setExpertSearchTerm("");
   }, []);
 
-  const handleAssignProject = useCallback(async (expertIds: string[]) => {
-    if (!selectedProject) return;
+  const handleAssignProject = useCallback(
+    async (expertIds: string[]) => {
+      if (!selectedProject) return;
 
-    setIsAssigning(true);
-    try {
-      inviteExperts({ 
-        projectId: selectedProject.id, 
-        expertIds 
-      });
-      
-      handleCloseModal();
-    } catch (error) {
-      console.error("Failed to assign experts:", error);
-    } finally {
-      setIsAssigning(false);
-    }
-  }, [selectedProject, inviteExperts, handleCloseModal]);
+      setIsAssigning(true);
+      try {
+        inviteExperts({
+          projectId: selectedProject.id,
+          expertIds,
+        });
+
+        handleCloseModal();
+      } catch (error) {
+        console.error("Failed to assign experts:", error);
+      } finally {
+        setIsAssigning(false);
+      }
+    },
+    [selectedProject, inviteExperts, handleCloseModal]
+  );
 
   const handleExpertPageChange = useCallback((newPage: number) => {
     setExpertCurrentPage(newPage);
@@ -639,15 +724,24 @@ const Projects = () => {
 
   const handleExpertSearchChange = useCallback((term: string) => {
     setExpertSearchTerm(term);
-    setExpertCurrentPage(1); // Reset to first page when searching
+    setExpertCurrentPage(1);
   }, []);
 
   if (isLoading) {
-    return <TableSkeleton 
-      columns={6} 
-      rows={5} 
-      headers={["Project name", "Business", "Experts", "Status", "Due Date", "Action"]}
-    />;
+    return (
+      <TableSkeleton
+        columns={8}
+        rows={10}
+        headers={[
+          "Project name",
+          "Business",
+          "Experts",
+          "Status",
+          "Due Date",
+          "Action",
+        ]}
+      />
+    );
   }
 
   return (
@@ -676,28 +770,36 @@ const Projects = () => {
             Total Projects:{" "}
             <span className="text-[#3E4351]">{statusCounts.total || 0}</span>
           </span>
-          
+
           <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl grid md:grid-cols-4 w-full max-w-[600px] gap-4 p-4">
             <div className="border-b sm:border-b-0 sm:border-r w-full flex flex-col gap-2 border-[#EFF2F3] pb-4 sm:pb-0">
-              <span className="text-2xl font-bold text-[#0E1426]">{statusCounts.total}</span>
+              <span className="text-2xl font-bold text-[#0E1426]">
+                {statusCounts.total}
+              </span>
               <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-gray-400">
                 Total
               </span>
             </div>
             <div className="border-b sm:border-b-0 sm:border-r w-full flex flex-col gap-2 border-[#EFF2F3] pb-4 sm:pb-0">
-              <span className="text-2xl font-bold text-[#0E1426]">{statusCounts.pending}</span>
+              <span className="text-2xl font-bold text-[#0E1426]">
+                {statusCounts.pending}
+              </span>
               <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#F2BB05]">
                 Pending
               </span>
             </div>
             <div className="border-b sm:border-b-0 sm:border-r w-full flex flex-col gap-2 border-[#EFF2F3] pb-4 sm:pb-0">
-              <span className="text-2xl font-bold text-[#0E1426]">{statusCounts["in-progress"]}</span>
+              <span className="text-2xl font-bold text-[#0E1426]">
+                {statusCounts["in-progress"]}
+              </span>
               <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary">
                 In-Progress
               </span>
             </div>
             <div className="w-full flex flex-col gap-2">
-              <span className="text-2xl font-bold text-[#0E1426]">{statusCounts.completed}</span>
+              <span className="text-2xl font-bold text-[#0E1426]">
+                {statusCounts.completed}
+              </span>
               <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">
                 Completed
               </span>
@@ -816,7 +918,7 @@ const Projects = () => {
                       </div>
                     </TableCell>
                     <TableCell className="text-gray-700 text-sm py-4">
-                      {project.businessId?.name || "N/A"} 
+                      {project.businessId?.name || "N/A"}
                     </TableCell>
                     <TableCell className="text-gray-700 text-sm py-4">
                       {project.experts && project.experts.length > 0
@@ -824,27 +926,30 @@ const Projects = () => {
                         : "No experts"}
                     </TableCell>
                     <TableCell className="py-4 capitalize">
-  <Badge
-    variant="secondary"
-    className={
-      `${
-        project.status === "completed"
-          ? "border border-[#04E762] text-[#04E762]"
-          : project.status === "in-progress"
-          ? "border border-primary text-primary"
-          : "border border-[#F2BB05] text-[#F2BB05]"
-      } text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent w-[90px] sm:w-[100px] md:w-[110px] truncate text-center flex justify-center` 
-    }
-  >
-    {project.status.replace("-", " ")}
-  </Badge>
-</TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={`${
+                          project.status === "completed"
+                            ? "border border-[#04E762] text-[#04E762]"
+                            : project.status === "in-progress"
+                            ? "border border-primary text-primary"
+                            : "border border-[#F2BB05] text-[#F2BB05]"
+                        } text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent w-[90px] sm:w-[100px] md:w-[110px] truncate text-center flex justify-center`}
+                      >
+                        {project.status.replace("-", " ")}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-gray-700 text-sm py-4">
                       {project.dueDate
                         ? format(new Date(project.dueDate), "MMM d, yyyy")
                         : "N/A"}
                     </TableCell>
-                    <TableCell className="py-4" onClick={(e: React.MouseEvent<HTMLTableCellElement>) => e.stopPropagation()}>
+                    <TableCell
+                      className="py-4"
+                      onClick={(e: React.MouseEvent<HTMLTableCellElement>) =>
+                        e.stopPropagation()
+                      }
+                    >
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -857,7 +962,9 @@ const Projects = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() => router.push(`/projects/${project.id}`)}
+                            onClick={() =>
+                              router.push(`/projects/${project.id}`)
+                            }
                           >
                             View
                           </DropdownMenuItem>
@@ -877,7 +984,10 @@ const Projects = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center py-8 text-gray-500"
+                  >
                     No projects found
                   </TableCell>
                 </TableRow>
@@ -905,10 +1015,9 @@ const Projects = () => {
 
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">
-              {projectList ? 
-                `Page ${projectList.currentPage} of ${projectList.totalPages}` : 
-                '0 of 0'
-              }
+              {projectList
+                ? `Page ${projectList.currentPage} of ${projectList.totalPages}`
+                : "0 of 0"}
             </span>
             <div className="flex items-center gap-1">
               <Button
