@@ -87,6 +87,7 @@ const BusinessId = () => {
 
   const router = useRouter();
   const { businessDetails, isLoading } = useGetBusinessById(businessId);
+
   const { AllBusinessProjects, isLoading: projectsLoading } =
     useGetAllBusinessProjects(
       businessId,
@@ -96,7 +97,7 @@ const BusinessId = () => {
       sortBy,
       searchQuery
     );
-  console.log(AllBusinessProjects);
+  console.log(businessDetails);
 
   const handleSearch = () => {
     setSearchQuery(tempSearchQuery);

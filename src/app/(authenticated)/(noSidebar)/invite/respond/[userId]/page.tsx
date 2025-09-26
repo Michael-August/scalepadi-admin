@@ -21,7 +21,7 @@ const AcceptDeclineInvitePage = () => {
                 toast.success(`Invite ${action} successfully`)
                 if (action === 'accepted') {
                     toast.info('Please sign in to continue')
-                    router.push('/sigin')
+                    router.push('/signin')
                 } else {
                     toast.error('You have declined the invite')
                     router.push('/')
@@ -42,12 +42,12 @@ const AcceptDeclineInvitePage = () => {
                 </p>
 
                 <div className="flex gap-4 justify-center mt-6">
-                    <Button disabled={isPending} onClick={() => handleAcceptDecline("accepted", userId as string)} className="bg-primary text-white w-fit text-xs rounded-[14px] px-4 py-6">{isPending ? 'Accepting match...' : 'Accept Match'}</Button>
+                    <Button disabled={isPending} onClick={() => handleAcceptDecline("accepted", userId as string)} className="bg-primary text-white w-fit text-xs rounded-[14px] px-4 py-6">{isPending ? 'Accepting...' : 'Accept'}</Button>
                     <Button disabled={isPending}
                         variant={'destructive'}
                         onClick={() => handleAcceptDecline("declined", userId as string)} className="w-fit text-xs rounded-[14px] px-4 py-6"
                     >
-                        {isPending ? 'Declining match...' : 'Decline Match'}
+                        {isPending ? 'Declining...' : 'Decline'}
                     </Button>
                 </div>
             </div>
