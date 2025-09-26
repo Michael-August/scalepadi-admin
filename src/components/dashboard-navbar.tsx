@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
 
     const pathName = usePathname()
-    const route = pathName.replace(/^\//, '');
+    const route = pathName.split("/")[1] || ""
 
     return (
         <nav className="w-full bg-white flex items-center justify-between py-2 px-4 xl:pr-14">
