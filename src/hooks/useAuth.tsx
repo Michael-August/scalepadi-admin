@@ -282,3 +282,34 @@ export const useCreateAdmin = () => {
   );
   return { createAdmin, isPending };
 };
+
+export const useAcceptDeclineMatch = () => { 
+    const queryClient = useQueryClient()
+    const { mutate: acceptOrDecline, isPending } = useMutation({
+        mutationFn: async (data: { inviteStatus: "accepted" | "declined", userId: string}) => {
+            try {
+                const response = await axiosClient.put(`/invite/admin/${data?.userId}`, { inviteStatus: data.inviteStatus });
+                if (response.data?.status === false) {
+                    throw new Error(response.data?.message || `Failed to ${data.inviteStatus} match`);
+                }
+                return response.data
+            } catch (error: any) {
+                if (error instanceof AxiosError) {
+                    toast.error(error.response?.data?.message || `Failed to ${data.inviteStatus} match`)
+                } else if (error instanceof Error) {
+                    toast.error(error.message)
+                } else {
+                    toast.error(`An unexpected error occured while trying to ${data.inviteStatus} match`)
+                }
+
+                throw error;
+            }
+        },
+        onSuccess: (data) => {
+            toast.success(data.message)
+            queryClient.invalidateQueries({ queryKey: ['projects'] })
+        }
+    })
+
+    return { acceptOrDecline, isPending }
+}
