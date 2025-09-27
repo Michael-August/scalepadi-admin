@@ -1,3 +1,4 @@
+// components/Payments.tsx
 "use client";
 
 import { MoreHorizontal, Eye, Edit, Trash2, ArrowUpDown, Download, Search, ChevronLeft, ChevronRight, FolderOpenIcon } from "lucide-react";
@@ -8,9 +9,33 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import { paymentTypes, statusStyles } from "@/app/data";
+// import Image from "next/image";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
+// import { paymentStatusStyles, paymentTypeStyles, paymentTypes } from "@/app/data/payment-styles";
 import { useGetAllPayment } from "@/hooks/usePayment";
+
+export const paymentStatusStyles = {
+  successful: "bg-green-50 text-green-700 border-green-200",
+  pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  failed: "bg-red-50 text-red-700 border-red-200",
+  refunded: "bg-blue-50 text-blue-700 border-blue-200",
+  default: "bg-gray-50 text-gray-700 border-gray-200"
+} as const;
+
+export const paymentTypeStyles = {
+  subscription: "bg-purple-100 text-purple-600",
+  project: "bg-blue-100 text-blue-600",
+  milestone: "bg-orange-100 text-orange-600",
+  default: "bg-gray-100 text-gray-600"
+} as const;
+
+export const paymentTypes = [
+  "All payments",
+  "Successful", 
+  "Pending",
+  "Failed",
+  "Refunded"
+];
 
 interface PaymentsProps {
   searchQuery: string;
@@ -19,6 +44,22 @@ interface PaymentsProps {
   setCurrentPage: (page: number) => void;
   rowsPerPage: number;
   setRowsPerPage: (rows: number) => void;
+}
+
+interface TransformedPayment {
+  id: string;
+  type: string;
+  business: string;
+  expert: string;
+  amount: string;
+  trxId: string;
+  status: string;
+  date: string;
+  avatar: string;
+  expertAvatar: string;
+  rawAmount: number;
+  planName: string;
+  rawDate: Date;
 }
 
 export default function Payments({
@@ -30,120 +71,60 @@ export default function Payments({
   setRowsPerPage
 }: PaymentsProps) {
   const [paymentType, setPaymentType] = useState("All payments");
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "asc" | "desc";
-  } | null>(null);
+  const [sortBy, setSortBy] = useState("createdAt");
 
-  const handleAction = (id: number, action: string) => {
-    console.log(`Action ${action} for row ${id}`);
+  const { paymentData, isLoading } = useGetAllPayment(
+    currentPage,
+    rowsPerPage,
+    paymentType === "All payments" ? "all" : paymentType.toLowerCase(),
+    sortBy,
+    searchQuery
+  );
+
+  console.log("Payment Data:", paymentData);
+
+  // Transform API data to match your table structure
+  const transformedPayments = useMemo((): TransformedPayment[] => {
+    if (!paymentData?.data) return [];
+
+    return paymentData.data.map((payment) => {
+      const isSubscription = !!payment.subscriptionId;
+      const business = isSubscription 
+        ? payment.subscriptionId?.businessId?.name || "N/A"
+        : payment.projectId?.businessId?.name || "N/A";
+      
+      const type = isSubscription ? "Subscription" : "Project";
+      const planName = isSubscription ? (payment.subscriptionId?.planId?.name ?? "N/A") : "Project Payment";
+      
+      // Format status to match our styles
+      const formattedStatus = payment.status.charAt(0).toUpperCase() + payment.status.slice(1);
+      
+      return {
+        id: payment.id,
+        type,
+        business,
+        expert: "System", 
+        amount: `₦${payment.amount.toLocaleString()}`,
+        // trxId: `TRX${payment.id.slice(-8).toUpperCase()}`,
+        trxId: "N/A",
+        status: formattedStatus,
+        date: payment.createdAt,
+        avatar: "",
+        expertAvatar: "",
+        rawAmount: payment.amount,
+        planName: planName, // always a string now
+        rawDate: new Date(payment.createdAt)
+      };
+    });
+  }, [paymentData]);
+
+  const handleAction = (id: string, action: string) => {
+    console.log(`Action ${action} for payment ${id}`);
   };
 
-  const { paymentList, isLoading } = useGetAllPayment();
-  const filteredPayments = useMemo(() => {
-    const dummyPayments = [
-      {
-        id: 1,
-        type: "Milestone",
-        business: "Acme Corp",
-        expert: "John Doe",
-        amount: "₦10,000",
-        trxId: "TRX123456",
-        status: "Paid",
-        date: "2025-08-29T10:45:46.870Z",
-        avatar: "",
-        expertAvatar: ""
-      },
-      {
-        id: 2,
-        type: "Project",
-        business: "Beta Ltd",
-        expert: "Jane Smith",
-        amount: "₦5,000",
-        trxId: "TRX654321",
-        status: "Pending",
-        date: "2025-08-28T10:45:46.870Z",
-        avatar: "",
-        expertAvatar: ""
-      },
-      {
-        id: 3,
-        type: "Milestone",
-        business: "Gamma Inc",
-        expert: "Alice Brown",
-        amount: "₦7,500",
-        trxId: "TRX789012",
-        status: "Paid",
-        date: "2025-08-27T10:45:46.870Z",
-        avatar: "",
-        expertAvatar: ""
-      }
-    ];
-    const source = Array.isArray(paymentList) && paymentList.length > 0 ? paymentList : dummyPayments;
-    let filtered = source.filter((payment) => {
-      const matchesType =
-        paymentType === "All payments" || payment.status === paymentType;
-      const matchesSearch =
-        searchQuery === "" ||
-        payment.business.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        payment.expert.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        payment.trxId.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesType && matchesSearch;
-    });
-
-    if (sortConfig) {
-      filtered = [...filtered].sort((a, b) => {
-        const { key, direction } = sortConfig;
-        type PaymentKey = "type" | "business" | "expert" | "amount" | "trxId" | "status" | "date";
-        if (!( ["type", "business", "expert", "amount", "trxId", "status", "date"].includes(key) )) return 0;
-        const aValue = (a as Record<PaymentKey, unknown>)[key as PaymentKey];
-        const bValue = (b as Record<PaymentKey, unknown>)[key as PaymentKey];
-        let aSort = aValue;
-        let bSort = bValue;
-        if (key === "amount") {
-          aSort = typeof aSort === "string" ? parseFloat(aSort.replace(/[^\d.]/g, "")) : aSort;
-          bSort = typeof bSort === "string" ? parseFloat(bSort.replace(/[^\d.]/g, "")) : bSort;
-        }
-        if (key === "date") {
-          aSort = typeof aSort === "string" ? new Date(aSort) : aSort;
-          bSort = typeof bSort === "string" ? new Date(bSort) : bSort;
-        }
-        if (typeof aSort === "string" && typeof bSort === "string") {
-          if (aSort < bSort) return direction === "asc" ? -1 : 1;
-          if (aSort > bSort) return direction === "asc" ? 1 : -1;
-          return 0;
-        }
-        if (typeof aSort === "number" && typeof bSort === "number") {
-          return direction === "asc" ? aSort - bSort : bSort - aSort;
-        }
-        if (aSort instanceof Date && bSort instanceof Date) {
-          return direction === "asc" ? aSort.getTime() - bSort.getTime() : bSort.getTime() - aSort.getTime();
-        }
-        return 0;
-      });
-    }
-    return filtered;
-  }, [paymentList, paymentType, searchQuery, sortConfig]);
-
-  const paginatedPayments = useMemo(() => {
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    return filteredPayments.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredPayments, currentPage, rowsPerPage]);
-
-  const totalPages = useMemo(() => {
-    return Math.ceil(filteredPayments.length / rowsPerPage);
-  }, [filteredPayments, rowsPerPage]);
-
-  const requestSort = (key: string) => {
-    let direction: "asc" | "desc" = "asc";
-    if (
-      sortConfig &&
-      sortConfig.key === key &&
-      sortConfig.direction === "asc"
-    ) {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
+  const handleSort = (key: string) => {
+    const newSortBy = sortBy === key ? `-${key}` : key;
+    setSortBy(newSortBy);
     setCurrentPage(1);
   };
 
@@ -154,27 +135,30 @@ export default function Payments({
   };
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) {
+    if (paymentData && currentPage < paymentData.totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };
 
-  const exportToCSV = <T extends Record<string, unknown>>(
-    data: T[],
-    filename: string
-  ) => {
+  const exportToCSV = (data: TransformedPayment[], filename: string) => {
     if (data.length === 0) return;
 
-    const headers = Object.keys(data[0]);
+    const headers = ["ID", "Type", "Business", "Expert", "Amount", "Transaction ID", "Status", "Date"];
     const csvRows = [];
 
     csvRows.push(headers.join(","));
 
     for (const row of data) {
-      const values = headers.map((header) => {
-        const escaped = ("" + row[header]).replace(/"/g, '\\"');
-        return `"${escaped}"`;
-      });
+      const values = [
+        row.id,
+        row.type,
+        `"${row.business}"`,
+        `"${row.expert}"`,
+        row.amount,
+        row.trxId,
+        row.status,
+        new Date(row.date).toLocaleDateString("en-GB")
+      ];
       csvRows.push(values.join(","));
     }
 
@@ -185,22 +169,39 @@ export default function Payments({
     const link = document.createElement("a");
     link.setAttribute("hidden", "");
     link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `${filename}_${new Date().toISOString().slice(0, 10)}.csv`
-    );
+    link.setAttribute("download", `${filename}_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  function getInitials(name: string): string {
+  const getInitials = (name: string): string => {
     return name
       .split(" ")
       .map((part) => part[0])
       .join("")
-      .toUpperCase();
-  }
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const getFolderIconStyle = (type: string) => {
+    switch (type.toLowerCase()) {
+      case "subscription":
+        return "text-purple-600 bg-purple-100";
+      case "project":
+        return "text-blue-600 bg-blue-100";
+      case "milestone":
+        return "text-orange-600 bg-orange-100";
+      default:
+        return "text-gray-600 bg-gray-100";
+    }
+  };
+
+  const getSortIndicator = (key: string) => {
+    if (sortBy === key) return "↑";
+    if (sortBy === `-${key}`) return "↓";
+    return null;
+  };
 
   return (
     <section aria-labelledby="payments-heading">
@@ -208,8 +209,7 @@ export default function Payments({
         Payments
       </h2>
       <p className="mb-4 font-montserrat text-sm">
-        Track and manage all milestone / project payments for expert
-        projects.
+        Track and manage all milestone / project payments for expert projects.
       </p>
 
       {/* Filters */}
@@ -237,7 +237,7 @@ export default function Payments({
           <div className="relative w-full md:w-[200px]">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search"
+              placeholder="Search by business or transaction ID"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -251,7 +251,8 @@ export default function Payments({
           variant="outline"
           size="sm"
           className="h-8 rounded-xl text-xs border-gray-300 bg-transparent"
-          onClick={() => exportToCSV(filteredPayments, "payments")}
+          onClick={() => exportToCSV(transformedPayments, "payments")}
+          disabled={transformedPayments.length === 0}
         >
           <Download className="h-3 w-3 mr-2" />
           Export CSV
@@ -261,189 +262,188 @@ export default function Payments({
       {/* Table */}
       <div className="rounded-lg overflow-x-auto lg:w-[82%] xl:w-full">
         {isLoading ? (
-          <div className="py-8 text-center text-gray-500">Loading payments...</div>
+          <div className="py-8">
+            <TableSkeleton rows={5} columns={8} />
+          </div>
         ) : (
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50/50">
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 ">
-                Payment type
-              </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4 ">
-                Business
-              </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4">
-                Expert
-              </TableHead>
-              <TableHead
-                className="text-[#878A93] font-medium text-sm py-4 cursor-pointer"
-                onClick={() => requestSort("amount")}
-              >
-                <div className="flex items-center gap-1">
-                  Amount
-                  <ArrowUpDown className="w-4 h-4" />
-                  {sortConfig?.key === "amount" &&
-                    (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </div>
-              </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4">
-                Trx ID
-              </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4">
-                Status
-              </TableHead>
-              <TableHead
-                className="text-[#878A93] font-medium text-sm py-4 cursor-pointer"
-                onClick={() => requestSort("date")}
-              >
-                <div className="flex items-center gap-1">
-                  Date
-                  <ArrowUpDown className="w-4 h-4" />
-                  {sortConfig?.key === "date" &&
-                    (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </div>
-              </TableHead>
-              <TableHead className="text-[#878A93] font-medium text-sm py-4">
-                Action
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedPayments.length > 0 ? (
-              paginatedPayments.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="border-b border-gray-100 hover:bg-gray-50/50"
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50/50">
+                <TableHead className="text-[#878A93] font-medium text-sm py-4">
+                  Payment type
+                </TableHead>
+                <TableHead className="text-[#878A93] font-medium text-sm py-4">
+                  Business
+                </TableHead>
+                <TableHead className="text-[#878A93] font-medium text-sm py-4">
+                  Expert
+                </TableHead>
+                <TableHead
+                  className="text-[#878A93] font-medium text-sm py-4 cursor-pointer hover:bg-gray-100/50"
+                  onClick={() => handleSort("amount")}
                 >
-                  <TableCell className="py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={
-                          row.status === "Paid"
-                            ? "default"
-                            : row.status === "Pending"
-                            ? "secondary"
-                            : "outline"
-                        }
-                        className={`${
-                          statusStyles[
-                            row.status as keyof typeof statusStyles
-                          ]
-                        } px-0 py-0 rounded-none border-0`}
-                      >
-                        <FolderOpenIcon size={22} />
-                      </Badge>
-                      <span className="text-gray-900 text-sm">{row.type}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      {row.avatar ? (
-                        <Image
-                          src={row.avatar}
-                          alt={row.business}
-                          width={20}
-                          height={20}
-                          className="w-5 h-5 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                  <div className="flex items-center gap-1">
+                    Amount
+                    <ArrowUpDown className="w-4 h-4" />
+                    {getSortIndicator("amount")}
+                  </div>
+                </TableHead>
+                <TableHead className="text-[#878A93] font-medium text-sm py-4">
+                  Trx ID
+                </TableHead>
+                <TableHead className="text-[#878A93] font-medium text-sm py-4">
+                  Status
+                </TableHead>
+                <TableHead
+                  className="text-[#878A93] font-medium text-sm py-4 cursor-pointer hover:bg-gray-100/50"
+                  onClick={() => handleSort("createdAt")}
+                >
+                  <div className="flex items-center gap-1">
+                    Date
+                    <ArrowUpDown className="w-4 h-4" />
+                    {getSortIndicator("createdAt")}
+                  </div>
+                </TableHead>
+                <TableHead className="text-[#878A93] font-medium text-sm py-4">
+                  Action
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {transformedPayments.length > 0 ? (
+                transformedPayments.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors"
+                  >
+                    <TableCell className="py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <div className={`p-1.5 rounded-lg ${getFolderIconStyle(row.type)}`}>
+                          <FolderOpenIcon size={18} className="stroke-current" />
+                        </div>
+                        <span className="text-gray-900 text-sm font-medium">{row.type}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                           <span className="text-xs font-medium text-blue-600">
                             {getInitials(row.business)}
                           </span>
                         </div>
-                      )}
-                      <span className="text-gray-900 text-sm">{row.business}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      {row.expertAvatar ? (
-                        <Image
-                          src={row.expertAvatar}
-                          alt={row.expert}
-                          width={20}
-                          height={20}
-                          className="w-5 h-5 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
+                        <div className="flex flex-col">
+                          <span className="text-gray-900 text-sm font-medium">{row.business}</span>
+                          <span className="text-gray-500 text-xs">{row.planName}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
                           <span className="text-xs font-medium text-purple-600">
                             {getInitials(row.expert)}
                           </span>
                         </div>
-                      )}
-                      <span className="text-gray-700 text-sm">{row.expert}</span>
+                        <span className="text-gray-700 text-sm">{row.expert}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 whitespace-nowrap">
+                      <span className="text-gray-900 text-sm font-semibold">{row.amount}</span>
+                    </TableCell>
+                    <TableCell className="py-4 whitespace-nowrap">
+                      <code className="text-gray-700 text-sm bg-gray-100 px-2 py-1 rounded">
+                        {row.trxId}
+                      </code>
+                    </TableCell>
+                    <TableCell className="py-4 whitespace-nowrap">
+                      <Badge
+                        className={`min-w-[80px] justify-center text-xs font-medium ${
+                          paymentStatusStyles[
+                            row.status.toLowerCase() as keyof typeof paymentStatusStyles
+                          ] || paymentStatusStyles.default
+                        }`}
+                      >
+                        {row.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-4 whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span className="text-gray-900 text-sm">
+                          {new Date(row.date).toLocaleDateString("en-GB")}
+                        </span>
+                        {/* <span className="text-gray-500 text-xs">
+                          {new Date(row.date).toLocaleTimeString("en-GB", {
+                            hour: "2-digit",
+                            minute: "2-digit"
+                          })}
+                        </span> */}
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 whitespace-nowrap">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 data-[state=open]:bg-gray-100"
+                          >
+                            <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem 
+                            onClick={() => handleAction(row.id, "view")}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleAction(row.id, "edit")}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <Edit className="w-4 h-4" />
+                            Edit Payment
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleAction(row.id, "delete")}
+                            className="flex items-center gap-2 text-red-600 cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={8}
+                    className="py-8 text-center text-gray-500"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <FolderOpenIcon className="h-12 w-12 text-gray-300" />
+                      <span className="text-lg font-medium">No payments found</span>
+                      <span className="text-sm">
+                        {searchQuery || paymentType !== "All payments" 
+                          ? "Try adjusting your search or filter criteria" 
+                          : "No payment records available"
+                        }
+                      </span>
                     </div>
                   </TableCell>
-                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">{row.amount}</TableCell>
-                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">{row.trxId}</TableCell>
-                  <TableCell className="py-4 whitespace-nowrap">
-                    <Badge
-                      variant={
-                        row.status === "Paid"
-                          ? "default"
-                          : row.status === "Pending"
-                          ? "secondary"
-                          : "outline"
-                      }
-                      className={`w-16 justify-center
-                        ${statusStyles[
-                          row.status as keyof typeof statusStyles
-                        ]}`
-                      }
-                    >
-                      {row.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">{new Date(row.date).toLocaleDateString("en-GB")}</TableCell>
-                  <TableCell className="py-4 whitespace-nowrap">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                        >
-                          <MoreHorizontal className="h-4 w-4 text-gray-400" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleAction(row.id, "view")}>
-                          <Eye className="w-4 h-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction(row.id, "edit")}>
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleAction(row.id, "delete")}> 
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="py-4 text-center text-gray-500"
-                >
-                  No payments found matching your criteria
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
         )}
       </div>
 
       {/* Pagination */}
-      {filteredPayments.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
+      {paymentData && paymentData.totalItems > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600 whitespace-nowrap">
               Rows per page
@@ -455,7 +455,7 @@ export default function Payments({
                 setCurrentPage(1);
               }}
             >
-              <SelectTrigger className="w-16 h-8 text-sm border-gray-300">
+              <SelectTrigger className="w-20 h-8 text-sm border-gray-300">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -469,19 +469,14 @@ export default function Payments({
 
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600 whitespace-nowrap">
-              {filteredPayments.length === 0
-                ? 0
-                : (currentPage - 1) * rowsPerPage + 1}
-              -
-              {Math.min(
-                currentPage * rowsPerPage,
-                filteredPayments.length
-              )}{" "}
-              of {filteredPayments.length}
+              Page {currentPage} of {paymentData.totalPages} •{" "}
+              {(currentPage - 1) * rowsPerPage + 1}-
+              {Math.min(currentPage * rowsPerPage, paymentData.totalItems)} of{" "}
+              {paymentData.totalItems} items
             </span>
             <div className="flex items-center gap-1">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 className="h-8 w-8 p-0"
                 onClick={handlePreviousPage}
@@ -490,11 +485,11 @@ export default function Payments({
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 className="h-8 w-8 p-0"
                 onClick={handleNextPage}
-                disabled={currentPage === totalPages || totalPages === 0}
+                disabled={currentPage === paymentData.totalPages || paymentData.totalPages === 0}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>

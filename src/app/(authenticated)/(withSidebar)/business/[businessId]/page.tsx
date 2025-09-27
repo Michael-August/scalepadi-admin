@@ -669,10 +669,14 @@ const BusinessId = () => {
                                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm">
                                   <FolderOpen
                                     className={
-                                      project.status === "active"
-                                        ? "text-[#04E762]"
-                                        : "text-[#F2BB05]"
-                                    }
+                                  project.status === "active"
+                                    ? "text-[#04E762]"
+                                    : project.status === "pending"
+                                    ? "text-[#F2BB05]"
+                                    : project.status === "in-progress"
+                                    ? "text-[#053cf2]"
+                                    : " text-gray-500"
+                                }
                                   />
                                 </div>
                                 <span className="text-gray-900 text-sm">
@@ -704,6 +708,8 @@ const BusinessId = () => {
                                     ? "border border-[#04E762] text-[#04E762] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
                                     : project.status === "pending"
                                     ? "border border-[#F2BB05] text-[#F2BB05] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
+                                    : project.status === "in-progress"
+                                    ? "border border-[#053cf2] text-[#053cf2] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
                                     : "border border-gray-300 text-gray-500 text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
                                 }
                               >
@@ -838,6 +844,7 @@ const BusinessId = () => {
             setCurrentPage={setCurrentPage}
             rowsPerPage={itemsPerPage}
             setRowsPerPage={setItemsPerPage}
+            businessId={businessId}
           />
         )}
       </div>
