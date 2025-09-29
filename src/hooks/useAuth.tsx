@@ -15,7 +15,15 @@ export const useSignUp = () => {
         }
         return res.data;
       } catch (error: any) {
-        throw new Error(error) || new Error("An error occurred during sign up");
+        if (error instanceof AxiosError) {
+            toast.error(error.response?.data?.message || `Failed to sign up`)
+        } else if (error instanceof Error) {
+            toast.error(error.message)
+        } else {
+            toast.error(`An unexpected error occured while trying to sign up`)
+        }
+
+        throw error;
       }
     },
   });
@@ -35,7 +43,15 @@ export const useLogin = () => {
         }
         return res.data;
       } catch (error: any) {
-        throw new Error(error) || new Error("An error occurred during login");
+          if (error instanceof AxiosError) {
+              toast.error(error.response?.data?.message || `Failed to log in`)
+          } else if (error instanceof Error) {
+              toast.error(error.message)
+          } else {
+              toast.error(`An unexpected error occured while trying to log in`)
+          }
+
+          throw error;
       }
     },
   });
