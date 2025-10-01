@@ -16,11 +16,11 @@ export const useSignUp = () => {
         return res.data;
       } catch (error: any) {
         if (error instanceof AxiosError) {
-            toast.error(error.response?.data?.message || `Failed to sign up`)
+          toast.error(error.response?.data?.message || `Failed to sign up`);
         } else if (error instanceof Error) {
-            toast.error(error.message)
+          toast.error(error.message);
         } else {
-            toast.error(`An unexpected error occured while trying to sign up`)
+          toast.error(`An unexpected error occured while trying to sign up`);
         }
 
         throw error;
@@ -43,15 +43,15 @@ export const useLogin = () => {
         }
         return res.data;
       } catch (error: any) {
-          if (error instanceof AxiosError) {
-              toast.error(error.response?.data?.message || `Failed to log in`)
-          } else if (error instanceof Error) {
-              toast.error(error.message)
-          } else {
-              toast.error(`An unexpected error occured while trying to log in`)
-          }
+        if (error instanceof AxiosError) {
+          toast.error(error.response?.data?.message || `Failed to log in`);
+        } else if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error(`An unexpected error occured while trying to log in`);
+        }
 
-          throw error;
+        throw error;
       }
     },
   });
@@ -86,7 +86,7 @@ export const useForgotPassword = () => {
   const { mutate: forgotPassword, isPending } = useMutation({
     mutationFn: async (data: { email: string }) => {
       try {
-        const res = await axiosClient.post("/forgot-password-business", data);
+        const res = await axiosClient.post("/forgot-password-expert", data);
         if (res.data?.status === false) {
           throw new Error(
             res.data?.message ||
@@ -109,12 +109,12 @@ export const useForgotPassword = () => {
 export const useResetPassword = () => {
   const { mutate: resetPassword, isPending } = useMutation({
     mutationFn: async (data: {
-      email: string;
-      password: string;
+      code: string;
+      newPassword: string;
       confirmPassword: string;
     }) => {
       try {
-        const res = await axiosClient.put("/reset-password-business", data);
+        const res = await axiosClient.put("/reset-password-expert", data);
         if (res.data?.status === false) {
           throw new Error(
             res.data?.message || "An error occurred during password reset"
@@ -299,33 +299,46 @@ export const useCreateAdmin = () => {
   return { createAdmin, isPending };
 };
 
-export const useAcceptDeclineMatch = () => { 
-    const queryClient = useQueryClient()
-    const { mutate: acceptOrDecline, isPending } = useMutation({
-        mutationFn: async (data: { inviteStatus: "accepted" | "declined", userId: string}) => {
-            try {
-                const response = await axiosClient.put(`/invite/admin/${data?.userId}`, { inviteStatus: data.inviteStatus });
-                if (response.data?.status === false) {
-                    throw new Error(response.data?.message || `Failed to ${data.inviteStatus} match`);
-                }
-                return response.data
-            } catch (error: any) {
-                if (error instanceof AxiosError) {
-                    toast.error(error.response?.data?.message || `Failed to ${data.inviteStatus} match`)
-                } else if (error instanceof Error) {
-                    toast.error(error.message)
-                } else {
-                    toast.error(`An unexpected error occured while trying to ${data.inviteStatus} match`)
-                }
-
-                throw error;
-            }
-        },
-        onSuccess: (data) => {
-            toast.success(data.message)
-            queryClient.invalidateQueries({ queryKey: ['projects'] })
+export const useAcceptDeclineMatch = () => {
+  const queryClient = useQueryClient();
+  const { mutate: acceptOrDecline, isPending } = useMutation({
+    mutationFn: async (data: {
+      inviteStatus: "accepted" | "declined";
+      userId: string;
+    }) => {
+      try {
+        const response = await axiosClient.put(
+          `/invite/admin/${data?.userId}`,
+          { inviteStatus: data.inviteStatus }
+        );
+        if (response.data?.status === false) {
+          throw new Error(
+            response.data?.message || `Failed to ${data.inviteStatus} match`
+          );
         }
-    })
+        return response.data;
+      } catch (error: any) {
+        if (error instanceof AxiosError) {
+          toast.error(
+            error.response?.data?.message ||
+              `Failed to ${data.inviteStatus} match`
+          );
+        } else if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error(
+            `An unexpected error occured while trying to ${data.inviteStatus} match`
+          );
+        }
 
-    return { acceptOrDecline, isPending }
-}
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      toast.success(data.message);
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+
+  return { acceptOrDecline, isPending };
+};
