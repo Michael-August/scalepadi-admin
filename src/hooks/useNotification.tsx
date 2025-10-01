@@ -21,7 +21,7 @@ export interface NotificationsResponse {
   };
 }
 
-// API functions
+
 const fetchNotifications = async (): Promise<NotificationsResponse> => {
   try {
     const response = await axiosClient.get('/notifications');
@@ -90,7 +90,7 @@ export const useNotifications = () => {
   const { data, isLoading, error } = useQuery<NotificationsResponse>({
     queryKey: ['notifications'],
     queryFn: fetchNotifications,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
   });
 

@@ -378,18 +378,18 @@ const ExpertDetails = () => {
                                       <TooltipTrigger asChild>
                                         {(() => {
                                           const isExpertAssigned =
-                                            project.experts?.some(
-                                              (expert) => expert.id === expertId
+                                            project?.experts?.some(
+                                              (expert) => expert?.id === expertId
                                             );
                                           return (
                                             <Button
                                               onClick={() => {
                                                 setAssigningProjects((prev) =>
-                                                  new Set(prev).add(project.id)
+                                                  new Set(prev).add(project?.id)
                                                 );
                                                 inviteExperts(
                                                   {
-                                                    projectId: project.id,
+                                                    projectId: project?.id,
                                                     expertIds: [expertId],
                                                   },
                                                   {
@@ -398,8 +398,8 @@ const ExpertDetails = () => {
                                                         (prev) => {
                                                           const newSet =
                                                             new Set(prev);
-                                                          newSet.delete(
-                                                            project.id
+                                                          newSet?.delete(
+                                                            project?.id
                                                           );
                                                           return newSet;
                                                         }
@@ -410,8 +410,8 @@ const ExpertDetails = () => {
                                                         (prev) => {
                                                           const newSet =
                                                             new Set(prev);
-                                                          newSet.delete(
-                                                            project.id
+                                                          newSet?.delete(
+                                                            project?.id
                                                           );
                                                           return newSet;
                                                         }
@@ -424,12 +424,12 @@ const ExpertDetails = () => {
                                               className="bg-primary text-primary-foreground hover:bg-primary/90 ml-auto"
                                               disabled={
                                                 isExpertAssigned ||
-                                                assigningProjects.has(
-                                                  project.id
+                                                assigningProjects?.has(
+                                                  project?.id
                                                 )
                                               }
                                             >
-                                              {assigningProjects.has(project.id)
+                                              {assigningProjects.has(project?.id)
                                                 ? "Assigning..."
                                                 : "Assign"}
                                             </Button>
@@ -437,7 +437,7 @@ const ExpertDetails = () => {
                                         })()}
                                       </TooltipTrigger>
                                       {project.experts?.some(
-                                        (expert) => expert.id === expertId
+                                        (expert) => expert?.id === expertId
                                       ) && (
                                         <TooltipContent>
                                           <p>

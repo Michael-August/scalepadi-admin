@@ -107,7 +107,7 @@ const SignIn = () => {
                                     </button>
                                 </div>
                                 {errors.password && <span className="text-red-600 text-sm">{errors.password.message}</span>}
-                                <Link href='' className="font-normal text-sm text-[#878A93] cursor-pointer">
+                                <Link href='/forgot-password' className="font-normal text-sm text-[#878A93] cursor-pointer">
                                     Forgot password
                                 </Link>
                             </div>
