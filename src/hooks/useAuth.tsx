@@ -86,7 +86,7 @@ export const useForgotPassword = () => {
   const { mutate: forgotPassword, isPending } = useMutation({
     mutationFn: async (data: { email: string }) => {
       try {
-        const res = await axiosClient.post("/forgot-password-expert", data);
+        const res = await axiosClient.post("/forgot-password-admin", data);
         if (res.data?.status === false) {
           throw new Error(
             res.data?.message ||
@@ -114,7 +114,7 @@ export const useResetPassword = () => {
       confirmPassword: string;
     }) => {
       try {
-        const res = await axiosClient.put("/reset-password-expert", data);
+        const res = await axiosClient.put("/reset-password-admin", data);
         if (res.data?.status === false) {
           throw new Error(
             res.data?.message || "An error occurred during password reset"
@@ -164,7 +164,7 @@ export const useLogout = () => {
   const { mutate: logout, isPending } = useMutation({
     mutationFn: async () => {
       try {
-        const res = await axiosClient.post("/logout/business");
+        const res = await axiosClient.post("/logout/admin");
         if (res.data?.status === false) {
           throw new Error(
             res.data?.message || "An error occurred during logout"

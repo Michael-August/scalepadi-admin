@@ -7,7 +7,7 @@ import { Providers } from "@/components/wrappers/providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ScalePadi for Business",
+  title: "ScalePadi for Admins",
   description: "",
 };
 

@@ -4,27 +4,23 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 
 const Protected = ({ children }: { children: React.ReactNode }) => {
+  const router = useRouter();
 
-    const router = useRouter();
+  const { admin } = useGetAdminByToken();
 
-    const { admin } = useGetAdminByToken()
+//   console.log(admin);
+  useEffect(() => {
+    if (!localStorage.getItem("token")) {
+      toast.info("You need to login first");
+      router.replace("/signin");
+    }
 
-    useEffect(() => {
-        if (!localStorage.getItem("token")) { 
-            toast.info("You need to login first")
-            router.replace('/signin');
-        }
+    if (admin) {
+      localStorage.setItem("user", JSON.stringify(admin));
+    }
+  }, [admin]);
 
-        if (admin?.status === true) {
-            localStorage.setItem("user", JSON.stringify(admin.data))
-        } 
-    }, [admin]);
-
-    return (
-        <>
-            {children}
-        </>
-    )
-}
+  return <>{children}</>;
+};
 
 export default Protected;
