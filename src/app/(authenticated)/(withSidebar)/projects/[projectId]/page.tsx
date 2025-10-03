@@ -292,7 +292,7 @@ const ProjectDetails = () => {
           onSuccess: () => {
             setIsTaskModalOpen(false);
             setUploading(false);
-            toast.success("Task updated successfully");
+            // toast.success("Task updated successfully");
             setEditingTask(null);
           },
           onError: () => {
@@ -311,7 +311,7 @@ const ProjectDetails = () => {
             setIsTaskModalOpen(false);
             setUploading(false);
             // refetchTasks();
-            toast.success("Task created successfully");
+            // toast.success("Task created successfully");
           },
           onError: () => {
             setUploading(false);
@@ -328,7 +328,7 @@ const ProjectDetails = () => {
       onSuccess: () => {
         setIsDeleteModalOpen(false);
         setTaskToDelete(null);
-        toast.success("Task deleted successfully");
+        // toast.success("Task deleted successfully");
       },
     });
   };
@@ -982,7 +982,8 @@ const ProjectDetails = () => {
                     onAssignmentComplete={() => {
                       setIsExpertAssignModalOpen(false);
                       setSelectedTaskForAssign(null);
-                      toast.success("Expert assigned successfully");
+                      // console.log(expert)
+                      // toast.success("Expert assigned successfully");
                     }}
                   />
                 ))

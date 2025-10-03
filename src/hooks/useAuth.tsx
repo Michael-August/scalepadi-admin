@@ -42,7 +42,7 @@ export const useLogin = () => {
           );
         }
         return res.data;
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (error instanceof AxiosError) {
           toast.error(error.response?.data?.message || `Failed to log in`);
         } else if (error instanceof Error) {
