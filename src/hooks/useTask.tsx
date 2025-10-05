@@ -67,6 +67,7 @@ export const useCreateTask = (options?: {
         if (response.data?.status === false) {
           throw new Error(response.data?.message || "Failed to create task.");
         }
+        toast.success(response.data?.message);
         console.log(response.data);
         return response.data;
       } catch (error: unknown) {
@@ -85,7 +86,7 @@ export const useCreateTask = (options?: {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
-      toast.success("Task created successfully!");
+      // toast.success("Task created successfully!");
       options?.onSuccess?.(data);
     },
     onError: (error) => {
@@ -185,6 +186,7 @@ export const useUpdateTask = (options?: {
         if (response.data?.status === false) {
           throw new Error(response.data?.message || "Failed to update task.");
         }
+        toast.success(response.data?.message);
         return response.data;
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
@@ -203,7 +205,7 @@ export const useUpdateTask = (options?: {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["task"] });
-      toast.success("Task updated successfully!");
+      // toast.success("Task updated successfully!");
       options?.onSuccess?.();
     },
     onError: () => {
@@ -225,6 +227,7 @@ export const useDeleteTask = (options?: {
         if (response.data?.status === false) {
           throw new Error(response.data?.message || "Failed to delete task.");
         }
+        toast.success(response.data?.message);
         console.log(response.data);
         return response.data;
       } catch (error: unknown) {
@@ -243,7 +246,7 @@ export const useDeleteTask = (options?: {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
-      toast.success("Task deleted successfully!");
+      // toast.success("Task deleted successfully!");
       options?.onSuccess?.();
     },
     onError: () => {
@@ -273,6 +276,7 @@ export const useAssignTask = (options?: {
         if (response.data?.status === false) {
           throw new Error(response.data?.message || "Failed to assign task.");
         }
+        toast.success(response.data?.message);
         return response.data;
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
@@ -291,7 +295,7 @@ export const useAssignTask = (options?: {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["task"] });
-      toast.success("Task assigned successfully!");
+      // toast.success("Task assigned successfully!");
       options?.onSuccess?.();
     },
     onError: () => {
@@ -337,4 +341,60 @@ export const useSearchTasks = (
   });
 
   return { taskList: data, isLoading, isError, error };
+};
+
+export const useUpdateTaskChanges = (options?: {
+  onSuccess?: () => void;
+  onError?: () => void;
+}) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      taskId,
+      status,
+      note
+    }: {
+      taskId: string;
+      status: "approved" | "needs-changes";
+      note: string;
+    }) => {
+      try {
+        const response = await axiosClient.put(
+          `/task/changes/${taskId}`,
+          {
+            status: status,
+            note: note
+          },
+        );
+        
+        if (response.data?.status === false) {
+          throw new Error(response.data?.message || "Failed to update task changes.");
+        }
+        // console.log(response.data);
+        toast.success(response.data?.message || "Task changes updated successfully!");
+        return response.data;
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          toast.error(
+            error.response?.data?.message || "Failed to update task changes."
+          );
+        } else if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error("An unexpected error occurred while updating task changes.");
+        }
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["task"] });
+      options?.onSuccess?.();
+    },
+    onError: () => {
+      options?.onError?.();
+    },
+  });
 };

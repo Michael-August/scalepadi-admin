@@ -27,14 +27,14 @@ export type Project = {
     status?: string;
     id: string;
   };
-  experts?: { id: string; name: string, image: string }[];
+  experts?: { id: { id: string }; name: string; image: string }[];
 };
 
 export const useGetAllProjects = (
-  currentPage: number = 1, 
-  itemsPerPage: number = 10, 
-  statusFilter: string = "all", 
-  sortBy: string = "createdAt", 
+  currentPage: number = 1,
+  itemsPerPage: number = 10,
+  statusFilter: string = "all",
+  sortBy: string = "createdAt",
   searchQuery: string = ""
 ) => {
   const { data, isLoading, error } = useQuery<{
@@ -48,7 +48,14 @@ export const useGetAllProjects = (
       data: Project[];
     };
   }>({
-    queryKey: ["projects", currentPage, itemsPerPage, statusFilter, sortBy, searchQuery],
+    queryKey: [
+      "projects",
+      currentPage,
+      itemsPerPage,
+      statusFilter,
+      sortBy,
+      searchQuery,
+    ],
     queryFn: async () => {
       try {
         // Build query parameters
@@ -56,17 +63,19 @@ export const useGetAllProjects = (
         params.append("page", currentPage.toString());
         params.append("limit", itemsPerPage.toString());
         params.append("sort", sortBy);
-        
+
         if (statusFilter && statusFilter !== "all") {
           params.append("status", statusFilter);
         }
-        
+
         if (searchQuery) {
           params.append("search", searchQuery);
         }
 
-        const response = await axiosClient.get(`/projects/admin?${params.toString()}`);
-        
+        const response = await axiosClient.get(
+          `/projects/admin?${params.toString()}`
+        );
+
         if (response.data?.status === false) {
           throw new Error(
             response.data?.message || "Failed to fetch projects."

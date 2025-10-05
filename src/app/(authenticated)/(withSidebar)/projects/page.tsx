@@ -43,31 +43,7 @@ import {
   useInviteExperts,
   useSearchExpert,
 } from "@/hooks/useExpert";
-
-export type Project = {
-  id: string;
-  title: string;
-  status: "pending" | "in-progress" | "completed";
-  createdAt: string;
-  dueDate?: string;
-  brief?: string;
-  goal?: string;
-  resources?: string[];
-  proposedTotalCost?: number;
-  paymentStatus?: string;
-  adminApproved?: boolean;
-  requestSupervisor?: boolean;
-  businessId?: {
-    name: string;
-    title?: string;
-    email?: string;
-    phone?: string;
-    verified?: boolean;
-    status?: string;
-    id: string;
-  };
-  experts?: { id: string; name: string; image: string }[];
-};
+import { Project } from "@/hooks/useProjects";
 
 export interface SocialLinks {
   linkedin?: string;
@@ -224,7 +200,9 @@ const ExpertSelectionRow = ({
           className="min-w-[100px]"
           onClick={(e) => {
             e.stopPropagation();
-            !isAlreadyAssigned && onSelect(expert.id);
+            if (!isAlreadyAssigned) {
+              onSelect(expert.id);
+            }
           }}
         >
           {isAlreadyAssigned
@@ -589,7 +567,6 @@ const Projects = () => {
 
   const [expertCurrentPage, setExpertCurrentPage] = useState(1);
   const [expertSearchTerm, setExpertSearchTerm] = useState("");
-  const [expertRowsPerPage, setExpertRowsPerPage] = useState("10");
   const [selectedExpertIds, setSelectedExpertIds] = useState<string[]>([]);
 
   const router = useRouter();
@@ -601,15 +578,16 @@ const Projects = () => {
     searchTerm
   );
 
-  const { expertList: allExperts, isLoading: isLoadingAllExperts } =
-    useGetAllExpert(expertCurrentPage, parseInt(expertRowsPerPage));
+  const { expertList: allExperts, isLoading: isLoadingAllExperts } = useGetAllExpert(
+    expertCurrentPage,
+    10
+  );
 
-  const { expertList: searchResults, isLoading: isLoadingExperts } =
-    useSearchExpert(
-      expertSearchTerm,
-      expertCurrentPage,
-      parseInt(expertRowsPerPage)
-    );
+  const { expertList: searchResults, isLoading: isLoadingExperts } = useSearchExpert(
+    expertSearchTerm,
+    expertCurrentPage,
+    10
+  );
 
   const expertsToDisplay = expertSearchTerm
     ? searchResults?.data
@@ -655,7 +633,7 @@ const Projects = () => {
   }, [projectList]);
   
   const assignedExpertIds = useMemo(() => {
-    return selectedProject?.experts?.map((expert) => expert.id) || [];
+    return selectedProject?.experts?.map((expert) => expert.id.id) || [];
   }, [selectedProject]);
 
   

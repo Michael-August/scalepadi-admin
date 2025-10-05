@@ -97,7 +97,7 @@ const Experts = () => {
   );
 
   const activeList = searchTerm ? searchResults : expertList;
-
+console.log(activeList)
   const totalPages = activeList?.data?.totalPages ?? 1;
   const currentPage = activeList?.data?.currentPage ?? 1;
   const totalItems = activeList?.data?.totalItems ?? 0;
