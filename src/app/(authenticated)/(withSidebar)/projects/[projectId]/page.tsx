@@ -34,15 +34,24 @@ import {
   useUpdateTask,
   useDeleteTask,
   useAssignTask,
+  useUpdateTaskChanges,
 } from "@/hooks/useTask";
 import { toast } from "sonner";
 import { useGetAllExpert } from "@/hooks/useExpert";
+import Link from "next/link";
 
 type Task = {
   id: string;
   title: string;
   description: string;
-  status: "pending" | "in-progress" | "completed";
+  status:
+    | "pending"
+    | "in-progress"
+    | "completed"
+    | "approved"
+    | "need-changes"
+    | "assigned"
+    | "not-assigned";
   dueDate: string;
   link?: string[];
   document?: string[];
@@ -52,6 +61,7 @@ type Task = {
     email?: string;
     profilePicture?: string;
   };
+  submission?: string[];
   assignedTo?: {
     id: string;
     name: string;
@@ -68,7 +78,7 @@ type Expert = {
   email: string;
   status: "active" | "inactive";
   category: string;
-  image?: string;
+  profilePicture?: string;
   phone: string;
   gender: string;
   verified: boolean;
@@ -126,22 +136,22 @@ const ExpertAssignmentItem = ({
     <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-          {expert.image ? (
+          {expert.profilePicture ? (
             <Image
-              src={expert.image}
+              src={expert.profilePicture}
               alt="Expert"
               width={40}
               height={40}
-              className="rounded-full"
+              className="rounded-full object-fit"
             />
           ) : (
             <span className="text-sm font-medium">{expert.name.charAt(0)}</span>
           )}
         </div>
         <div>
-          <p className="font-medium text-sm">{expert.name}</p>
+          <p className="font-medium text-sm capitalize">{expert.name}</p>
           {expert.category && (
-            <p className="text-xs text-gray-500">{expert.category}</p>
+            <p className="text-xs text-gray-500 capitalize">{expert.category}</p>
           )}
           <div className="flex items-center gap-2 mt-1">
             {expert.verified && (
@@ -151,7 +161,7 @@ const ExpertAssignmentItem = ({
               </div>
             )}
             <span
-              className={`text-xs px-2 py-0.5 rounded-full ${
+              className={`text-xs px-2 py-0.5 rounded-full capitalize ${
                 expert.status === "active"
                   ? "bg-green-100 text-green-800"
                   : "bg-gray-100 text-gray-800"
@@ -175,14 +185,18 @@ const ExpertAssignmentItem = ({
 };
 
 const ProjectDetails = () => {
-  const [activeTab, setActiveTab] = useState<"projectOverview" | "taskTracker">("projectOverview");
+  const [activeTab, setActiveTab] = useState<"projectOverview" | "taskTracker">(
+    "projectOverview"
+  );
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isTaskDetailsModalOpen, setIsTaskDetailsModalOpen] = useState(false);
   const [isExpertAssignModalOpen, setIsExpertAssignModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [selectedTaskForAssign, setSelectedTaskForAssign] = useState<string | null>(null);
+  const [selectedTaskForAssign, setSelectedTaskForAssign] = useState<
+    string | null
+  >(null);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [approvalStatus, setApprovalStatus] = useState<boolean>(true);
@@ -198,14 +212,48 @@ const ProjectDetails = () => {
   });
   const [uploading, setUploading] = useState(false);
 
+  const [showNoteInput, setShowNoteInput] = useState<
+    "approved" | "needs-changes" | null
+  >(null);
+  const [note, setNote] = useState("");
+
+  const updateTaskChangesMutation = useUpdateTaskChanges({
+    onSuccess: () => {
+      setShowNoteInput(null);
+      setNote("");
+    },
+    onError: () => {
+      // Optional: handle error state if needed
+    },
+  });
+
+  const handleStatusUpdate = (
+    status: "approved" | "needs-changes",
+    note: string,
+    taskId: string
+  ) => {
+    if (!note.trim()) {
+      toast.error("Please enter a note before submitting.");
+      return;
+    }
+
+    updateTaskChangesMutation.mutate({
+      taskId: taskId,
+      status: status,
+      note: note.trim(),
+    });
+  };
+
   const params = useParams();
   const projectId = params.projectId as string;
 
   const { projectDetails, isLoading } = useGetProjectById(projectId);
   const { projectTasks, isLoading: tasksLoading } =
     useGetProjectTasks(projectId);
-    // console.log(projectDetails)
+  console.log(projectDetails);
   const { expertList, isLoading: expertsLoading } = useGetAllExpert();
+  console.log(expertList);
+  console.log(projectTasks);
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
   const deleteTaskMutation = useDeleteTask();
@@ -388,6 +436,17 @@ const ProjectDetails = () => {
     setIsExpertAssignModalOpen(true);
   };
 
+  const statusColors = {
+    completed: "bg-green-100 text-green-800",
+    approved: "bg-blue-100 text-blue-800",
+    "in-progress": "bg-indigo-100 text-indigo-800",
+    assigned: "bg-orange-100 text-orange-800",
+    "not-assigned": "bg-gray-100 text-gray-800",
+    "need-changes": "bg-red-100 text-red-800",
+    default: "bg-yellow-100 text-yellow-800",
+    pending: "bg-yellow-100 text-yellow-800",
+  };
+
   if (isLoading || tasksLoading) {
     return <ProjectSkeleton />;
   }
@@ -481,7 +540,7 @@ const ProjectDetails = () => {
                 <input
                   type="number"
                   value={proposedTotalCost}
-                  onChange={e => setProposedTotalCost(Number(e.target.value))}
+                  onChange={(e) => setProposedTotalCost(Number(e.target.value))}
                   min="0"
                   className="w-full p-2 border border-gray-300 rounded-lg"
                 />
@@ -494,7 +553,7 @@ const ProjectDetails = () => {
                 <input
                   type="number"
                   value={discount}
-                  onChange={e => {
+                  onChange={(e) => {
                     const newDiscount = Number(e.target.value);
                     setDiscount(Math.min(newDiscount, proposedTotalCost));
                   }}
@@ -509,7 +568,7 @@ const ProjectDetails = () => {
                   Final Amount
                 </label>
                 <div className="p-2 bg-gray-100 rounded-lg font-medium">
-                  ₦{(Math.max(0, proposedTotalCost - discount)).toLocaleString()}
+                  ₦{Math.max(0, proposedTotalCost - discount).toLocaleString()}
                 </div>
               </div>
             </div>
@@ -768,8 +827,16 @@ const ProjectDetails = () => {
                         className={`px-3 py-1 rounded-full text-sm capitalize font-medium ${
                           selectedTask.status === "completed"
                             ? "bg-green-100 text-green-800"
-                            : selectedTask.status === "in-progress"
+                            : selectedTask.status === "approved"
                             ? "bg-blue-100 text-blue-800"
+                            : selectedTask.status === "in-progress"
+                            ? "bg-indigo-100 text-indigo-800"
+                            : selectedTask.status === "assigned"
+                            ? "bg-orange-100 text-orange-800"
+                            : selectedTask.status === "not-assigned"
+                            ? "bg-gray-100 text-gray-800"
+                            : selectedTask.status === "need-changes"
+                            ? "bg-red-100 text-red-800"
                             : "bg-yellow-100 text-yellow-800"
                         }`}
                       >
@@ -821,15 +888,6 @@ const ProjectDetails = () => {
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">
-                        Last Updated:
-                      </span>
-                      <span className="text-sm font-medium">
-                        {/* {format(new Date(task.dueDate), "MMM d, yyyy")} */}
-                        {/* {format(new Date(selectedTask.updatedAt), "MMM d, yyyy") || 0} */}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Due Date:</span>
                       <span className="text-sm font-medium">
                         {format(new Date(selectedTask.dueDate), "MMM d, yyyy")}
@@ -873,64 +931,323 @@ const ProjectDetails = () => {
                 )}
               </div>
 
-              {/* Links Section */}
-              {selectedTask.link && selectedTask.link.length > 0 && (
-                <div>
-                  <h5 className="font-semibold mb-3">
-                    Reference Links ({selectedTask.link.length})
-                  </h5>
-                  <div className="space-y-2">
-                    {selectedTask.link.map((link, index) => (
-                      <a
-                        key={index}
-                        href={link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <Link2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                        <span className="text-sm text-blue-600 truncate flex-1">
-                          {link}
+              {/* Expert Details Section */}
+              {selectedTask.assignedTo && (
+                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 relative rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                      {selectedTask.assignedTo.profilePicture ? (
+                        <Image
+                          src={selectedTask.assignedTo.profilePicture}
+                          alt="Expert Profile"
+                          layout="fill"
+                          objectFit="cover"
+                        />
+                      ) : (
+                        <span className="text-lg font-medium">
+                          {selectedTask.assignedTo.name?.charAt(0) || "E"}
                         </span>
-                        <Eye className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      </a>
-                    ))}
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[#1A1A1A] font-medium text-base">
+                          {selectedTask.assignedTo.name}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Star className="w-3 h-3 text-[#F2BB05] fill-[#F6CF50]" />
+                          <Star className="w-3 h-3 text-[#F2BB05] fill-[#F6CF50]" />
+                          <Star className="w-3 h-3 text-[#F2BB05] fill-[#F6CF50]" />
+                          <Star className="w-3 h-3 text-[#F2BB05] fill-[#F6CF50]" />
+                          <Star className="w-3 h-3 text-[#CFD0D4] fill-[#E7ECEE]" />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1 font-medium text-[#48c629] text-sm">
+                          <Verified className="w-3 h-3 text-[#48c629]" />
+                          <span>Verified</span>
+                        </span>
+                        <span className="flex items-center gap-1 font-medium text-[#878A93] text-sm">
+                          <Pin className="w-3 h-3 text-[#878A93]" />
+                          Remote
+                        </span>
+                        <span className="flex items-center gap-1 font-medium text-[#878A93] text-sm">
+                          <Clock className="w-3 h-3 text-[#878A93]" />
+                          Available
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl"
+                      >
+                        Message Expert
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl"
+                      >
+                        Reassign
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Documents Section */}
-              {selectedTask.document && selectedTask.document.length > 0 && (
-                <div>
-                  <h5 className="font-semibold mb-3">
-                    Documents ({selectedTask.document.length})
-                  </h5>
-                  <div className="space-y-2">
-                    {selectedTask.document.map((doc, index) => (
-                      <a
-                        key={index}
-                        href={doc}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <FileText className="w-5 h-5 text-gray-400" />
-                          <div>
-                            <p className="text-sm font-medium">
-                              Document {index + 1}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Click to download
-                            </p>
-                          </div>
+              {/* Task Resources */}
+              {((selectedTask.link && selectedTask.link.length > 0) ||
+                (selectedTask.document &&
+                  selectedTask.document.length > 0)) && (
+                <div className="flex flex-col gap-3">
+                  <h5 className="font-semibold">Task Resources</h5>
+
+                  {/* Links */}
+                  {selectedTask.link && selectedTask.link.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTask.link.map((link, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
+                        >
+                          <Link2 />
+                          <input
+                            type="text"
+                            className="w-full outline-none text-sm text-[#727374] bg-transparent"
+                            value={link}
+                            readOnly
+                          />
                         </div>
-                        <Download className="w-4 h-4 text-gray-400" />
-                      </a>
-                    ))}
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Documents */}
+                  {selectedTask.document &&
+                    selectedTask.document.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {selectedTask.document.map((doc, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Image
+                                src="/icons/file-icon.svg"
+                                alt="file icon"
+                                width={16}
+                                height={16}
+                              />
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-sm font-medium text-[#1A1A1A] truncate">
+                                  Document {index + 1}
+                                </span>
+                                <span className="text-xs text-[#878A93]">
+                                  PDF File
+                                </span>
+                              </div>
+                            </div>
+                            <a
+                              href={doc}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Download className="w-4 h-4 text-[#878A93] cursor-pointer hover:text-primary" />
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                </div>
+              )}
+
+              {/* Task Progress Actions */}
+              {selectedTask.assignee && !selectedTask.submission?.length && (
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[#878A93] text-sm font-medium">
+                      Task Progress
+                    </span>
+                    <span className="text-[#727374] text-sm">
+                      Track completion and review submissions
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl"
+                      onClick={() => setShowNoteInput("needs-changes")}
+                    >
+                      Request Update
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl hover:bg-primary-hover"
+                      onClick={() => setShowNoteInput("approved")}
+                    >
+                      Mark as Completed
+                    </Button>
                   </div>
                 </div>
               )}
+
+              {/* Submissions Section */}
+              {selectedTask.submission &&
+                selectedTask.submission.length > 0 && (
+                  <div className="pt-3 border-t border-gray-100">
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[#878A93] text-sm font-medium">
+                          Task Progress
+                        </span>
+                        <span className="text-[#727374] text-sm">
+                          Track completion and review submissions
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-xl"
+                          onClick={() => setShowNoteInput("needs-changes")}
+                        >
+                          Request Update
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-xl hover:bg-primary-hover"
+                          onClick={() => setShowNoteInput("approved")}
+                        >
+                          Mark as Completed
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Note Input */}
+                    {showNoteInput && (
+                      <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                        <div className="flex flex-col gap-3">
+                          <label className="text-sm font-medium text-gray-700">
+                            Add a note for{" "}
+                            {showNoteInput === "approved"
+                              ? "approval"
+                              : "changes"}
+                            :
+                          </label>
+                          <textarea
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            placeholder="Enter your feedback here..."
+                            className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            rows={3}
+                          />
+                          <div className="flex items-center gap-2 justify-end">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setShowNoteInput(null);
+                                setNote("");
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="bg-primary text-white hover:bg-primary-hover"
+                              onClick={() =>
+                                handleStatusUpdate(
+                                  showNoteInput,
+                                  note,
+                                  selectedTask?.id
+                                )
+                              }
+                              disabled={updateTaskChangesMutation.isPending}
+                            >
+                              {updateTaskChangesMutation.isPending
+                                ? "Updating..."
+                                : "Submit"}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col gap-3">
+                      <span className="text-[#878A93] text-sm font-medium mt-4">
+                        Submissions ({selectedTask.submission.length})
+                      </span>
+
+                      {/* Links */}
+                      <div className="flex flex-wrap gap-2">
+                        {(
+                          selectedTask?.submission?.filter(
+                            (item: string) =>
+                              !item.includes("res.cloudinary.com")
+                          ) || []
+                        )?.map((link: string, index: number) => (
+                          <Link
+                            href={link}
+                            target="_blank"
+                            key={index}
+                            className="flex items-center cursor-pointer gap-2 p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
+                          >
+                            <Link2 />
+                            <input
+                              type="text"
+                              className="w-full outline-none text-sm text-[#727374] bg-transparent"
+                              value={link}
+                              readOnly
+                            />
+                          </Link>
+                        ))}
+                      </div>
+
+                      {/* Documents */}
+                      <div className="flex flex-wrap gap-2">
+                        {(
+                          selectedTask?.submission?.filter((item: string) =>
+                            item.includes("res.cloudinary.com")
+                          ) || []
+                        )?.map((doc: string, index: number) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Image
+                                src="/icons/file-icon.svg"
+                                alt="file icon"
+                                width={16}
+                                height={16}
+                              />
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-sm font-medium text-[#1A1A1A] truncate">
+                                  Document {index + 1}
+                                </span>
+                                <span className="text-xs text-[#878A93]">
+                                  File
+                                </span>
+                              </div>
+                            </div>
+                            <a
+                              href={doc}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Download className="w-4 h-4 text-[#878A93] cursor-pointer hover:text-primary" />
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
               {/* Task Actions */}
               <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
@@ -1292,11 +1609,7 @@ const ProjectDetails = () => {
                           </h4>
                           <span
                             className={`px-2 py-1 rounded-full text-xs capitalize font-medium ${
-                              task.status === "completed"
-                                ? "bg-green-100 text-green-800"
-                                : task.status === "in-progress"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-yellow-100 text-yellow-800"
+                              statusColors[task?.status] || statusColors.default
                             }`}
                           >
                             {task.status}
@@ -1434,12 +1747,7 @@ const ProjectDetails = () => {
                                 key={index}
                                 className="flex items-center gap-2 p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
                               >
-                                <Image
-                                  src="/icons/list.svg"
-                                  alt="link icon"
-                                  width={16}
-                                  height={16}
-                                />
+                                <Link2 />
                                 <input
                                   type="text"
                                   className="w-full outline-none text-sm text-[#727374] bg-transparent"
@@ -1515,6 +1823,159 @@ const ProjectDetails = () => {
                           >
                             Mark as Completed
                           </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Submissions */}
+                    {task.submission && task.submission.length > 0 && (
+                      <div className="pt-3 border-t border-gray-100">
+                        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[#878A93] text-sm font-medium">
+                              Task Progress
+                            </span>
+                            <span className="text-[#727374] text-sm">
+                              Track completion and review submissions
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="rounded-xl"
+                              onClick={() => setShowNoteInput("needs-changes")}
+                            >
+                              Request Update
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="rounded-xl hover:bg-primary-hover"
+                              onClick={() => setShowNoteInput("approved")}
+                            >
+                              Mark as Completed
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Note Input */}
+                        {showNoteInput && (
+                          <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                            <div className="flex flex-col gap-3">
+                              <label className="text-sm font-medium text-gray-700">
+                                Add a note for{" "}
+                                {showNoteInput === "approved"
+                                  ? "approval"
+                                  : "changes"}
+                                :
+                              </label>
+                              <textarea
+                                value={note}
+                                onChange={(e) => setNote(e.target.value)}
+                                placeholder="Enter your feedback here..."
+                                className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                rows={3}
+                              />
+                              <div className="flex items-center gap-2 justify-end">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setShowNoteInput(null);
+                                    setNote("");
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="bg-primary text-white hover:bg-primary-hover"
+                                  onClick={() =>
+                                    handleStatusUpdate(
+                                      showNoteInput,
+                                      note,
+                                      task?.id
+                                    )
+                                  }
+                                  disabled={updateTaskChangesMutation.isPending}
+                                >
+                                  {updateTaskChangesMutation.isPending
+                                    ? "Updating..."
+                                    : "Submit"}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex flex-col gap-3">
+                          <span className="text-[#878A93] text-sm font-medium mt-4">
+                            Submissions
+                          </span>
+
+                          {/* Links */}
+                          <div className="flex flex-wrap gap-2">
+                            {(
+                              task?.submission?.filter(
+                                (item: string) =>
+                                  !item.includes("res.cloudinary.com")
+                              ) || []
+                            )?.map((link: string, index: number) => (
+                              <Link
+                                href={link}
+                                target="_blank"
+                                key={index}
+                                className="flex items-center cursor-pointer gap-2 p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
+                              >
+                                <Link2 />
+                                <input
+                                  type="text"
+                                  className="w-full outline-none text-sm text-[#727374] bg-transparent"
+                                  value={link}
+                                  readOnly
+                                />
+                              </Link>
+                            ))}
+                          </div>
+
+                          {/* Documents */}
+                          <div className="flex flex-wrap gap-2">
+                            {(
+                              task?.submission?.filter((item: string) =>
+                                item.includes("res.cloudinary.com")
+                              ) || []
+                            )?.map((doc: string, index: number) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Image
+                                    src="/icons/file-icon.svg"
+                                    alt="file icon"
+                                    width={16}
+                                    height={16}
+                                  />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="text-sm font-medium text-[#1A1A1A] truncate">
+                                      Document {index + 1}
+                                    </span>
+                                    <span className="text-xs text-[#878A93]">
+                                      File
+                                    </span>
+                                  </div>
+                                </div>
+                                <a
+                                  href={doc}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <Download className="w-4 h-4 text-[#878A93] cursor-pointer hover:text-primary" />
+                                </a>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}

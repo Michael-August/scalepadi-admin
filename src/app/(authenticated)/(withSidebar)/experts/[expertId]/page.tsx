@@ -73,6 +73,12 @@ export interface ExpertDetails {
     linkedin: string;
     website: string;
   };
+  expert: {
+    id: string;
+    github: string;
+    linkedin: string;
+    website: string;
+  };
 }
 
 const ExpertDetails = () => {
@@ -97,9 +103,8 @@ const ExpertDetails = () => {
     projectSearchTerm
   );
 
-  // console.log(expertDetails)
+  console.log(projectList?.data);
   const { mutate: inviteExperts } = useInviteExperts();
-
 
   if (isLoading) {
     return <ProjectSkeleton />;
@@ -144,7 +149,9 @@ const ExpertDetails = () => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-5">
               <div className="w-[76px] relative h-[76px] rounded-full">
                 <Image
-                  src={expertDetails?.profilePicture}
+                  src={
+                    expertDetails?.profilePicture || "/images/profile-pic.svg"
+                  }
                   alt="Profile Picture"
                   width={76}
                   height={76}
@@ -253,7 +260,245 @@ const ExpertDetails = () => {
                           </TableHead>
                         </TableRow>
                       </TableHeader>
+
                       <TableBody>
+                        {projectsLoading ? (
+                          [...Array(5)].map((_, i) => (
+                            <TableRow
+                              key={`skeleton-${i}`}
+                              className="hover:bg-gray-50/50"
+                            >
+                              <TableCell className="py-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-4 h-4 rounded bg-gray-200 animate-pulse" />
+                                  <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-4 h-4 rounded-full bg-gray-200 animate-pulse" />
+                                  <div className="h-4 w-28 bg-gray-200 rounded animate-pulse" />
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-4">
+                                <div className="flex -space-x-2">
+                                  {[...Array(3)].map((_, j) => (
+                                    <div
+                                      key={`skeleton-exp-${i}-${j}`}
+                                      className="h-6 w-6 rounded-full bg-gray-200 animate-pulse"
+                                    />
+                                  ))}
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-4">
+                                <div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse" />
+                              </TableCell>
+                              <TableCell className="py-4 text-right">
+                                <div className="h-9 w-20 bg-gray-200 rounded-md animate-pulse ml-auto" />
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : projectList?.data && projectList.data.length > 0 ? (
+                          projectList.data.map((project, projectIndex) => {
+                            const statusColor =
+                              project.status === "completed"
+                                ? "text-green-600"
+                                : project.status === "in-progress"
+                                ? "text-blue-600"
+                                : "text-amber-600";
+
+                            const badgeColor =
+                              project.status === "completed"
+                                ? "bg-green-100 text-green-800"
+                                : project.status === "in-progress"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-amber-100 text-amber-800";
+
+                            return (
+                              <TableRow
+                                key={project?.id || `project-${projectIndex}`}
+                                className="hover:bg-gray-50/50"
+                              >
+                                <TableCell className="py-4 text-gray-700 text-sm truncate">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
+                                      <FolderOpen
+                                        className={`w-4 h-4 ${statusColor}`}
+                                      />
+                                    </div>
+                                    <span>{project?.title || "N/A"}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="py-4 text-gray-700 text-sm truncate">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
+                                      <User
+                                        className={`h-3 w-3 ${statusColor}`}
+                                      />
+                                    </div>
+                                    <span>
+                                      {project?.businessId?.name || "N/A"}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="py-4">
+                                  <div className="flex -space-x-2">
+                                    {project?.experts
+                                      ?.slice(0, 3)
+                                      .map((exp, expIndex) => (
+                                        <div
+                                          key={
+                                            exp?.id?.id ||
+                                            `${
+                                              project?.id || "proj"
+                                            }-exp-${expIndex}`
+                                          }
+                                          className="relative h-7 w-7 rounded-full overflow-hidden border-2 border-white shadow-sm bg-gray-100 flex items-center justify-center"
+                                        >
+                                          {exp?.image ? (
+                                            <Image
+                                              src={exp?.image}
+                                              alt={exp?.name || "Expert"}
+                                              fill
+                                              className="object-cover"
+                                            />
+                                          ) : (
+                                            <User
+                                              className={`h-4 w-4 ${statusColor}`}
+                                            />
+                                          )}
+                                        </div>
+                                      ))}
+                                    {project?.experts &&
+                                      project.experts.length > 3 && (
+                                        <div className="relative h-7 w-7 rounded-full overflow-hidden border-2 border-white bg-gray-200 flex items-center justify-center text-xs font-medium">
+                                          +{project.experts.length - 3}
+                                        </div>
+                                      )}
+                                    {(!project?.experts ||
+                                      project.experts.length === 0) && (
+                                      <span className="text-xs text-gray-500">
+                                        None
+                                      </span>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="py-4">
+                                  <span
+                                    className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize w-[90px] sm:w-[100px] md:w-[80px] truncate text-center flex justify-center ${badgeColor}`}
+                                  >
+                                    {project?.status?.replace("-", " ") ||
+                                      "unknown"}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="py-4 text-right">
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div>
+                                          <Button
+                                            onClick={() => {
+                                              setAssigningProjects((prev) =>
+                                                new Set(prev).add(project?.id)
+                                              );
+                                              inviteExperts(
+                                                {
+                                                  projectId: project?.id,
+                                                  expertIds: [expertId],
+                                                },
+                                                {
+                                                  onSuccess: () => {
+                                                    setAssigningProjects(
+                                                      (prev) => {
+                                                        const newSet = new Set(
+                                                          prev
+                                                        );
+                                                        newSet.delete(
+                                                          project?.id
+                                                        );
+                                                        return newSet;
+                                                      }
+                                                    );
+                                                  },
+                                                  onError: () => {
+                                                    setAssigningProjects(
+                                                      (prev) => {
+                                                        const newSet = new Set(
+                                                          prev
+                                                        );
+                                                        newSet.delete(
+                                                          project?.id
+                                                        );
+                                                        return newSet;
+                                                      }
+                                                    );
+                                                  },
+                                                }
+                                              );
+                                            }}
+                                            size="sm"
+                                            className="bg-primary text-primary-foreground hover:bg-primary/90 ml-auto w-[90px] sm:w-[100px] md:w-[80px]"
+                                            disabled={
+                                              project?.experts?.some(
+                                                (expert) =>
+                                                  expert?.id?.id === expertId
+                                              ) ||
+                                              assigningProjects?.has(
+                                                project?.id
+                                              )
+                                            }
+                                          >
+                                            {project?.experts?.some(
+                                              (expert) =>
+                                                expert?.id?.id === expertId
+                                            )
+                                              ? "Assigned"
+                                              : assigningProjects.has(
+                                                  project?.id
+                                                )
+                                              ? "Assigning..."
+                                              : "Assign"}
+                                          </Button>
+                                        </div>
+                                      </TooltipTrigger>
+
+                                      {project?.experts?.some(
+                                        (expert) => expert?.id?.id === expertId
+                                      ) && (
+                                        <TooltipContent>
+                                          <p>
+                                            This expert is already assigned to
+                                            this project.
+                                          </p>
+                                        </TooltipContent>
+                                      )}
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        ) : (
+                          <TableRow>
+                            <TableCell
+                              colSpan={5}
+                              className="text-center py-12 text-gray-500"
+                            >
+                              <div className="flex flex-col items-center justify-center gap-2">
+                                <FolderOpen className="h-10 w-10 text-gray-300" />
+                                <p>No projects found</p>
+                                {projectSearchTerm && (
+                                  <p className="text-sm">
+                                    Try adjusting your search term
+                                  </p>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+
+                      {/* <TableBody>
                         {projectsLoading ? (
                           [...Array(5)].map((_, i) => (
                             <TableRow key={i} className="hover:bg-gray-50/50">
@@ -470,7 +715,7 @@ const ExpertDetails = () => {
                             </TableCell>
                           </TableRow>
                         )}
-                      </TableBody>
+                      </TableBody> */}
                     </Table>
                   </div>
                 </SheetContent>
@@ -651,7 +896,7 @@ const ExpertDetails = () => {
                       Full Name
                     </span>
                     <span className="text-[#1A1A1A] text-base font-semibold">
-                      {expertDetails.name}
+                      {expertDetails.name || "N/A"}
                     </span>
                   </div>
                   <div className="flex flex-col gap-1">
@@ -659,7 +904,7 @@ const ExpertDetails = () => {
                       Email
                     </span>
                     <span className="text-[#1A1A1A] text-base font-semibold">
-                      {expertDetails.email}
+                      {expertDetails.email || "N/A"}
                     </span>
                   </div>
                   <div className="flex flex-col gap-1">
@@ -675,7 +920,7 @@ const ExpertDetails = () => {
                       Phone number
                     </span>
                     <span className="text-[#1A1A1A] text-base font-semibold">
-                      {expertDetails.phone}
+                      {expertDetails.phone || "N/A"}
                     </span>
                   </div>
                   <div className="flex flex-col gap-1">
@@ -709,7 +954,7 @@ const ExpertDetails = () => {
                       Years of experience
                     </span>
                     <span className="text-[#1A1A1A] text-base font-semibold">
-                      {expertDetails.yearsOfExperience}
+                      {expertDetails.yearsOfExperience || "Not specified"}
                     </span>
                   </div>
                   <div className="flex flex-col gap-1">
@@ -717,7 +962,7 @@ const ExpertDetails = () => {
                       Category
                     </span>
                     <span className="text-[#1A1A1A] text-base font-semibold capitalize">
-                      {expertDetails.category}
+                      {expertDetails.category || "Not specified"}
                     </span>
                   </div>
                   <div className="flex flex-col gap-1">
@@ -725,7 +970,7 @@ const ExpertDetails = () => {
                       Role
                     </span>
                     <span className="text-[#1A1A1A] text-base font-semibold capitalize">
-                      {expertDetails.role.join(", ") || "Not specified"}
+                      {expertDetails?.role.join(", ") || "Not specified"}
                     </span>
                   </div>
                 </div>

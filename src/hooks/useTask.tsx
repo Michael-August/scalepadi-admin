@@ -342,3 +342,59 @@ export const useSearchTasks = (
 
   return { taskList: data, isLoading, isError, error };
 };
+
+export const useUpdateTaskChanges = (options?: {
+  onSuccess?: () => void;
+  onError?: () => void;
+}) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      taskId,
+      status,
+      note
+    }: {
+      taskId: string;
+      status: "approved" | "needs-changes";
+      note: string;
+    }) => {
+      try {
+        const response = await axiosClient.put(
+          `/task/changes/${taskId}`,
+          {
+            status: status,
+            note: note
+          },
+        );
+        
+        if (response.data?.status === false) {
+          throw new Error(response.data?.message || "Failed to update task changes.");
+        }
+        // console.log(response.data);
+        toast.success(response.data?.message || "Task changes updated successfully!");
+        return response.data;
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          toast.error(
+            error.response?.data?.message || "Failed to update task changes."
+          );
+        } else if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error("An unexpected error occurred while updating task changes.");
+        }
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["task"] });
+      options?.onSuccess?.();
+    },
+    onError: () => {
+      options?.onError?.();
+    },
+  });
+};

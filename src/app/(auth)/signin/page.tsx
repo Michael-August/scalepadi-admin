@@ -58,12 +58,12 @@ const SignIn = () => {
         reset();
         router.replace("/overview");
       },
-      onError: (error) => {
-        toast.error(
-          error?.response?.data?.message || "An error occurred during login"
-        );
-        console.error("Login error:", error?.response?.data?.message);
-      },
+      // onError: (error) => {
+      //   toast.error(
+      //     error?.response?.data?.message || "An error occurred during login"
+      //   );
+      //   console.error("Login error:", error?.response?.data?.message);
+      // },
     });
   };
 
