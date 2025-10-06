@@ -824,9 +824,9 @@ const ExpertDetails = () => {
                   <span className="font-medium text-lg sm:text-[20px] text-primary">
                     Onboarding Status
                   </span>
-                  <span className="border border-[#E7E8E9] rounded-[10px] p-2 bg-white cursor-pointer text-[#0E1426] text-sm">
+                  {/* <span className="border border-[#E7E8E9] rounded-[10px] p-2 bg-white cursor-pointer text-[#0E1426] text-sm">
                     Mark Onboarding as complete
-                  </span>
+                  </span> */}
                 </div>
 
                 <div className="p-5 flex flex-col gap-4">

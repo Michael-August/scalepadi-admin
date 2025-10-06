@@ -249,182 +249,195 @@ export default function InquiriesPage() {
           </div>
 
           {/* Table */}
-          <div className="rounded-lg border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50/50">
-                    <TableHead className="text-[#878A93] font-medium text-sm py-4 min-w-[150px]">
-                      Customer
-                    </TableHead>
-                    <TableHead className="text-[#878A93] font-medium text-sm py-4 min-w-[200px]">
-                      Email
-                    </TableHead>
-                    <TableHead className="text-[#878A93] font-medium text-sm py-4 min-w-[250px]">
-                      Note Preview
-                    </TableHead>
-                    <TableHead className="text-[#878A93] font-medium text-sm py-4 min-w-[100px]">
-                      Status
-                    </TableHead>
-                    <TableHead className="text-[#878A93] font-medium text-sm py-4 min-w-[120px]">
-                      Date
-                    </TableHead>
-                    <TableHead className="text-[#878A93] font-medium text-sm py-4 min-w-[80px] text-right">
-                      Actions
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    // Proper skeleton loading
-                    Array.from({ length: 5 }).map((_, index) => (
-                      <TableRow
-                        key={index}
-                        className="border-b border-gray-100"
-                      >
-                        <TableCell className="py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
-                            <div className="space-y-2">
-                              <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-4">
-                          <div className="flex items-center gap-2">
-                            <div className="h-4 bg-gray-200 rounded w-32 animate-pulse" />
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-4">
-                          <div className="h-4 bg-gray-200 rounded w-40 animate-pulse" />
-                        </TableCell>
-                        <TableCell className="py-4">
-                          <div className="h-6 bg-gray-200 rounded w-16 animate-pulse" />
-                        </TableCell>
-                        <TableCell className="py-4">
-                          <div className="h-4 bg-gray-200 rounded w-20 animate-pulse" />
-                        </TableCell>
-                        <TableCell className="py-4 text-right">
-                          <div className="h-8 bg-gray-200 rounded w-8 animate-pulse ml-auto" />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : processedData.length > 0 ? (
-                    processedData.map((inquiry) => (
-                      <TableRow
-                        key={inquiry.id}
-                        className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors"
-                      >
-                        <TableCell className="py-4">
-                          <div className="flex items-center gap-3 min-w-[150px]">
-                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                              <User className="text-gray-600 h-4 w-4" />
-                            </div>
-                            <div className="min-w-0">
-                              <span className="text-gray-900 text-sm font-medium block truncate">
-                                {inquiry.firstName} {inquiry.lastName}
-                              </span>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-4 min-w-[200px]">
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                            <span className="text-gray-700 text-sm truncate block">
-                              {inquiry.email}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-4 min-w-[250px] max-w-[300px]">
-                          <span
-                            className="text-gray-700 text-sm truncate block"
-                            title={inquiry.note}
-                          >
-                            {inquiry.note.length > 50
-                              ? `${inquiry.note.substring(0, 50)}...`
-                              : inquiry.note}
-                          </span>
-                        </TableCell>
-                        <TableCell className="py-4 min-w-[100px]">
-                          <Badge
-                            variant="secondary"
-                            className={`${
-                              inquiry.viewed
-                                ? "border border-[#04E762] text-[#04E762]"
-                                : "border border-[#F2BB05] text-[#F2BB05]"
-                            } text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent w-[70px] text-center flex justify-center`}
-                          >
-                            {inquiry.viewed ? "Viewed" : "Unread"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-4 min-w-[120px]">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                            <span className="text-gray-700 text-sm">
-                              {format(
-                                new Date(inquiry.createdAt),
-                                "MMM d, yyyy"
-                              )}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-4 min-w-[80px] text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 ml-auto"
-                              >
-                                <MoreHorizontal className="h-4 w-4 text-gray-400" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => handleViewInquiry(inquiry)}
-                                className="flex items-center gap-2"
-                              >
-                                <Eye className="h-4 w-4" />
-                                View
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteInquiry(inquiry)}
-                                className="flex items-center gap-2 text-red-600"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className="text-center py-12 text-gray-500"
-                      >
-                        <div className="flex flex-col items-center gap-2">
-                          <MessageSquare className="h-8 w-8 text-gray-300" />
-                          <div>
-                            <p className="font-medium">No inquiries found</p>
-                            <p className="text-sm text-gray-400">
-                              {searchTerm ||
-                              statusFilter !== "all" ||
-                              dateFilter
-                                ? "Try adjusting your filters"
-                                : "Get started by creating your first inquiry"}
-                            </p>
-                          </div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
+<div className="rounded-lg border border-gray-200 overflow-hidden">
+  <div className="overflow-x-auto">
+    <Table>
+      <TableHeader>
+        <TableRow className="bg-gray-50/50">
+          <TableHead className="text-[#878A93] font-medium text-sm py-4 min-w-[120px] lg:min-w-[150px]">
+            <span className="hidden xs:inline">Customer</span>
+            <span className="xs:hidden">Client</span>
+          </TableHead>
+          <TableHead className="text-[#878A93] font-medium text-sm py-4 min-w-[140px] lg:min-w-[200px] hidden sm:table-cell">
+            Email
+          </TableHead>
+          <TableHead className="text-[#878A93] font-medium text-sm py-4 min-w-[120px] lg:min-w-[250px] hidden md:table-cell">
+            Note Preview
+          </TableHead>
+          <TableHead className="text-[#878A93] font-medium text-sm py-4 min-w-[80px] lg:min-w-[100px]">
+            Status
+          </TableHead>
+          <TableHead className="text-[#878A93] font-medium text-sm py-4 min-w-[100px] lg:min-w-[120px] hidden xs:table-cell">
+            Date
+          </TableHead>
+          <TableHead className="text-[#878A93] font-medium text-sm py-4 min-w-[60px] lg:min-w-[80px] text-right">
+            Actions
+          </TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {isLoading ? (
+          // Responsive skeleton loading
+          Array.from({ length: 5 }).map((_, index) => (
+            <TableRow key={index} className="border-b border-gray-100">
+              <TableCell className="py-3 sm:py-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-200 animate-pulse flex-shrink-0" />
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <div className="h-3 sm:h-4 bg-gray-200 rounded animate-pulse" />
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell className="py-3 sm:py-4 hidden sm:table-cell">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 sm:h-4 bg-gray-200 rounded w-full max-w-[120px] lg:max-w-[160px] animate-pulse" />
+                </div>
+              </TableCell>
+              <TableCell className="py-3 sm:py-4 hidden md:table-cell">
+                <div className="h-3 sm:h-4 bg-gray-200 rounded w-full max-w-[100px] lg:max-w-[200px] animate-pulse" />
+              </TableCell>
+              <TableCell className="py-3 sm:py-4">
+                <div className="h-6 bg-gray-200 rounded w-12 sm:w-16 animate-pulse" />
+              </TableCell>
+              <TableCell className="py-3 sm:py-4 hidden xs:table-cell">
+                <div className="h-3 sm:h-4 bg-gray-200 rounded w-14 sm:w-20 animate-pulse" />
+              </TableCell>
+              <TableCell className="py-3 sm:py-4 text-right">
+                <div className="h-6 sm:h-8 bg-gray-200 rounded w-6 sm:w-8 animate-pulse ml-auto" />
+              </TableCell>
+            </TableRow>
+          ))
+        ) : processedData.length > 0 ? (
+          processedData.map((inquiry) => (
+            <TableRow
+              key={inquiry.id}
+              className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors"
+            >
+              <TableCell className="py-3 sm:py-4">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                    <User className="text-gray-600 h-3 w-3 sm:h-4 sm:w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-gray-900 text-xs sm:text-sm font-medium block truncate">
+                      {inquiry.firstName} {inquiry.lastName}
+                    </span>
+                    {/* Mobile email - shows on small screens */}
+                    <span className="text-gray-500 text-xs block sm:hidden mt-1 truncate">
+                      {inquiry.email}
+                    </span>
+                    {/* Mobile note preview - shows on small screens */}
+                    <span className="text-gray-500 text-xs block md:hidden mt-1 truncate">
+                      {inquiry.note.length > 30
+                        ? `${inquiry.note.substring(0, 30)}...`
+                        : inquiry.note}
+                    </span>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell className="py-3 sm:py-4 hidden sm:table-cell">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
+                  <span className="text-gray-700 text-xs sm:text-sm truncate block min-w-0">
+                    {inquiry.email}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell className="py-3 sm:py-4 hidden md:table-cell">
+                <span
+                  className="text-gray-700 text-xs sm:text-sm truncate block min-w-0 max-w-[200px] lg:max-w-[300px]"
+                  title={inquiry.note}
+                >
+                  {inquiry.note.length > 50
+                    ? `${inquiry.note.substring(0, 50)}...`
+                    : inquiry.note}
+                </span>
+              </TableCell>
+              <TableCell className="py-3 sm:py-4">
+                <Badge
+                  variant="secondary"
+                  className={`${
+                    inquiry.viewed
+                      ? "border border-[#04E762] text-[#04E762]"
+                      : "border border-[#F2BB05] text-[#F2BB05]"
+                  } text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent w-[60px] sm:w-[70px] text-center flex justify-center`}
+                >
+                  <span className="hidden xs:inline">
+                    {inquiry.viewed ? "Viewed" : "Unread"}
+                  </span>
+                  <span className="xs:hidden">
+                    {inquiry.viewed ? "Viewed" : "Unread"}
+                  </span>
+                </Badge>
+              </TableCell>
+              <TableCell className="py-3 sm:py-4 hidden xs:table-cell">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
+                  <span className="text-gray-700 text-xs sm:text-sm whitespace-nowrap">
+                    {format(
+                      new Date(inquiry.createdAt),
+                      "MMM d, yyyy"
+                    )}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell className="py-3 sm:py-4 text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 sm:h-8 sm:w-8 p-0 ml-auto"
+                    >
+                      <MoreHorizontal className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      onClick={() => handleViewInquiry(inquiry)}
+                      className="flex items-center gap-2 text-xs sm:text-sm"
+                    >
+                      <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                      View Details
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleDeleteInquiry(inquiry)}
+                      className="flex items-center gap-2 text-red-600 text-xs sm:text-sm"
+                    >
+                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))
+        ) : (
+          <TableRow>
+            <TableCell
+              colSpan={6}
+              className="text-center py-8 sm:py-12 text-gray-500"
+            >
+              <div className="flex flex-col items-center gap-2 px-4">
+                <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-gray-300" />
+                <div className="text-center">
+                  <p className="font-medium text-sm sm:text-base">No inquiries found</p>
+                  <p className="text-xs sm:text-sm text-gray-400 mt-1">
+                    {searchTerm ||
+                    statusFilter !== "all" ||
+                    dateFilter
+                      ? "Try adjusting your filters"
+                      : "Get started by creating your first inquiry"}
+                  </p>
+                </div>
+              </div>
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
+  </div>
+</div>
 
           {/* Pagination */}
           <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
