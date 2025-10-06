@@ -648,7 +648,7 @@ const ProjectDetails = () => {
                   Due Date *
                 </label>
                 <input
-                  type="datetime-local"
+                  type="date"
                   value={taskForm.dueDate}
                   onChange={(e) =>
                     setTaskForm((prev) => ({
@@ -1365,15 +1365,15 @@ const ProjectDetails = () => {
           <div className="flex flex-wrap items-center justify-end gap-2 w-full lg:w-auto">
             <Button
               variant={"outline"}
-              className="rounded-[14px] w-full lg:w-auto flex items-center gap-2"
+              className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full lg:w-auto"
               onClick={() => setIsTaskModalOpen(true)}
             >
               <Plus className="w-4 h-4" />
               Add Task
             </Button>
-            <Button className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full lg:w-auto">
+            {/* <Button className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full lg:w-auto">
               Change Status
-            </Button>
+            </Button> */}
 
             {projectDetails.adminApproved ? (
               <Button
