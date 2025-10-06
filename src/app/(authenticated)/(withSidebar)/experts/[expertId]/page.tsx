@@ -26,7 +26,11 @@ import { useState } from "react";
 import CircularProgress from "@/components/circular-progress";
 import { useParams } from "next/navigation";
 import { ProjectSkeleton } from "@/components/ui/project-skeleton";
-import { useApproveExpert, useGetExpertById, useInviteExperts } from "@/hooks/useExpert";
+import {
+  useApproveExpert,
+  useGetExpertById,
+  useInviteExperts,
+} from "@/hooks/useExpert";
 import { useGetAllProjects } from "@/hooks/useProjects";
 import {
   Table,
@@ -729,12 +733,12 @@ const ExpertDetails = () => {
           </div>
           <div className="flex items-center justify-end gap-3 w-full lg:w-auto">
             <Button
-              onClick={handleApprove} 
+              onClick={handleApprove}
               disabled={isPending}
               variant={"outline"}
               className="rounded-[14px] text-white bg-primary hover:bg-primary-hover hover:text-black"
             >
-               {isPending ? "Verifying..." : "Verify Expert"}
+              {isPending ? "Verifying..." : "Verify Expert"}
             </Button>
             <Button
               variant={"outline"}
@@ -1116,11 +1120,74 @@ const ExpertDetails = () => {
                 </div>
               </div>
 
-              <div className="portfolio flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
+              {/* <div className="portfolio flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-lg sm:text-[20px] text-primary">
                     Identity
                   </span>
+                </div>
+              </div> */}
+              <div className="portfolio flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-[20px] text-primary">
+                    Identity
+                  </span>
+                </div>
+
+                {/* Identity Type and ID Image */}
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[#878A93] text-sm font-normal">
+                      Identity Type
+                    </span>
+                    <span className="text-[#1A1A1A] text-base font-semibold">
+                      {expertDetails?.identification?.type
+                        ? expertDetails.identification.type
+                            .replace(/([A-Z])/g, " $1")
+                            .replace(/^./, (str: string) => str.toUpperCase())
+                        : "Not specified"}
+                    </span>
+                  </div>
+
+                  {/* ID Image Display */}
+                  {expertDetails?.identification?.idImage && (
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[#878A93] text-sm font-normal">
+                        ID Document
+                      </span>
+                      <div className="relative w-full max-w-md">
+                        <Image
+                          src={expertDetails.identification.idImage}
+                          alt="ID Document"
+                          width={400}
+                          height={200}
+                          className="w-full h-auto rounded-lg border border-gray-200 object-cover"
+                          unoptimized
+                        />
+                        {/* <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
+                              Verified
+                            </div> */}
+                      </div>
+                    </div>
+                  )}
+
+                  {!expertDetails?.identification?.idImage && (
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[#878A93] text-sm font-normal">
+                        ID Document
+                      </span>
+                      <div className="flex items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                        <div className="text-center">
+                          <div className="text-gray-400 text-sm mb-2">
+                            No ID document uploaded
+                          </div>
+                          {/* <div className="text-xs text-gray-500">
+                            Upload your ID document to get verified
+                          </div> */}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
