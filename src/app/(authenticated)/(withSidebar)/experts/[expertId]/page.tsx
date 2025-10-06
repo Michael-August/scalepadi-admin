@@ -26,7 +26,7 @@ import { useState } from "react";
 import CircularProgress from "@/components/circular-progress";
 import { useParams } from "next/navigation";
 import { ProjectSkeleton } from "@/components/ui/project-skeleton";
-import { useGetExpertById, useInviteExperts } from "@/hooks/useExpert";
+import { useApproveExpert, useGetExpertById, useInviteExperts } from "@/hooks/useExpert";
 import { useGetAllProjects } from "@/hooks/useProjects";
 import {
   Table,
@@ -103,8 +103,13 @@ const ExpertDetails = () => {
     projectSearchTerm
   );
 
-  console.log(projectList?.data);
+  // console.log(projectList?.data);
   const { mutate: inviteExperts } = useInviteExperts();
+  const { mutate: approveExpert, isPending } = useApproveExpert(expertId);
+
+  const handleApprove = () => {
+    approveExpert();
+  };
 
   if (isLoading) {
     return <ProjectSkeleton />;
@@ -724,8 +729,16 @@ const ExpertDetails = () => {
           </div>
           <div className="flex items-center justify-end gap-3 w-full lg:w-auto">
             <Button
+              onClick={handleApprove} 
+              disabled={isPending}
               variant={"outline"}
-              className="rounded-[14px] hover:bg-primary-hover hover:text-black"
+              className="rounded-[14px] text-white bg-primary hover:bg-primary-hover hover:text-black"
+            >
+               {isPending ? "Verifying..." : "Verify Expert"}
+            </Button>
+            <Button
+              variant={"outline"}
+              className="rounded-[14px] bg-red-500 text-white hover:bg-primary-hover hover:text-black"
             >
               {expertDetails.status === "active" ? "Suspend" : "Activate"}
             </Button>
