@@ -210,50 +210,6 @@ export const useInviteExperts = (
   })
 }
 
-
-// export const useInviteExperts = (options?: { onSuccess?: () => void; onError?: () => void }) => {
-//   const queryClient = useQueryClient()
-
-//   return useMutation({
-//     mutationFn: async ({ projectId, expertIds }: { projectId: string; expertIds: string[] }) => {
-//       try {
-//         const response = await axiosClient.patch(
-//           `/project/${projectId}/invite-experts`,
-//           { experts: expertIds }
-//         )
-//         if (response.data?.status === false) {
-//           throw new Error(
-//             response.data?.message || "Failed to invite experts."
-//           )
-//         }
-//         console.log(response.data)
-//         return response.data.data
-//       } catch (error: unknown) {
-//         console.log(error)
-//         if (error instanceof AxiosError) {
-//           toast.error(
-//             error.response?.data?.message || "Failed to invite experts."
-//           )
-//         } else if (error instanceof Error) {
-//           toast.error(error.message)
-//         } else {
-//           toast.error("An unexpected error occurred while inviting experts.")
-//         }
-//         throw error
-//       }
-//     },
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ["projects"] })
-//       queryClient.invalidateQueries({ queryKey: ["experts"] })
-//       // toast.success("Experts invited successfully!")
-//       options?.onSuccess?.()
-//     },
-//     onError: () => {
-//       options?.onError?.()
-//     },
-//   })
-// };
-
 export const useGetExpertsCount = (
   businessId: string,
   currentPage: number = 1, itemsPerPage: number = 10,
@@ -332,4 +288,41 @@ export const useAssignSupervisor = () => {
       toast.success("Supervisor assigned successfully!")
     },
   })
+};
+
+// Approve Expert Mutation Hook
+export const useApproveExpert = (id: string) => {
+  const queryClient = useQueryClient();
+  
+  const mutation = useMutation({
+    mutationFn: async () => {
+      try {
+        const response = await axiosClient.put(`/approve/expert/${id}`);
+        if (response.data?.status === false) {
+          throw new Error(response.data?.message || "Failed to approve expert.");
+        }
+        // console.log(response.data)
+        return response?.data;
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          toast.error(
+            error.response?.data?.message || "Failed to approve expert."
+          );
+        } else if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error("An unexpected error occurred while approving expert.");
+        }
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["expert", id] });
+      queryClient.invalidateQueries({ queryKey: ["experts"] });
+      toast.success(data?.message || "Expert approved successfully!");
+      console.log(data)
+    },
+  });
+
+  return mutation;
 };
