@@ -148,22 +148,24 @@ export const useGetAllBusinessProjects = (businessId: string, currentPage: numbe
   return { AllBusinessProjects: data?.data, isLoading, error }
 };
 
-export const useInviteExperts = (options?: { onSuccess?: () => void; onError?: () => void }) => {
+export const useInviteExperts = (
+  options?: { onSuccess?: () => void; onError?: () => void }
+) => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ projectId, expertIds }: { projectId: string; expertIds: string[] }) => {
+    mutationFn: async ({
+      projectId,
+      expertIds,
+    }: { projectId: string; expertIds: string[] }) => {
       try {
         const response = await axiosClient.patch(
           `/project/${projectId}/invite-experts`,
           { experts: expertIds }
         )
         if (response.data?.status === false) {
-          throw new Error(
-            response.data?.message || "Failed to invite experts."
-          )
+          throw new Error(response.data?.message || "Failed to invite experts.")
         }
-        console.log(response.data)
         return response.data.data
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
@@ -178,17 +180,79 @@ export const useInviteExperts = (options?: { onSuccess?: () => void; onError?: (
         throw error
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["projects"] })
       queryClient.invalidateQueries({ queryKey: ["experts"] })
-      toast.success("Experts invited successfully!")
+
+      const { invitedExperts = [], rejectedExperts = [] } = data || {}
+
+      if (invitedExperts.length > 0) {
+        const invitedList = invitedExperts.map((e: any) => e.name).join(", ")
+        toast.success(`Invited experts: ${invitedList}`)
+      }
+
+      if (rejectedExperts.length > 0) {
+        const rejectedList = rejectedExperts
+          .map((e: any) => `${e.name} (${e.reason})`)
+          .join("; ")
+        toast.error(`Rejected experts: ${rejectedList}`)
+      }
+
+      if (invitedExperts.length === 0 && rejectedExperts.length === 0) {
+        toast.info("No experts were processed.")
+      }
+
       options?.onSuccess?.()
     },
     onError: () => {
       options?.onError?.()
     },
   })
-};
+}
+
+
+// export const useInviteExperts = (options?: { onSuccess?: () => void; onError?: () => void }) => {
+//   const queryClient = useQueryClient()
+
+//   return useMutation({
+//     mutationFn: async ({ projectId, expertIds }: { projectId: string; expertIds: string[] }) => {
+//       try {
+//         const response = await axiosClient.patch(
+//           `/project/${projectId}/invite-experts`,
+//           { experts: expertIds }
+//         )
+//         if (response.data?.status === false) {
+//           throw new Error(
+//             response.data?.message || "Failed to invite experts."
+//           )
+//         }
+//         console.log(response.data)
+//         return response.data.data
+//       } catch (error: unknown) {
+//         console.log(error)
+//         if (error instanceof AxiosError) {
+//           toast.error(
+//             error.response?.data?.message || "Failed to invite experts."
+//           )
+//         } else if (error instanceof Error) {
+//           toast.error(error.message)
+//         } else {
+//           toast.error("An unexpected error occurred while inviting experts.")
+//         }
+//         throw error
+//       }
+//     },
+//     onSuccess: () => {
+//       queryClient.invalidateQueries({ queryKey: ["projects"] })
+//       queryClient.invalidateQueries({ queryKey: ["experts"] })
+//       // toast.success("Experts invited successfully!")
+//       options?.onSuccess?.()
+//     },
+//     onError: () => {
+//       options?.onError?.()
+//     },
+//   })
+// };
 
 export const useGetExpertsCount = (
   businessId: string,

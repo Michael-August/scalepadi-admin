@@ -1,6 +1,7 @@
 import { axiosClient } from "@/lib/api/axiosclient";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export const useSignUp = () => {
@@ -42,7 +43,7 @@ export const useLogin = () => {
           );
         }
         return res.data;
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (error instanceof AxiosError) {
           toast.error(error.response?.data?.message || `Failed to log in`);
         } else if (error instanceof Error) {
@@ -93,6 +94,7 @@ export const useForgotPassword = () => {
               "An error occurred during password reset request"
           );
         }
+        console.log(res.data);
         return res.data;
       } catch (error: any) {
         throw (
@@ -120,6 +122,7 @@ export const useResetPassword = () => {
             res.data?.message || "An error occurred during password reset"
           );
         }
+        console.log(res.data);
         return res.data;
       } catch (error: any) {
         throw (
@@ -161,19 +164,37 @@ export const useGetAdminByToken = () => {
 };
 
 export const useLogout = () => {
+  const router = useRouter();
   const { mutate: logout, isPending } = useMutation({
     mutationFn: async () => {
       try {
         const res = await axiosClient.post("/logout/admin");
+
         if (res.data?.status === false) {
           throw new Error(
             res.data?.message || "An error occurred during logout"
           );
         }
+
+        console.log(res.data);
         return res.data;
-      } catch (error: any) {
-        throw new Error(error) || new Error("An error occurred during logout");
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          toast.error(error.response?.data?.message || `Failed to log out`);
+          router.push("/");
+        } else if (error instanceof Error) {
+          toast.error(error.message);
+          router.push("/");
+        } else {
+          toast.error(`An unexpected error occured while trying to log out`);
+          router.push("/");
+        }
+        throw error;
       }
+    },
+    onError: (error: any) => {
+      // You can add toast notification here
+      console.error("Logout error:", error);
     },
   });
 
