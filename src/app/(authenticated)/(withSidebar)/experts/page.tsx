@@ -50,6 +50,7 @@ export interface Expert {
   email: string;
   status: "active" | "inactive";
   category: string;
+  profilePicture: string;
   image?: string;
   phone: string;
   gender: string;
@@ -97,7 +98,7 @@ const Experts = () => {
   );
 
   const activeList = searchTerm ? searchResults : expertList;
-console.log(activeList)
+  console.log(activeList);
   const totalPages = activeList?.data?.totalPages ?? 1;
   const currentPage = activeList?.data?.currentPage ?? 1;
   const totalItems = activeList?.data?.totalItems ?? 0;
@@ -316,16 +317,31 @@ console.log(activeList)
                   >
                     <TableCell className="py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
-                          <Image
-                            src={"/images/profile-pics.svg"}
-                            alt="profile picture"
-                            width={20}
-                            height={20}
-                          />
+                        <div
+                          className={`w-5 h-5 rounded-full flex items-center justify-center text-xs overflow-hidden border ${
+                            expert?.profilePicture
+                              ? "bg-gray-100 border-gray-200"
+                              : expert?.status === "active"
+                              ? "bg-[#04E762]/5 border-[#04E762]/20 text-[#04E762]"
+                              : "bg-[#F2BB05]/5 border-[#F2BB05]/20 text-[#F2BB05]"
+                          }`}
+                        >
+                          {expert?.profilePicture ? (
+                            <Image
+                              src={expert.profilePicture}
+                              alt="profile picture"
+                              width={20}
+                              height={20}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="font-medium leading-none text-[10px]">
+                              {expert?.name?.charAt(0)?.toUpperCase() || "U"}
+                            </span>
+                          )}
                         </div>
                         <span className="text-gray-900 text-sm">
-                          {expert.name}
+                          {expert?.name || "Unknown User"}
                         </span>
                       </div>
                     </TableCell>
