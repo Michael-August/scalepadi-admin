@@ -1,13 +1,16 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { useGetProjectById } from "@/hooks/useProjects";
 import { useGetBusinessById } from "@/hooks/useBusiness";
 import { useGetExpertById } from "@/hooks/useExpert";
-import { useGetAdminById } from "@/hooks/useAuth";
-import { useNotifications, useNotificationActions } from "@/hooks/useNotification";
+import { useGetAdminById, useLogout } from "@/hooks/useAuth";
+import {
+  useNotifications,
+  useNotificationActions,
+} from "@/hooks/useNotification";
 // import { Skeleton } from "./ui/skeleton";
 import { Button } from "./ui/button";
 // import { Badge } from "./ui/badge";
@@ -16,7 +19,7 @@ import io, { Socket } from "socket.io-client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import moment from "moment";
-
+import { ChevronDown, LogOutIcon } from "lucide-react";
 
 interface Notification {
   id: string;
@@ -43,8 +46,7 @@ const RelativeTime: React.FC<{ date: string | Date }> = ({ date }) => {
       return `${diffMinutes} min${diffMinutes !== 1 ? "s" : ""} ago`;
     if (diffHours < 24)
       return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
-    if (diffDays < 30)
-      return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+    if (diffDays < 30) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
     return `${diffMonths} month${diffMonths !== 1 ? "s" : ""} ago`;
   };
 
@@ -61,10 +63,10 @@ const RelativeTime: React.FC<{ date: string | Date }> = ({ date }) => {
   return <p className="text-[10px] text-muted-foreground">{relative}</p>;
 };
 
-const NotificationItem = ({ 
-  notification, 
-  onMarkAsRead
-}: { 
+const NotificationItem = ({
+  notification,
+  onMarkAsRead,
+}: {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
 }) => {
@@ -73,7 +75,7 @@ const NotificationItem = ({
     if (!notification.read) {
       onMarkAsRead(notification.id);
     }
-    
+
     // Navigate to link if provided
     // if (notification.link) {
     //   window.open(notification.link, '_blank');
@@ -133,6 +135,7 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
   const { businessDetails } = useGetBusinessById(businessId || "");
   const { expertDetails } = useGetExpertById(expertId || "");
   const { AdminDetails } = useGetAdminById(userId || "");
+  console.log(AdminDetails);
 
   const displayText = useMemo(() => {
     if (projectId && projectDetails?.title) {
@@ -154,16 +157,40 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
     } else {
       return route.charAt(0).toUpperCase() + route.slice(1);
     }
-  }, [projectId, businessId, expertId, userId, projectDetails, businessDetails, expertDetails, AdminDetails, route]);
+  }, [
+    projectId,
+    businessId,
+    expertId,
+    userId,
+    projectDetails,
+    businessDetails,
+    expertDetails,
+    AdminDetails,
+    route,
+  ]);
 
   // Notifications state
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [newNotifications, setNewNotifications] = useState<Notification[]>([]);
-  
+
+  const [user, setUser] = useState<any>();
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const { logout, isPending } = useLogout();
+
+  const initials = user?.name
+    ? user.name
+        .split(" ")
+        .map((n: any) => n[0])
+        .join("")
+        .toUpperCase()
+    : "?";
+
   const { notifications, isLoading } = useNotifications();
-  const { markAsRead, markAllAsRead, isMarkingAsRead } = useNotificationActions();
+  const { markAsRead, markAllAsRead, isMarkingAsRead } =
+    useNotificationActions();
 
   // Use refs to avoid dependency issues
   const markAsReadRef = useRef(markAsRead);
@@ -176,8 +203,8 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
 
   // Calculate total unread count
   const totalUnreadCount = useMemo(() => {
-    const existingUnread = notifications.filter(n => !n.read).length;
-    const newUnread = newNotifications.filter(n => !n.read).length;
+    const existingUnread = notifications.filter((n) => !n.read).length;
+    const newUnread = newNotifications.filter((n) => !n.read).length;
     return existingUnread + newUnread;
   }, [notifications, newNotifications]);
 
@@ -192,6 +219,7 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
     let user;
     try {
       user = JSON.parse(storedUser);
+      setUser(user);
       if (!user?.id) {
         console.log("No user ID found");
         return;
@@ -217,27 +245,27 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
     const handleConnect = () => {
       console.log(`WebSocket Connected for user ${user.id}:`);
       setIsConnected(true);
-      
+
       // Register user with socket server
       newSocket.emit("register", user.id);
     };
 
     const handleNotification = (data: Notification) => {
       console.log("New notification received");
-      
-      setNewNotifications(prev => [data, ...prev]);
-      
+
+      setNewNotifications((prev) => [data, ...prev]);
+
       toast.info("New Notification", {
         description: data.content,
         action: {
           label: "View",
           onClick: () => {
             setIsSheetOpen(true);
-            
+
             if (!data.read) {
               markAsReadRef.current(data.id);
-              setNewNotifications(prev => 
-                prev.map(n => n.id === data.id ? { ...n, read: true } : n)
+              setNewNotifications((prev) =>
+                prev.map((n) => (n.id === data.id ? { ...n, read: true } : n))
               );
             }
           },
@@ -266,13 +294,13 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
       newSocket.off("notification", handleNotification);
       newSocket.off("disconnect", handleDisconnect);
       newSocket.off("connect_error", handleConnectError);
-      
+
       newSocket.disconnect();
       setSocket(null);
       setIsConnected(false);
     };
   }, []);
-  
+
   useEffect(() => {
     if (!isConnected && socket && socket.disconnected) {
       console.log("Attempting to reconnect WebSocket...");
@@ -284,30 +312,39 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
     }
   }, [isConnected, socket]);
 
-  const handleMarkAsRead = useCallback((notificationId: string) => {
-    markAsRead(notificationId);
-    setNewNotifications(prev => 
-      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-    );
-  }, [markAsRead]);
+  const handleMarkAsRead = useCallback(
+    (notificationId: string) => {
+      markAsRead(notificationId);
+      setNewNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+      );
+    },
+    [markAsRead]
+  );
 
   const handleMarkAllAsRead = useCallback(() => {
     markAllAsRead();
-    setNewNotifications(prev => 
-      prev.map(n => ({ ...n, read: true }))
-    );
+    setNewNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   }, [markAllAsRead]);
 
   const handleSheetOpen = useCallback((open: boolean) => {
     setIsSheetOpen(open);
   }, []);
 
+  const handleLogOut = () => {
+    logout(undefined, {
+      onSuccess: () => {
+        toast.success("Logout Successful");
+        localStorage.clear();
+        router.push("/signin");
+      },
+    });
+  };
+
   return (
     <nav className="w-full bg-white border-b border-primary-border flex items-center justify-between py-2 px-4 lg:pr-14">
       {!withLogo && (
-        <div className="text-[#0E1426] text-lg font-medium">
-          {displayText}
-        </div>
+        <div className="text-[#0E1426] text-lg font-medium">{displayText}</div>
       )}
       {withLogo && (
         <Image src={"/logo.svg"} alt="Logo" width={104} height={27.54} />
@@ -346,7 +383,7 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
                   </Button>
                 )}
               </div>
-              
+
               {/* Notifications List */}
               {isLoading ? (
                 <div className="space-y-3">
@@ -373,7 +410,46 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
           </SheetContent>
         </Sheet>
 
-        <div className="w-[38px] h-[38px] rounded-full bg-[#FCCE37]"></div>
+        <div className="relative">
+          {/* Avatar */}
+          <button
+            onClick={() => setOpen(!open)}
+            className="flex items-center gap-2 focus:outline-none"
+          >
+            {user?.profilePicture ? (
+              <Image
+                src={user.profilePicture}
+                alt={user.name}
+                width={38}
+                height={38}
+                className="w-[38px] h-[38px] rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-[38px] h-[38px] rounded-full bg-[#FCCE37] flex items-center justify-center text-sm font-semibold text-gray-800">
+                {initials}
+              </div>
+            )}
+            <ChevronDown
+              size={18}
+              className={`transition-transform ${
+                open ? "rotate-180" : "rotate-0"
+              } text-gray-600`}
+            />
+          </button>
+
+          {/* Dropdown */}
+          {open && (
+            <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
+              <div
+                className={`cursor-pointer rounded-xl w-full items-center px-4 py-3 flex text-[#E33161] gap-[10px] font-medium text-sm`}
+                onClick={handleLogOut}
+              >
+                <LogOutIcon className="w-5 h-5" />
+                <span>{isPending ? "Loging out..." : "Log out"}</span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );
