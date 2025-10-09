@@ -7,9 +7,9 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  MoreHorizontal,
-  Eye,
-  FileText,
+  // MoreHorizontal,
+  // Eye,
+  // FileText,
   CreditCard,
   Building,
   FolderOpen
@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+// import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { useGetAccountTransactions } from "@/hooks/usePayment";
 
@@ -190,10 +190,10 @@ export default function PaymentsTab({
     });
   }, [transactionData]);
 
-  const handleAction = (id: string, action: string) => {
-    console.log(`Action ${action} for transaction ${id}`);
-    // Implement action logic here
-  };
+  // const handleAction = (id: string, action: string) => {
+  //   console.log(`Action ${action} for transaction ${id}`);
+  //   // Implement action logic here
+  // };
 
   const handleSort = (key: string) => {
     const newSortBy = sortBy === key ? `-${key}` : key;
@@ -419,9 +419,9 @@ export default function PaymentsTab({
                           {getSortIndicator("createdAt")}
                         </div>
                       </TableHead>
-                      <TableHead className="text-[#878A93] font-medium text-sm py-4">
+                      {/* <TableHead className="text-[#878A93] font-medium text-sm py-4">
                         Action
-                      </TableHead>
+                      </TableHead> */}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -496,7 +496,7 @@ export default function PaymentsTab({
                               </span> */}
                             </div>
                           </TableCell>
-                          <TableCell className="py-4 whitespace-nowrap">
+                          {/* <TableCell className="py-4 whitespace-nowrap">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
@@ -533,7 +533,7 @@ export default function PaymentsTab({
                                 )}
                               </DropdownMenuContent>
                             </DropdownMenu>
-                          </TableCell>
+                          </TableCell> */}
                         </TableRow>
                       ))
                     ) : (

@@ -12,7 +12,7 @@ import {
   useNotificationActions,
 } from "@/hooks/useNotification";
 // import { Skeleton } from "./ui/skeleton";
-import { Button } from "./ui/button";
+// import { Button } from "./ui/button";
 // import { Badge } from "./ui/badge";
 import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import io, { Socket } from "socket.io-client";
@@ -135,7 +135,6 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
   const { businessDetails } = useGetBusinessById(businessId || "");
   const { expertDetails } = useGetExpertById(expertId || "");
   const { AdminDetails } = useGetAdminById(userId || "");
-  console.log(AdminDetails);
 
   const displayText = useMemo(() => {
     if (projectId && projectDetails?.title) {
@@ -186,10 +185,10 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
         .map((n: any) => n[0])
         .join("")
         .toUpperCase()
-    : "?";
+    : "U";
 
   const { notifications, isLoading } = useNotifications();
-  const { markAsRead, markAllAsRead, isMarkingAsRead } =
+  const { markAsRead } =
     useNotificationActions();
 
   // Use refs to avoid dependency issues
@@ -322,10 +321,10 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
     [markAsRead]
   );
 
-  const handleMarkAllAsRead = useCallback(() => {
-    markAllAsRead();
-    setNewNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  }, [markAllAsRead]);
+  // const handleMarkAllAsRead = useCallback(() => {
+  //   markAllAsRead();
+  //   setNewNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  // }, [markAllAsRead]);
 
   const handleSheetOpen = useCallback((open: boolean) => {
     setIsSheetOpen(open);
@@ -371,7 +370,7 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
                 <span className="text-2xl font-medium text-[#1A1A1A]">
                   Notifications
                 </span>
-                {totalUnreadCount > 0 && (
+                {/* {totalUnreadCount > 0 && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -381,7 +380,7 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
                   >
                     {isMarkingAsRead ? "Marking..." : "Mark all read"}
                   </Button>
-                )}
+                )} */}
               </div>
 
               {/* Notifications List */}

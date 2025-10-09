@@ -309,7 +309,7 @@ export default function UsersListPage() {
               <button
                 onClick={handleExportCSV}
                 disabled={filteredUsers.length === 0}
-                className="flex items-center gap-2 px-4 py-2 text-xs text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 text-xs text-gray-600 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Download className="w-3 h-3" />
                 Export CSV
@@ -317,7 +317,7 @@ export default function UsersListPage() {
 
               <button
                 onClick={handleOpenAddModal}
-                className="flex items-center gap-2 px-4 py-3 text-xs text-white bg-blue-900/90 rounded-xl hover:bg-blue-900 transition-colors whitespace-nowrap"
+                className="flex items-center gap-2 px-4 py-3 text-white hover:text-black text-xs rounded-md bg-primary hover:bg-primary-hover transition-colors whitespace-nowrap"
               >
                 <UserPlus className="w-3 h-3" />
                 Add New User

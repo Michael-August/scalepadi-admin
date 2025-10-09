@@ -385,23 +385,23 @@ const AdminDetails = () => {
               </span>
             </div>
             <div className="flex flex-wrap items-center mt-3 sm:mt-5 gap-3">
-              <Button className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black">
+              <Button onClick={()=> router.push(`/messages`)} className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black">
                 <MessageCircle className="w-4 h-4" />
                 <span className="ml-2">Chat</span>
               </Button>
-              <Button variant={"outline"} className="rounded-[14px] text-sm">
+              <Button onClick={()=> router.push(`/users`)} variant={"outline"} className="rounded-[14px] text-sm">
                 Assign new Role
               </Button>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-3 w-full md:w-auto">
+          {/* <div className="flex items-center justify-end gap-3 w-full md:w-auto">
             <Button
               variant={"outline"}
               className="rounded-[14px] hover:bg-primary-hover hover:text-black"
             >
               Suspend
             </Button>
-          </div>
+          </div> */}
         </div>
 
         <div className="flex flex-col bg-white rounded-2xl my-5 py-2 overflow-x-auto">
