@@ -21,10 +21,11 @@ import {
   Verified,
   FolderOpen,
   User,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 import CircularProgress from "@/components/circular-progress";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ProjectSkeleton } from "@/components/ui/project-skeleton";
 import {
   useApproveExpert,
@@ -86,6 +87,7 @@ export interface ExpertDetails {
 }
 
 const ExpertDetails = () => {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<
     "about" | "documents" | "performance" | "account"
   >("about");
@@ -99,20 +101,30 @@ const ExpertDetails = () => {
   const expertId = params.expertId as string;
 
   const { expertDetails, isLoading } = useGetExpertById(expertId);
+  const [page, setPage] = useState(1);
+
   const { projectList, isLoading: projectsLoading } = useGetAllProjects(
-    1,
+    page,
     10,
     "all",
     "createdAt",
     projectSearchTerm
   );
 
-  // console.log(projectList?.data);
+  const handlePageChange = (newPage: number) => {
+    if (!projectList?.totalPages) return; // <-- safeguard
+    if (newPage < 1 || newPage > projectList.totalPages) return;
+    setPage(newPage);
+  };
+
+  console.log(projectList);
   const { mutate: inviteExperts } = useInviteExperts();
   const { mutate: approveExpert, isPending } = useApproveExpert(expertId);
 
   const handleApprove = () => {
     approveExpert();
+    // if (!expert?.verified) {
+    // }
   };
 
   if (isLoading) {
@@ -179,12 +191,22 @@ const ExpertDetails = () => {
                   {expertDetails.name}
                 </span>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="flex items-center gap-[2px] font-medium text-[#0DDC0E] text-sm">
-                    <Verified className="w-4 h-4" />
-                    {expertDetails.verified
-                      ? "Verified"
-                      : "Pending Verification"}
+                  <span className="flex items-center font-medium text-sm">
+                    {expertDetails.verified ? (
+                      <>
+                        <Verified className="w-4 h-4 text-green-600" />
+                        <span className="text-green-600">Verified</span>
+                      </>
+                    ) : (
+                      <>
+                        <X className="w-4 h-4 text-red-500 mt-0.5" />
+                        <span className="text-red-500">
+                          Pending Verification
+                        </span>
+                      </>
+                    )}
                   </span>
+
                   <span className="text-[#878A93] text-sm font-medium capitalize">
                     {expertDetails.category}
                   </span>
@@ -213,7 +235,10 @@ const ExpertDetails = () => {
               </span>
             </div>
             <div className="flex items-center mt-5 gap-3">
-              <Button className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black">
+              <Button
+                onClick={() => router.push(`messages`)}
+                className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black"
+              >
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Chat
               </Button>
@@ -506,225 +531,64 @@ const ExpertDetails = () => {
                           </TableRow>
                         )}
                       </TableBody>
+                      {projectList && projectList.totalPages > 1 && (
+                        <div className="flex flex-col w-full sm:flex-row items-center justify-between gap-3 px-4 py-2 border-t border-gray-100 bg-gray-50/80 backdrop-blur-sm">
+                          {/* <p className="text-xs sm:text-sm text-gray-500">
+      Showing{" "}
+      <span className="font-medium text-gray-700">
+        {(projectList.currentPage - 1) * projectList.itemsPerPage + 1}–
+        {Math.min(
+          projectList.currentPage * projectList.itemsPerPage,
+          projectList.totalItems
+        )}
+      </span>{" "}
+      of{" "}
+      <span className="font-medium text-gray-700">
+        {projectList.totalItems}
+      </span>
+    </p> */}
 
-                      {/* <TableBody>
-                        {projectsLoading ? (
-                          [...Array(5)].map((_, i) => (
-                            <TableRow key={i} className="hover:bg-gray-50/50">
-                              <TableCell className="py-4">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-4 h-4 rounded bg-gray-200 animate-pulse" />
-                                  <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
-                                </div>
-                              </TableCell>
-                              <TableCell className="py-4">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-4 h-4 rounded-full bg-gray-200 animate-pulse" />
-                                  <div className="h-4 w-28 bg-gray-200 rounded animate-pulse" />
-                                </div>
-                              </TableCell>
-                              <TableCell className="py-4">
-                                <div className="flex -space-x-2">
-                                  {[...Array(3)].map((_, j) => (
-                                    <div
-                                      key={j}
-                                      className="h-6 w-6 rounded-full bg-gray-200 animate-pulse"
-                                    />
-                                  ))}
-                                </div>
-                              </TableCell>
-                              <TableCell className="py-4">
-                                <div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse" />
-                              </TableCell>
-                              <TableCell className="py-4 text-right">
-                                <div className="h-9 w-20 bg-gray-200 rounded-md animate-pulse ml-auto" />
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : projectList?.data && projectList.data.length > 0 ? (
-                          projectList.data.map((project) => {
-                            const statusColor =
-                              project.status === "completed"
-                                ? "text-green-600"
-                                : project.status === "in-progress"
-                                ? "text-blue-600"
-                                : "text-amber-600";
-
-                            const badgeColor =
-                              project.status === "completed"
-                                ? "bg-green-100 text-green-800"
-                                : project.status === "in-progress"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-amber-100 text-amber-800";
-
-                            return (
-                              <TableRow
-                                key={project.id}
-                                className="hover:bg-gray-50/50"
-                              >
-                                <TableCell className="py-4 text-gray-700 text-sm truncate">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
-                                      <FolderOpen
-                                        className={`w-4 h-4 ${statusColor}`}
-                                      />
-                                    </div>
-                                    <span>{project.title || "N/A"}</span>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="py-4 text-gray-700 text-sm truncate">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
-                                      <User
-                                        className={`h-3 w-3 ${statusColor}`}
-                                      />
-                                    </div>
-                                    <span>
-                                      {project.businessId?.name || "N/A"}
-                                    </span>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="py-4">
-                                  <div className="flex -space-x-2">
-                                    {project.experts?.slice(0, 3).map((exp) => (
-                                      <div
-                                        key={exp.id}
-                                        className="relative h-7 w-7 rounded-full overflow-hidden border-2 border-white shadow-sm bg-gray-100 flex items-center justify-center"
-                                      >
-                                        {exp.image ? (
-                                          <Image
-                                            src={exp.image}
-                                            alt={exp.name || "Expert"}
-                                            fill
-                                            className="object-cover"
-                                          />
-                                        ) : (
-                                          <User
-                                            className={`h-4 w-4 ${statusColor}`}
-                                          />
-                                        )}
-                                      </div>
-                                    ))}
-                                    {project.experts &&
-                                      project.experts.length > 3 && (
-                                        <div className="relative h-7 w-7 rounded-full overflow-hidden border-2 border-white bg-gray-200 flex items-center justify-center text-xs font-medium">
-                                          +{project.experts.length - 3}
-                                        </div>
-                                      )}
-                                    {(!project.experts ||
-                                      project.experts.length === 0) && (
-                                      <span className="text-xs text-gray-500">
-                                        None
-                                      </span>
-                                    )}
-                                  </div>
-                                </TableCell>
-                                <TableCell className="py-4">
-                                  <span
-                                    className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${badgeColor}`}
-                                  >
-                                    {project.status.replace("-", " ")}
-                                  </span>
-                                </TableCell>
-                                <TableCell className="py-4 text-right">
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        {(() => {
-                                          const isExpertAssigned =
-                                            project?.experts?.some(
-                                              (expert) => expert?.id === expertId
-                                            );
-                                          return (
-                                            <Button
-                                              onClick={() => {
-                                                setAssigningProjects((prev) =>
-                                                  new Set(prev).add(project?.id)
-                                                );
-                                                inviteExperts(
-                                                  {
-                                                    projectId: project?.id,
-                                                    expertIds: [expertId],
-                                                  },
-                                                  {
-                                                    onSuccess: () => {
-                                                      setAssigningProjects(
-                                                        (prev) => {
-                                                          const newSet =
-                                                            new Set(prev);
-                                                          newSet?.delete(
-                                                            project?.id
-                                                          );
-                                                          return newSet;
-                                                        }
-                                                      );
-                                                    },
-                                                    onError: () => {
-                                                      setAssigningProjects(
-                                                        (prev) => {
-                                                          const newSet =
-                                                            new Set(prev);
-                                                          newSet?.delete(
-                                                            project?.id
-                                                          );
-                                                          return newSet;
-                                                        }
-                                                      );
-                                                    },
-                                                  }
-                                                );
-                                              }}
-                                              size="sm"
-                                              className="bg-primary text-primary-foreground hover:bg-primary/90 ml-auto"
-                                              disabled={
-                                                isExpertAssigned ||
-                                                assigningProjects?.has(
-                                                  project?.id
-                                                )
-                                              }
-                                            >
-                                              {assigningProjects.has(project?.id)
-                                                ? "Assigning..."
-                                                : "Assign"}
-                                            </Button>
-                                          );
-                                        })()}
-                                      </TooltipTrigger>
-                                      {project.experts?.some(
-                                        (expert) => expert?.id === expertId
-                                      ) && (
-                                        <TooltipContent>
-                                          <p>
-                                            This expert is already assigned to
-                                            this project.
-                                          </p>
-                                        </TooltipContent>
-                                      )}
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })
-                        ) : (
-                          <TableRow>
-                            <TableCell
-                              colSpan={5}
-                              className="text-center py-12 text-gray-500"
+                          <div className="flex items-center gap-1 sm:gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs sm:text-sm text-gray-600 hover:text-gray-800"
+                              disabled={
+                                projectsLoading || projectList.currentPage === 1
+                              }
+                              onClick={() =>
+                                handlePageChange(projectList.currentPage - 1)
+                              }
                             >
-                              <div className="flex flex-col items-center justify-center gap-2">
-                                <FolderOpen className="h-10 w-10 text-gray-300" />
-                                <p>No projects found</p>
-                                {projectSearchTerm && (
-                                  <p className="text-sm">
-                                    Try adjusting your search term
-                                  </p>
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody> */}
+                              ← Prev
+                            </Button>
+
+                            <div className="flex items-center bg-white border border-gray-200 rounded-md px-3 py-1 text-xs sm:text-sm font-medium text-gray-700">
+                              Page {projectList.currentPage}
+                              <span className="text-gray-400">
+                                &nbsp;/&nbsp;
+                              </span>
+                              {projectList.totalPages}
+                            </div>
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs sm:text-sm text-gray-600 hover:text-gray-800"
+                              disabled={
+                                projectsLoading ||
+                                projectList.currentPage ===
+                                  projectList.totalPages
+                              }
+                              onClick={() =>
+                                handlePageChange(projectList.currentPage + 1)
+                              }
+                            >
+                              Next →
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </Table>
                   </div>
                 </SheetContent>
@@ -734,12 +598,21 @@ const ExpertDetails = () => {
           <div className="flex items-center justify-end gap-3 w-full lg:w-auto">
             <Button
               onClick={handleApprove}
-              disabled={isPending}
-              variant={"outline"}
-              className="rounded-[14px] text-white bg-primary hover:bg-primary-hover hover:text-black"
+              disabled={isPending || expertDetails?.verified}
+              variant="outline"
+              className={`rounded-[14px] ${
+                expertDetails?.verified
+                  ? "bg-green-500 text-white cursor-not-allowed"
+                  : "text-white bg-primary hover:bg-primary-hover hover:text-black"
+              }`}
             >
-              {isPending ? "Verifying..." : "Verify Expert"}
+              {expertDetails?.verified
+                ? "Verified"
+                : isPending
+                ? "Verifying..."
+                : "Verify Expert"}
             </Button>
+
             <Button
               variant={"outline"}
               className="rounded-[14px] bg-red-500 text-white hover:bg-primary-hover hover:text-black"
@@ -1155,18 +1028,15 @@ const ExpertDetails = () => {
                       <span className="text-[#878A93] text-sm font-normal">
                         ID Document
                       </span>
-                      <div className="relative w-full max-w-md">
+
+                      <div className="relative w-full h-[100px] sm:h-[100px] md:h-[200px] max-h-[200px]">
                         <Image
                           src={expertDetails.identification.idImage}
                           alt="ID Document"
-                          width={400}
-                          height={200}
-                          className="w-full h-auto rounded-lg border border-gray-200 object-cover"
+                          fill
+                          className="rounded-lg border border-gray-200 object-contain bg-gray-50"
                           unoptimized
                         />
-                        {/* <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
-                              Verified
-                            </div> */}
                       </div>
                     </div>
                   )}

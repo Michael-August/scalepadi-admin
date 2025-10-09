@@ -232,7 +232,7 @@ export const useGetAdminById = (id: string) => {
   const { data, isLoading } = useQuery({
     queryKey: ["profile", id],
     queryFn: async ({ queryKey }) => {
-      const [adminId] = queryKey;
+      const [, adminId] = queryKey;
 
       try {
         const response = await axiosClient.get(`/admin/${adminId}`);

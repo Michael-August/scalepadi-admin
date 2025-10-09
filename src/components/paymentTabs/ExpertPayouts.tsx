@@ -1,16 +1,35 @@
 "use client";
 
-import { ArrowUpDown, Download, Search, ChevronLeft, ChevronRight, FolderOpenIcon } from "lucide-react";
+import {
+  Download,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  FolderOpenIcon,
+} from "lucide-react";
 import React, { useState, useMemo } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import { expertPayoutData, payoutStatuses, statusStyles } from "@/app/data";
+import { useGetAllHires } from "@/hooks/useHook";
+import { TableSkeleton } from "../ui/table-skeleton";
 
-interface ExpertPayoutsProps {
+interface HireManagementProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   currentPage: number;
@@ -19,97 +38,67 @@ interface ExpertPayoutsProps {
   setRowsPerPage: (rows: number) => void;
 }
 
-export default function ExpertPayouts({
+const statusStyles = {
+  in_progress: "bg-blue-100 text-blue-800 border-blue-200",
+  completed: "bg-green-100 text-green-800 border-green-200",
+  cancelled: "bg-red-100 text-red-800 border-red-200",
+  "awaiting-payment": "bg-yellow-100 text-yellow-800 border-yellow-200",
+  accepted: "bg-purple-100 text-purple-800 border-purple-200",
+} as const;
+
+const hireStatuses = [
+  "All statuses",
+  "in_progress",
+  "completed",
+  "cancelled",
+  "awaiting-payment",
+  "accepted",
+];
+
+export default function HireManagement({
   searchQuery,
   setSearchQuery,
   currentPage,
   setCurrentPage,
   rowsPerPage,
-  setRowsPerPage
-}: ExpertPayoutsProps) {
-  const [payoutStatus, setPayoutStatus] = useState("All statuses");
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "asc" | "desc";
-  } | null>(null);
+  setRowsPerPage,
+}: HireManagementProps) {
+  const [hireStatus, setHireStatus] = useState("All statuses");
 
-  const filteredPayouts = useMemo(() => {
-    let filtered = expertPayoutData.filter((payout) => {
-      const matchesStatus =
-        payoutStatus === "All statuses" || payout.status === payoutStatus;
-      const matchesSearch =
-        searchQuery === "" ||
-        payout.expert.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        payout.trxId.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesStatus && matchesSearch;
-    });
+  const { hireData, isLoading, error } = useGetAllHires(
+    currentPage,
+    rowsPerPage
+  );
 
-    if (sortConfig) {
-      filtered = [...filtered].sort((a, b) => {
-        const { key, direction } = sortConfig;
-        // Only allow sorting by known keys
-        type PayoutKey = "expert" | "amount" | "trxId" | "status" | "date" | "type" | "method";
-        if (!(["expert", "amount", "trxId", "status", "date", "type", "method"].includes(key))) return 0;
-        
-        const aValue = (a as Record<PayoutKey, unknown>)[key as PayoutKey];
-        const bValue = (b as Record<PayoutKey, unknown>)[key as PayoutKey];
-        let aSort = aValue;
-        let bSort = bValue;
-        
-        // Handle numeric sort for amount
-        if (key === "amount") {
-          aSort = typeof aSort === "string" ? parseFloat(aSort.replace(/[^\d.]/g, "")) : aSort;
-          bSort = typeof bSort === "string" ? parseFloat(bSort.replace(/[^\d.]/g, "")) : bSort;
-        }
-        
-        // Handle date sort for date
-        if (key === "date") {
-          aSort = typeof aSort === "string" ? new Date(aSort) : aSort;
-          bSort = typeof bSort === "string" ? new Date(bSort) : bSort;
-        }
-        
-        if (typeof aSort === "string" && typeof bSort === "string") {
-          if (aSort < bSort) return direction === "asc" ? -1 : 1;
-          if (aSort > bSort) return direction === "asc" ? 1 : -1;
-          return 0;
-        }
-        
-        if (typeof aSort === "number" && typeof bSort === "number") {
-          return direction === "asc" ? aSort - bSort : bSort - aSort;
-        }
-        
-        if (aSort instanceof Date && bSort instanceof Date) {
-          return direction === "asc" ? aSort.getTime() - bSort.getTime() : bSort.getTime() - aSort.getTime();
-        }
-        
-        return 0;
-      });
+  const filteredHires = useMemo(() => {
+    if (!hireData?.data) return [];
+
+    let filtered = hireData.data;
+
+    // Filter by status
+    if (hireStatus !== "All statuses") {
+      filtered = filtered.filter((hire) => hire.hireStatus === hireStatus);
     }
-    
+
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (hire) =>
+          hire.businessId.name.toLowerCase().includes(query) ||
+          hire.expertId.name.toLowerCase().includes(query) ||
+          hire.description.toLowerCase().includes(query)
+      );
+    }
+
     return filtered;
-  }, [payoutStatus, searchQuery, sortConfig]);
+  }, [hireData?.data, hireStatus, searchQuery]);
 
-  const paginatedPayouts = useMemo(() => {
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    return filteredPayouts.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredPayouts, currentPage, rowsPerPage]);
+  const paginatedHires = useMemo(() => {
+    return filteredHires;
+  }, [filteredHires]);
 
-  const totalPages = useMemo(() => {
-    return Math.ceil(filteredPayouts.length / rowsPerPage);
-  }, [filteredPayouts, rowsPerPage]);
-
-  const requestSort = (key: string) => {
-    let direction: "asc" | "desc" = "asc";
-    if (
-      sortConfig &&
-      sortConfig.key === key &&
-      sortConfig.direction === "asc"
-    ) {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-    setCurrentPage(1);
-  };
+  const totalPages = hireData?.totalPages || 1;
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
@@ -166,22 +155,60 @@ export default function ExpertPayouts({
       .toUpperCase();
   }
 
+  function formatCurrency(amount: number): string {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+    }).format(amount);
+  }
+
+  function formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  }
+
+  if (isLoading) {
+    return (
+     <div className="py-8">
+                 <TableSkeleton rows={5} columns={8} />
+               </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <section aria-labelledby="hire-management-heading">
+        <h2 id="hire-management-heading" className="sr-only">
+          Hire Management
+        </h2>
+        <div className="flex justify-center items-center py-8">
+          <div className="text-red-500">
+            Error loading hires. Please try again.
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section aria-labelledby="expert-payout-heading">
-      <h2 id="expert-payout-heading" className="sr-only">
-        Expert Payouts
+    <section aria-labelledby="hire-management-heading">
+      <h2 id="hire-management-heading" className="sr-only">
+        Hire Management
       </h2>
       <p className="mb-4 font-montserrat text-sm">
-        Admin view of all payments released to experts.
+        Admin view of all hire requests and their status.
       </p>
 
       {/* Filters */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div className="flex flex-wrap gap-2">
           <Select
-            value={payoutStatus}
+            value={hireStatus}
             onValueChange={(value) => {
-              setPayoutStatus(value);
+              setHireStatus(value);
               setCurrentPage(1);
             }}
           >
@@ -189,7 +216,7 @@ export default function ExpertPayouts({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {payoutStatuses.map((status) => (
+              {hireStatuses.map((status) => (
                 <SelectItem key={status} value={status}>
                   {status}
                 </SelectItem>
@@ -214,7 +241,12 @@ export default function ExpertPayouts({
           variant="outline"
           size="sm"
           className="h-9 text-xs rounded-xl text-gray-500 border-gray-300 bg-transparent"
-          onClick={() => exportToCSV(filteredPayouts, "expert_payouts")}
+          onClick={() =>
+            exportToCSV(
+              filteredHires as unknown as Record<string, unknown>[],
+              "hire_management"
+            )
+          }
         >
           <Download className="h-3 w-3 mr-2" />
           Export CSV
@@ -226,164 +258,115 @@ export default function ExpertPayouts({
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50/50">
-              <TableHead 
-                className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer"
-                onClick={() => requestSort("expert")}
-              >
-                <div className="flex items-center gap-1">
-                  Expert
-                  <ArrowUpDown className="w-4 h-4" />
-                  {sortConfig?.key === "expert" &&
-                    (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </div>
+              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                Business
               </TableHead>
-              <TableHead 
-                className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer"
-                onClick={() => requestSort("type")}
-              >
-                <div className="flex items-center gap-1">
-                  Project
-                  <ArrowUpDown className="w-4 h-4" />
-                  {sortConfig?.key === "type" &&
-                    (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </div>
+              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                Expert
               </TableHead>
-              <TableHead
-                className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer"
-                onClick={() => requestSort("amount")}
-              >
-                <div className="flex items-center gap-1">
-                  Amount
-                  <ArrowUpDown className="w-4 h-4" />
-                  {sortConfig?.key === "amount" &&
-                    (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </div>
+              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                Description
               </TableHead>
-              <TableHead
-                className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer"
-                onClick={() => requestSort("date")}
-              >
-                <div className="flex items-center gap-1">
-                  Date
-                  <ArrowUpDown className="w-4 h-4" />
-                  {sortConfig?.key === "date" &&
-                    (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </div>
+              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                Duration
               </TableHead>
-              <TableHead 
-                className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer"
-                onClick={() => requestSort("status")}
-              >
-                <div className="flex items-center gap-1">
-                  Status
-                  <ArrowUpDown className="w-4 h-4" />
-                  {sortConfig?.key === "status" &&
-                    (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </div>
+              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                Budget
               </TableHead>
-              <TableHead 
-                className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer"
-                onClick={() => requestSort("trxId")}
-              >
-                <div className="flex items-center gap-1">
-                  Transaction ID
-                  <ArrowUpDown className="w-4 h-4" />
-                  {sortConfig?.key === "trxId" &&
-                    (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </div>
+              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                Commission
               </TableHead>
-              <TableHead 
-                className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap cursor-pointer"
-                onClick={() => requestSort("method")}
-              >
-                <div className="flex items-center gap-1">
-                  Method
-                  <ArrowUpDown className="w-4 h-4" />
-                  {sortConfig?.key === "method" &&
-                    (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </div>
+              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                Status
+              </TableHead>
+              <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                Created Date
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedPayouts.length > 0 ? (
-              paginatedPayouts.map((row) => (
+            {paginatedHires.length > 0 ? (
+              paginatedHires.map((hire) => (
                 <TableRow
-                  key={row.id}
+                  key={hire.id}
                   className="border-b border-gray-100 hover:bg-gray-50/50"
                 >
                   <TableCell className="py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      {row.expertAvatar ? (
-                        <Image
-                          src={row.expertAvatar}
-                          alt={row.expert}
-                          width={20}
-                          height={20}
-                          className="w-5 h-5 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                          <span className="text-xs font-medium text-purple-600">
-                            {getInitials(row.expert)}
-                          </span>
-                        </div>
-                      )}
-                      <span className="text-gray-700 text-sm">{row.expert}</span>
+                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                        <span className="text-xs font-medium text-blue-600">
+                          {getInitials(hire.businessId.name)}
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-gray-700 text-sm font-medium">
+                          {hire.businessId.name}
+                        </span>
+                        <span className="text-gray-500 text-xs">
+                          {hire.businessId.email}
+                        </span>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <Badge
-                        variant={
-                          row.status === "Paid"
-                            ? "default"
-                            : row.status === "Pending"
-                            ? "secondary"
-                            : "outline"
-                        }
-                        className={`${
-                          statusStyles[
-                            row.status as keyof typeof statusStyles
-                          ]
-                        } px-0 py-0 rounded-none border-0`}
-                      >
-                        <FolderOpenIcon size={22} />
-                      </Badge>
-                      <span className="text-gray-900 text-sm">{row.type}</span>
+                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                        <span className="text-xs font-medium text-green-600">
+                          {getInitials(hire.expertId.name)}
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-gray-700 text-sm font-medium">
+                          {hire.expertId.name}
+                        </span>
+                        <span className="text-gray-500 text-xs">
+                          {hire.expertId.email}
+                        </span>
+                      </div>
                     </div>
                   </TableCell>
-                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">{row.amount}</TableCell>
-                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">{row.date}</TableCell>
+                  <TableCell className="py-4 max-w-[200px]">
+                    <div className="line-clamp-2 text-gray-700 text-sm">
+                      {hire.description}
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">
+                    {hire.duration}
+                  </TableCell>
+                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm font-medium">
+                    {formatCurrency(hire.budget)}
+                  </TableCell>
+                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">
+                    {formatCurrency(hire.commissionDue)}
+                  </TableCell>
                   <TableCell className="py-4 whitespace-nowrap">
                     <Badge
-                      variant={
-                        row.status === "Paid"
-                          ? "default"
-                          : row.status === "Pending"
-                          ? "secondary"
-                          : "outline"
-                      }
-                      className={`w-20 justify-center
-                        ${statusStyles[
-                          row.status as keyof typeof statusStyles
-                        ]}`
-                      }
+                      className={`w-20 justify-center ${
+                        statusStyles[
+                          hire.hireStatus as keyof typeof statusStyles
+                        ] || "bg-gray-100 text-gray-800 border-gray-200"
+                      }`}
                     >
-                      {row.status}
+                      {hire.hireStatus
+                        .replace(/_/g, " ")
+                        .replace(/\b\w/g, (l) => l.toUpperCase())}
                     </Badge>
                   </TableCell>
-                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">{row.trxId}</TableCell>
-                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">{row.method}</TableCell>
+                  <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">
+                    {formatDate(hire.createdAt)}
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={7}
-                  className="py-4 text-center text-gray-500"
+                  colSpan={8}
+                  className="py-8 text-center text-gray-500"
                 >
-                  No payouts found matching your criteria
+                  <div className="flex flex-col items-center justify-center">
+                    <FolderOpenIcon className="h-12 w-12 text-gray-300 mb-2" />
+                    <p>No hires found matching your criteria</p>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
@@ -392,7 +375,7 @@ export default function ExpertPayouts({
       </div>
 
       {/* Pagination */}
-      {filteredPayouts.length > 0 && (
+      {filteredHires.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600 whitespace-nowrap">
@@ -419,15 +402,9 @@ export default function ExpertPayouts({
 
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600 whitespace-nowrap">
-              {filteredPayouts.length === 0
-                ? 0
-                : (currentPage - 1) * rowsPerPage + 1}
-              -
-              {Math.min(
-                currentPage * rowsPerPage,
-                filteredPayouts.length
-              )}{" "}
-              of {filteredPayouts.length}
+              {(currentPage - 1) * rowsPerPage + 1}-
+              {Math.min(currentPage * rowsPerPage, hireData?.totalItems || 0)}{" "}
+              of {hireData?.totalItems || 0}
             </span>
             <div className="flex items-center gap-1">
               <Button

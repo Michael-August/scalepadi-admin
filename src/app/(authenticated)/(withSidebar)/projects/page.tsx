@@ -141,8 +141,8 @@ const ExpertSelectionRow = ({
                 variant="secondary"
                 className={
                   expert.status === "active"
-                    ? "bg-green-100 text-green-800 border-green-200 text-xs"
-                    : "bg-red-100 text-red-800 border-red-200 text-xs"
+                    ? "bg-green-100 text-green-800 border-green-200 text-xs capitalize"
+                    : "bg-red-100 text-red-800 border-red-200 text-xs capitalize"
                 }
               >
                 {expert.status}
@@ -784,9 +784,9 @@ const Projects = () => {
             </div>
           </div>
         </div>
-        <Button className="hover:bg-primary-hover hover:text-black w-full md:w-auto">
+        {/* <Button className="hover:bg-primary-hover hover:text-black w-full md:w-auto">
           Start a new project
-        </Button>
+        </Button> */}
       </div>
 
       <div className="w-full bg-white overflow-x-auto p-6 rounded-lg border border-gray-200">
@@ -912,7 +912,7 @@ const Projects = () => {
                             : project.status === "in-progress"
                             ? "border border-primary text-primary"
                             : "border border-[#F2BB05] text-[#F2BB05]"
-                        } text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent w-[90px] sm:w-[100px] md:w-[110px] truncate text-center flex justify-center`}
+                        } text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent w-[80px] sm:w-[80px] md:w-[80px] truncate text-center flex justify-center`}
                       >
                         {project.status.replace("-", " ")}
                       </Badge>
@@ -946,15 +946,15 @@ const Projects = () => {
                           >
                             View
                           </DropdownMenuItem>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
+                          {/* <DropdownMenuItem>Edit</DropdownMenuItem> */}
                           <DropdownMenuItem
                             onClick={() => handleAssignExpert(project)}
                           >
                             Assign Expert
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
+                          {/* <DropdownMenuItem className="text-red-600">
                             Delete
-                          </DropdownMenuItem>
+                          </DropdownMenuItem> */}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
