@@ -22,6 +22,7 @@ import {
   FolderOpen,
   User,
   X,
+  FileText,
 } from "lucide-react";
 import { useState } from "react";
 import CircularProgress from "@/components/circular-progress";
@@ -29,7 +30,9 @@ import { useParams, useRouter } from "next/navigation";
 import { ProjectSkeleton } from "@/components/ui/project-skeleton";
 import {
   useApproveExpert,
+  useGetExpertAccountDetails,
   useGetExpertById,
+  useGetExpertPerformance,
   useInviteExperts,
 } from "@/hooks/useExpert";
 import { useGetAllProjects } from "@/hooks/useProjects";
@@ -49,6 +52,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import dynamic from "next/dynamic";
+
+// Dynamically import react-pdf components with no SSR
+const PDFViewer = dynamic(() => import("./PDFViewer"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex justify-center items-center py-12">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <span className="ml-3 text-gray-600">Loading PDF viewer...</span>
+    </div>
+  ),
+});
 
 export interface ExpertDetails {
   id: string;
@@ -87,6 +102,7 @@ export interface ExpertDetails {
 }
 
 const ExpertDetails = () => {
+  const [showResumePdfPreview, setShowResumePdfPreview] = useState(false);
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
     "about" | "documents" | "performance" | "account"
@@ -99,8 +115,10 @@ const ExpertDetails = () => {
 
   const params = useParams();
   const expertId = params.expertId as string;
+  const { expertPerformance, isLoading } = useGetExpertPerformance(expertId);
+  const { expertAccountDetails } = useGetExpertAccountDetails(expertId);
 
-  const { expertDetails, isLoading } = useGetExpertById(expertId);
+  const { expertDetails } = useGetExpertById(expertId);
   const [page, setPage] = useState(1);
 
   const { projectList, isLoading: projectsLoading } = useGetAllProjects(
@@ -112,19 +130,16 @@ const ExpertDetails = () => {
   );
 
   const handlePageChange = (newPage: number) => {
-    if (!projectList?.totalPages) return; // <-- safeguard
+    if (!projectList?.totalPages) return;
     if (newPage < 1 || newPage > projectList.totalPages) return;
     setPage(newPage);
   };
 
-  console.log(projectList);
   const { mutate: inviteExperts } = useInviteExperts();
   const { mutate: approveExpert, isPending } = useApproveExpert(expertId);
 
   const handleApprove = () => {
     approveExpert();
-    // if (!expert?.verified) {
-    // }
   };
 
   if (isLoading) {
@@ -223,7 +238,10 @@ const ExpertDetails = () => {
               </span>
               <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
                 <Star className="w-4 h-4 text-[#F2BB05] fill-[#F6CF50]" />
-                4.5/5 average rating | {expertDetails.projectCount}: Projects
+                {expertPerformance?.data?.averageScore > 0
+                  ? expertPerformance.data.averageScore.toFixed(1)
+                  : "0.0"}{" "}
+                / 5 average rating | {expertDetails.projectCount}: Projects
                 completed
               </span>
               <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
@@ -985,21 +1003,56 @@ const ExpertDetails = () => {
 
           {activeTab === "documents" && (
             <div className="flex flex-col gap-4 my-5">
-              <div className="portfolio flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-lg sm:text-[20px] text-primary">
-                    Resume
-                  </span>
-                </div>
+              <div className="flex flex-col gap-4">
+                {expertDetails?.resume ? (
+                  <div className="portfolio flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-lg sm:text-[20px] text-primary">
+                        Resume
+                      </span>
+                      <div className="flex gap-2">
+                        <a
+                          href={expertDetails.resume}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1 bg-primary text-white rounded text-sm transition-colors"
+                        >
+                          Download
+                        </a>
+                        <button
+                          onClick={() =>
+                            setShowResumePdfPreview(!showResumePdfPreview)
+                          }
+                          className="px-3 py-1 bg-gray-600 text-white rounded text-sm transition-colors"
+                        >
+                          {showResumePdfPreview ? "Hide Preview" : "Preview"}
+                        </button>
+                      </div>
+                    </div>
+                    {showResumePdfPreview && (
+                      <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                        <PDFViewer
+                          fileUrl={expertDetails.resume}
+                          type="resume"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <FileText className="w-8 h-8 text-yellow-600" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-yellow-800">
+                        No Resume Uploaded
+                      </p>
+                      <p className="text-xs text-yellow-600">
+                        Upload your resume to complete your profile
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* <div className="portfolio flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-lg sm:text-[20px] text-primary">
-                    Identity
-                  </span>
-                </div>
-              </div> */}
               <div className="portfolio flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-[20px] text-primary">
@@ -1009,7 +1062,7 @@ const ExpertDetails = () => {
 
                 {/* Identity Type and ID Image */}
                 <div className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-1">
+                  {/* <div className="flex flex-col gap-1">
                     <span className="text-[#878A93] text-sm font-normal">
                       Identity Type
                     </span>
@@ -1020,7 +1073,7 @@ const ExpertDetails = () => {
                             .replace(/^./, (str: string) => str.toUpperCase())
                         : "Not specified"}
                     </span>
-                  </div>
+                  </div> */}
 
                   {/* ID Image Display */}
                   {expertDetails?.identification?.idImage && (
@@ -1066,13 +1119,14 @@ const ExpertDetails = () => {
           {activeTab === "performance" && (
             <div className="flex flex-col gap-4 my-5">
               <div className="flex flex-col lg:flex-row gap-4">
+                {/* Performance Stats */}
                 <div className="bg-white border flex flex-col border-[#EFF2F3] rounded-3xl p-4 w-full">
                   <div className="flex flex-col gap-2 border-b border-[#EFF2F3] pb-4 mb-4">
                     <span className="text-base text-[#878A93] font-medium">
                       Projects Completed
                     </span>
                     <span className="font-bold text-[32px] text-[#121217]">
-                      {expertDetails.projectCount}
+                      {expertDetails?.projectCount || 0}
                     </span>
                   </div>
                   <div className="flex flex-col gap-2">
@@ -1080,318 +1134,202 @@ const ExpertDetails = () => {
                       Average Project Duration
                     </span>
                     <span className="font-bold text-[24px] text-[#121217]">
-                      3 months
+                      {expertDetails?.projectCount || 0} month(s)
                     </span>
                   </div>
                 </div>
+
+                {/* Rating Overview */}
                 <div className="bg-white border border-[#EFF2F3] flex flex-col lg:flex-row gap-6 rounded-3xl p-4 flex-1">
                   <div className="flex flex-col lg:gap-5 lg:mt-4">
                     <span className="font-bold text-4xl lg:text-[84px] text-[#0E1426]">
-                      4.0
+                      {expertPerformance?.data?.averageScore > 0
+                        ? expertPerformance.data.averageScore.toFixed(1)
+                        : "0.0"}
                     </span>
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-1">
-                        <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                        <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                        <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                        <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                        <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
+                        {Array.from({ length: 5 }, (_, index) => (
+                          <Star
+                            key={index}
+                            className={`w-[13.33px] h-[13.33px] ${
+                              index <
+                              Math.floor(
+                                expertPerformance?.data?.averageScore || 0
+                              )
+                                ? "text-[#F2BB05] fill-[#F6CF50]"
+                                : "text-[#CFD0D4] fill-[#E7ECEE]"
+                            }`}
+                          />
+                        ))}
                       </div>
                       <span className="text-[#878A93] text-sm font-normal">
-                        Client&rsquo;s Reviews
+                        {expertPerformance?.data?.totalRatings || 0} Client
+                        Review
+                        {expertPerformance?.data?.totalRatings !== 1 ? "s" : ""}
                       </span>
                     </div>
                   </div>
+
+                  {/* Rating Distribution */}
                   <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-1">
-                      <div className="w-full lg:w-[245px] h-[6px] bg-[#F5F5F5] rounded-[4px]">
-                        <div className="w-[40%] h-[6px] bg-[#CCCCCC] rounded-[4px]"></div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
+                    {[5, 4, 3, 2, 1].map((stars) => {
+                      const ratingCount =
+                        expertPerformance?.data?.ratings?.filter(
+                          (rating: any) => Math.round(rating?.score) === stars
+                        ).length || 0;
+
+                      const percentage =
+                        expertPerformance?.data?.totalRatings > 0
+                          ? (ratingCount /
+                              expertPerformance.data.totalRatings) *
+                            100
+                          : 0;
+
+                      return (
+                        <div key={stars} className="flex items-center gap-1">
+                          <div className="w-full lg:w-[245px] h-[6px] bg-[#F5F5F5] rounded-[4px]">
+                            <div
+                              className="h-[6px] bg-[#CCCCCC] rounded-[4px] transition-all duration-300"
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1">
+                              {Array.from({ length: 5 }, (_, index) => (
+                                <Star
+                                  key={index}
+                                  className={`w-[13.33px] h-[13.33px] ${
+                                    index < stars
+                                      ? "text-[#F2BB05] fill-[#F6CF50]"
+                                      : "text-[#CFD0D4] fill-[#E7ECEE]"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-[#0E1426] text-sm font-normal">
+                              {percentage.toFixed(0)}%
+                            </span>
+                          </div>
                         </div>
-                        <span className="text-[#0E1426] text-sm font-normal">
-                          40%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-full lg:w-[245px] h-[6px] bg-[#F5F5F5] rounded-[4px]">
-                        <div className="w-[20%] h-[6px] bg-[#CCCCCC] rounded-[4px]"></div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                        </div>
-                        <span className="text-[#0E1426] text-sm font-normal">
-                          20%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-full lg:w-[245px] h-[6px] bg-[#F5F5F5] rounded-[4px]">
-                        <div className="w-[15%] h-[6px] bg-[#CCCCCC] rounded-[4px]"></div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                        </div>
-                        <span className="text-[#0E1426] text-sm font-normal">
-                          15%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-full lg:w-[245px] h-[6px] bg-[#F5F5F5] rounded-[4px]">
-                        <div className="w-[15%] h-[6px] bg-[#CCCCCC] rounded-[4px]"></div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                        </div>
-                        <span className="text-[#0E1426] text-sm font-normal">
-                          15%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-full lg:w-[245px] h-[6px] bg-[#F5F5F5] rounded-[4px]">
-                        <div className="w-[10%] h-[6px] bg-[#CCCCCC] rounded-[4px]"></div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                        </div>
-                        <span className="text-[#0E1426] text-sm font-normal">
-                          10%
-                        </span>
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
 
+              {/* Individual Reviews */}
               <div className="bg-white border border-[#D1DAEC80] rounded-3xl p-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="bg-[#FBFCFC] rounded-[18px] p-4 flex flex-col gap-[10px]">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <Image
-                        className="w-[22px] h-[22px] rounded-full border border-[#EFF2F3]"
-                        src={"/images/dp.svg"}
-                        width={22}
-                        height={22}
-                        alt="user picture"
-                      />
-                      <span className="text-xs text-[#3E4351] font-medium">
-                        Darlene Robertson
-                      </span>
-                    </div>
-                    <Dot className="text-[#CFD0D4] w-6 h-6" />
-                    <span className="text-xs text-[#3E4351] font-normal">
-                      AI & ML Smitre ltd
+                {expertPerformance?.data?.ratings?.length > 0 ? (
+                  expertPerformance.data.ratings.map(
+                    (rating: any, index: number) => (
+                      <div
+                        key={rating.id || index}
+                        className="bg-[#FBFCFC] rounded-[18px] p-4 flex flex-col gap-[10px]"
+                      >
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: 5 }, (_, index) => (
+                            <Star
+                              key={index}
+                              className={`w-[13.33px] h-[13.33px] ${
+                                index < Math.floor(rating.score)
+                                  ? "text-[#F2BB05] fill-[#F6CF50]"
+                                  : "text-[#CFD0D4] fill-[#E7ECEE]"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            <Image
+                              className="w-[22px] h-[22px] rounded-full border border-[#EFF2F3]"
+                              src={"/images/dp.svg"}
+                              width={22}
+                              height={22}
+                              alt="reviewer picture"
+                            />
+                            <span className="text-xs text-[#3E4351] font-medium">
+                              {rating.ratingBy || "Anonymous"}
+                            </span>
+                          </div>
+                          <Dot className="text-[#CFD0D4] w-6 h-6" />
+                          <span className="text-xs text-[#3E4351] font-normal">
+                            {new Date(rating.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <span className="text-[#878A93] text-base font-normal">
+                          {rating.note || "No review text provided"}
+                        </span>
+                      </div>
+                    )
+                  )
+                ) : (
+                  <div className="col-span-2 text-center py-8">
+                    <span className="text-[#878A93] text-lg">
+                      No reviews yet
                     </span>
                   </div>
-                  <span className="text-[#878A93] text-base font-normal">
-                    made scaling our business feel exciting and achievable!
-                    Their strategic guidance was crystal clear, their expertise
-                    was invaluable, and their collaborative approach gave us the
-                    support we needed to hit our growth targets.{" "}
-                  </span>
-                </div>
-                <div className="bg-[#FBFCFC] rounded-[18px] p-4 flex flex-col gap-[10px]">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <Image
-                        className="w-[22px] h-[22px] rounded-full border border-[#EFF2F3]"
-                        src={"/images/dp.svg"}
-                        width={22}
-                        height={22}
-                        alt="user picture"
-                      />
-                      <span className="text-xs text-[#3E4351] font-medium">
-                        Darlene Robertson
-                      </span>
-                    </div>
-                    <Dot className="text-[#CFD0D4] w-6 h-6" />
-                    <span className="text-xs text-[#3E4351] font-normal">
-                      AI & ML Smitre ltd
-                    </span>
-                  </div>
-                  <span className="text-[#878A93] text-base font-normal">
-                    made scaling our business feel exciting and achievable!
-                    Their strategic guidance was crystal clear, their expertise
-                    was invaluable, and their collaborative approach gave us the
-                    support we needed to hit our growth targets.{" "}
-                  </span>
-                </div>
-                <div className="bg-[#FBFCFC] rounded-[18px] p-4 flex flex-col gap-[10px]">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <Image
-                        className="w-[22px] h-[22px] rounded-full border border-[#EFF2F3]"
-                        src={"/images/dp.svg"}
-                        width={22}
-                        height={22}
-                        alt="user picture"
-                      />
-                      <span className="text-xs text-[#3E4351] font-medium">
-                        Darlene Robertson
-                      </span>
-                    </div>
-                    <Dot className="text-[#CFD0D4] w-6 h-6" />
-                    <span className="text-xs text-[#3E4351] font-normal">
-                      AI & ML Smitre ltd
-                    </span>
-                  </div>
-                  <span className="text-[#878A93] text-base font-normal">
-                    made scaling our business feel exciting and achievable!
-                    Their strategic guidance was crystal clear, their expertise
-                    was invaluable, and their collaborative approach gave us the
-                    support we needed to hit our growth targets.{" "}
-                  </span>
-                </div>
-                <div className="bg-[#FBFCFC] rounded-[18px] p-4 flex flex-col gap-[10px]">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <Image
-                        className="w-[22px] h-[22px] rounded-full border border-[#EFF2F3]"
-                        src={"/images/dp.svg"}
-                        width={22}
-                        height={22}
-                        alt="user picture"
-                      />
-                      <span className="text-xs text-[#3E4351] font-medium">
-                        Darlene Robertson
-                      </span>
-                    </div>
-                    <Dot className="text-[#CFD0D4] w-6 h-6" />
-                    <span className="text-xs text-[#3E4351] font-normal">
-                      AI & ML Smitre ltd
-                    </span>
-                  </div>
-                  <span className="text-[#878A93] text-base font-normal">
-                    made scaling our business feel exciting and achievable!
-                    Their strategic guidance was crystal clear, their expertise
-                    was invaluable, and their collaborative approach gave us the
-                    support we needed to hit our growth targets.{" "}
-                  </span>
-                </div>
-                <div className="bg-[#FBFCFC] rounded-[18px] p-4 flex flex-col gap-[10px]">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <Image
-                        className="w-[22px] h-[22px] rounded-full border border-[#EFF2F3]"
-                        src={"/images/dp.svg"}
-                        width={22}
-                        height={22}
-                        alt="user picture"
-                      />
-                      <span className="text-xs text-[#3E4351] font-medium">
-                        Darlene Robertson
-                      </span>
-                    </div>
-                    <Dot className="text-[#CFD0D4] w-6 h-6" />
-                    <span className="text-xs text-[#3E4351] font-normal">
-                      AI & ML Smitre ltd
-                    </span>
-                  </div>
-                  <span className="text-[#878A93] text-base font-normal">
-                    made scaling our business feel exciting and achievable!
-                    Their strategic guidance was crystal clear, their expertise
-                    was invaluable, and their collaborative approach gave us the
-                    support we needed to hit our growth targets.{" "}
-                  </span>
-                </div>
-                <div className="bg-[#FBFCFC] rounded-[18px] p-4 flex flex-col gap-[10px]">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <Image
-                        className="w-[22px] h-[22px] rounded-full border border-[#EFF2F3]"
-                        src={"/images/dp.svg"}
-                        width={22}
-                        height={22}
-                        alt="user picture"
-                      />
-                      <span className="text-xs text-[#3E4351] font-medium">
-                        Darlene Robertson
-                      </span>
-                    </div>
-                    <Dot className="text-[#CFD0D4] w-6 h-6" />
-                    <span className="text-xs text-[#3E4351] font-normal">
-                      AI & ML Smitre ltd
-                    </span>
-                  </div>
-                  <span className="text-[#878A93] text-base font-normal">
-                    made scaling our business feel exciting and achievable!
-                    Their strategic guidance was crystal clear, their expertise
-                    was invaluable, and their collaborative approach gave us the
-                    support we needed to hit our growth targets.{" "}
-                  </span>
-                </div>
+                )}
               </div>
+            </div>
+          )}
+
+          {activeTab === "account" && (
+            <div className="flex flex-col gap-4 my-5">
+              {expertAccountDetails?.data ? (
+                <div className="bg-white p-6 rounded-lg border border-[#D1DAEC80]">
+                  <h3 className="font-medium text-lg sm:text-[20px] text-primary">
+                    Account Details
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm text-gray-500">
+                        Account Name
+                      </label>
+                      <p className="font-medium">
+                        {expertAccountDetails.data.accountName}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm text-gray-500">
+                        Account Number
+                      </label>
+                      <p className="font-medium">
+                        {expertAccountDetails.data.accountNumber}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm text-gray-500">Bank Name</label>
+                      <p className="font-medium">
+                        {expertAccountDetails.data.bankName}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm text-gray-500">Sort Code</label>
+                      <p className="font-medium">
+                        {expertAccountDetails.data.sortCode}
+                      </p>
+                    </div>
+
+                    {expertAccountDetails.data.branch && (
+                      <div>
+                        <label className="text-sm text-gray-500">Branch</label>
+                        <p className="font-medium">
+                          {expertAccountDetails.data.branch}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No account details found
+                </div>
+              )}
             </div>
           )}
         </div>

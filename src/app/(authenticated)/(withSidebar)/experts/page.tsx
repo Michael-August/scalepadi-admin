@@ -366,7 +366,11 @@ const Experts = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-gray-700 text-sm py-4">
-                      {new Date(expert.createdAt).toLocaleDateString("en-GB")}
+                      {new Date(expert.createdAt).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
                     </TableCell>
                     <TableCell className="py-4">
                       <DropdownMenu>

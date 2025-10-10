@@ -1351,7 +1351,14 @@ const ProjectDetails = () => {
                   Due:
                   <span className="text-[#121217]">
                     {projectDetails?.dueDate
-                      ? new Date(projectDetails.dueDate).toLocaleDateString()
+                      ? new Date(projectDetails?.dueDate).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          }
+                        )
                       : "No due date"}
                   </span>
                 </span>
@@ -1368,7 +1375,7 @@ const ProjectDetails = () => {
           </div>
 
           {/* Right section */}
-          <div className="flex flex-wrap items-center justify-end gap-2 w-full lg:w-auto">
+          <div className="flex items-center gap-2 justify-end flex-nowrap">
             <Button
               variant="outline"
               className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full lg:w-auto"

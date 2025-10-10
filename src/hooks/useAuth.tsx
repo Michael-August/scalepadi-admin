@@ -363,3 +363,34 @@ export const useAcceptDeclineMatch = () => {
 
   return { acceptOrDecline, isPending };
 };
+
+
+export const useGetAdminApprovedUsers = (id: string) => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-approved", id],
+    queryFn: async ({ queryKey }) => {
+      const [, adminId] = queryKey;
+
+      try {
+        const response = await axiosClient.get(`/approval/count/${adminId}`);
+        if (response.data?.status === false) {
+          throw new Error(response.data?.message || "Failed to fetch admin");
+        }
+        return response.data.data;
+      } catch (error: any) {
+        if (error instanceof AxiosError) {
+          toast.error(error.response?.data?.message || "Failed to fetch admin");
+        } else if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error("An unexpected error occurred while fetching admin");
+        }
+
+        throw error;
+      }
+    },
+    enabled: !!id,
+  });
+
+  return { adminApprovedUsers: data, isLoading };
+};

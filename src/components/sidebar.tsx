@@ -6,11 +6,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useLogout } from "@/hooks/useAuth";
 
 // Confirmation Modal Component
-const LogoutConfirmationModal = ({ 
-  isOpen, 
-  onClose, 
+const LogoutConfirmationModal = ({
+  isOpen,
+  onClose,
   onConfirm,
-  isPending 
+  isPending,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -26,7 +26,8 @@ const LogoutConfirmationModal = ({
           Confirm Logout
         </h3>
         <p className="text-[#83899F] mb-6">
-          Are you sure you want to log out? You`ll need to log in again to access your account.
+          Are you sure you want to log out? You`ll need to log in again to
+          access your account.
         </p>
         <div className="flex gap-3 justify-end">
           <button
@@ -88,72 +89,85 @@ const SideBar = ({ onLinkClick }: { onLinkClick?: () => void }) => {
 
   return (
     <>
-      <div className="bg-[#ffffff] w-full border-r border-[#EDEEF3] px-[18px] py-[30px] flex flex-col gap-14">
-        <Image src={"/logo.svg"} alt="Logo" width={137.7} height={28} />
+      <div className="bg-[#ffffff] w-full border-r border-[#EDEEF3] px-[18px] py-[30px] flex flex-col gap-14 h-screen overflow-hidden">
+        {/* Logo - Fixed at top */}
+        <div className="flex-shrink-0">
+          <Image src={"/logo.svg"} alt="Logo" width={137.7} height={28} />
+        </div>
 
-        <div className="flex w-full h-full flex-col items-center justify-between">
-          <div className="routes w-full flex flex-col gap-3">
-            {Routes.map((route) => {
-              const isActive = pathname.startsWith(route.route);
-              return (
+        {/* Scrollable Content Area */}
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="flex flex-col flex-1 overflow-hidden gap-8">
+            {/* Navigation Routes - Scrollable without visible scrollbar */}
+            <div className="routes flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none]">
+              <div className="flex flex-col gap-3 [&::-webkit-scrollbar]:hidden">
+                {Routes.map((route) => {
+                  const isActive = pathname.startsWith(route.route);
+                  return (
+                    <div
+                      key={route.route}
+                      onClick={() => {
+                        onLinkClick?.();
+                        router.push(route.route);
+                      }}
+                      className={`route cursor-pointer rounded-xl w-full items-center px-4 py-3 flex gap-[10px] font-medium text-sm
+                        ${
+                          isActive
+                            ? "bg-secondary text-primary"
+                            : "text-[#1A1A1A] hover:bg-secondary hover:text-primary"
+                        }`}
+                    >
+                      <route.icon className="w-5 h-5 flex-shrink-0" />
+                      <span className="whitespace-nowrap">{route.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Bottom Section - Fixed at bottom */}
+            <div className="flex-shrink-0">
+              <div className="flex flex-col gap-3">
                 <div
-                  key={route.route}
                   onClick={() => {
                     onLinkClick?.();
-                    router.push(route.route);
+                    router.push("/inquiries");
                   }}
-                  className={`route cursor-pointer rounded-xl w-full items-center px-4 py-3 flex gap-[10px] font-medium text-sm
-                    ${
-                      isActive
-                        ? "bg-secondary text-primary"
-                        : "text-[#1A1A1A] hover:bg-secondary hover:text-primary"
-                    }`}
+                  className="flex w-full cursor-pointer justify-between bg-[#F5F6F8] items-center rounded-2xl px-4 py-3 hover:bg-[#EDEEF3] transition-colors"
                 >
-                  <route.icon />
-                  <span>{route.name}</span>
+                  <div className="bg-white w-12 h-12 rounded-full flex-shrink-0">
+                    <Image
+                      src={"/icons/double-message.svg"}
+                      alt="message icon"
+                      width={48}
+                      height={48}
+                      className="w-full h-full"
+                    />
+                  </div>
+                  <div className="flex flex-col flex-1 min-w-0 mx-3">
+                    <span className="text-[#1A1A1A] font-bold text-[15px] truncate">
+                      Help Center
+                    </span>
+                    <span className="text-[#83899F] text-sm font-normal truncate">
+                      Answers here
+                    </span>
+                  </div>
+                  <ChevronRight className="text-[#9CA0B2] w-4 h-4 flex-shrink-0" />
                 </div>
-              );
-            })}
-          </div>
 
-          <div className="flex w-full flex-col gap-3">
-            <div
-              onClick={() => {
-                onLinkClick?.();
-                router.push("/inquiries");
-              }}
-              className="flex w-full cursor-pointer justify-between bg-[#F5F6F8] items-center rounded-2xl px-4 py-3"
-            >
-              <div className="bg-white w-12 h-12 rounded-full">
-                <Image
-                  src={"/icons/double-message.svg"}
-                  alt="message icon"
-                  width={48}
-                  height={48}
-                />
+                {/* Logout Button */}
+                <div
+                  onClick={handleLogoutClick}
+                  className={`cursor-pointer rounded-xl w-full items-center px-4 py-3 flex text-[#E33161] gap-[10px] font-medium text-sm hover:bg-red-50 transition-colors ${
+                    isPending ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  <LogOutIcon className="w-5 h-5 flex-shrink-0" />
+                  <span className="whitespace-nowrap">
+                    {isPending ? "Logging out..." : "Log out"}
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col">
-                <span className="text-[#1A1A1A] font-bold text-[15px]">
-                  Help Center
-                </span>
-                <span className="text-[#83899F] text-sm font-normal">
-                  Answers here
-                </span>
-              </div>
-              <ChevronRight className="text-[#9CA0B2] w-4 h-4" />
-            </div>
-            
-            {/* Logout Button */}
-            <div
-              onClick={handleLogoutClick}
-              className={`cursor-pointer rounded-xl w-full items-center px-4 py-3 flex text-[#E33161] gap-[10px] font-medium text-sm hover:bg-red-50 transition-colors ${
-                isPending ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              <LogOutIcon className="w-5 h-5" />
-              <span>
-                {isPending ? "Logging out..." : "Log out"}
-              </span>
             </div>
           </div>
         </div>

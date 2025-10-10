@@ -27,19 +27,19 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { useGetExpertsCount } from "@/hooks/useExpert";
+import { useGetExpertPerformance, useGetExpertsCount } from "@/hooks/useExpert";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 
 interface Expert {
-  expertId: string;
+  id: string;
   name: string;
   email: string;
   profilePicture?: string;
-  count: number;
   role?: string;
   status?: string;
   rating?: number;
   taskInvolvement?: number;
+  performance?: any;
 }
 
 interface ExpertTabProps {
@@ -53,6 +53,78 @@ interface ExpertTabProps {
   setStatusFilter: (status: string) => void;
   sortBy: string;
   businessId: string;
+}
+
+// Component to handle individual expert performance
+function ExpertRow({ expert }: { expert: any }) {
+  const { expertPerformance, isLoading: performanceLoading } = useGetExpertPerformance(expert.id);
+
+  // Calculate rating from performance data
+  const rating = useMemo(() => {
+    if (performanceLoading) return 0; // Default while loading
+    if (expertPerformance?.data?.averageScore) {
+      return expertPerformance.data.averageScore;
+    }
+    return 4.6; // Default if no performance data
+  }, [expertPerformance, performanceLoading]);
+
+  return (
+    <TableRow className="border-b border-gray-100 hover:bg-gray-50/50">
+      <TableCell className="py-4 whitespace-nowrap">
+        <div className="flex items-center gap-2">
+          {expert.profilePicture ? (
+            <Image
+              src={expert.profilePicture}
+              alt={expert.name}
+              width={20}
+              height={20}
+              className="w-5 h-5 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
+              <span className="text-xs font-medium text-purple-600">
+                {expert.name.split(" ").map((part: string) => part[0]).join("").toUpperCase()}
+              </span>
+            </div>
+          )}
+          <span className="text-gray-700 text-sm">
+            {expert.name}
+          </span>
+        </div>
+      </TableCell>
+
+      <TableCell className="py-4 whitespace-nowrap">
+        <span className="text-gray-900 text-sm">
+          {expert.role}
+        </span>
+      </TableCell>
+
+      <TableCell className="py-4 whitespace-nowrap">
+        <Badge
+          variant="outline"
+          className={`w-20 justify-center ${
+            expert.status === "Active" ? "bg-green-100 text-green-800" :
+            expert.status === "Inactive" ? "bg-gray-100 text-gray-800" :
+            "bg-yellow-100 text-yellow-800"
+          }`}
+        >
+          {expert.status}
+        </Badge>
+      </TableCell>
+
+      <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm flex items-center gap-0.5">
+        <Star size={14} /> {performanceLoading ? "Loading..." : rating}
+      </TableCell>
+      <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">
+        {expert.taskInvolvement} project{expert.taskInvolvement !== 1 ? 's' : ''}
+      </TableCell>
+      <TableCell className="py-4 whitespace-nowrap">
+        <Button variant="outline" size="sm">
+          View
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
 }
 
 export default function ExpertTab({
@@ -79,24 +151,25 @@ export default function ExpertTab({
   const expertsData = useMemo(() => {
     if (!expertsCount) return [];
     
-    // Check if expertsCount is an array or has a data property with array
     const expertsArray = Array.isArray(expertsCount) 
       ? expertsCount 
       : (expertsCount as any)?.data && Array.isArray((expertsCount as any).data)
         ? (expertsCount as any).data
         : [];
     
-    return expertsArray.map((expert: any) => ({
-      expertId: expert.expertId || expert.id || "",
-      name: expert.name || "",
-      email: expert.email || "",
-      profilePicture: expert.profilePicture,
-      count: expert.count || 0,
-      role: expert.role || "Expert",
-      status: expert.status || "Active",
-      rating: expert.rating || 4.6,
-      taskInvolvement: expert.taskInvolvement || expert.count || 0,
-    }));
+    return expertsArray.map((expert: any) => {
+      const expertId = expert.expertId || expert.id || "";
+      
+      return {
+        id: expertId,
+        name: expert.name || "",
+        email: expert.email || "",
+        profilePicture: expert.profilePicture,
+        role: expert.role || "Expert",
+        status: expert.status || "Active",
+        taskInvolvement: expert.count || 0,
+      };
+    });
   }, [expertsCount]);
 
   const filteredExperts = useMemo(() => {
@@ -165,20 +238,6 @@ export default function ExpertTab({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  function getInitials(name: string): string {
-    return name
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase();
-  }
-
-  const statusStyles = {
-    Active: "bg-green-100 text-green-800",
-    Inactive: "bg-gray-100 text-gray-800",
-    Pending: "bg-yellow-100 text-yellow-800",
   };
 
   if (isLoading) {
@@ -281,62 +340,7 @@ export default function ExpertTab({
               <TableBody>
                 {paginatedExperts.length > 0 ? (
                   paginatedExperts.map((expert: Expert) => (
-                    <TableRow
-                      key={expert.expertId}
-                      className="border-b border-gray-100 hover:bg-gray-50/50"
-                    >
-                      <TableCell className="py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          {expert.profilePicture ? (
-                            <Image
-                              src={expert.profilePicture}
-                              alt={expert.name}
-                              width={20}
-                              height={20}
-                              className="w-5 h-5 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
-                              <span className="text-xs font-medium text-purple-600">
-                                {getInitials(expert.name)}
-                              </span>
-                            </div>
-                          )}
-                          <span className="text-gray-700 text-sm">
-                            {expert.name}
-                          </span>
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="py-4 whitespace-nowrap">
-                        <span className="text-gray-900 text-sm">
-                          {expert.role}
-                        </span>
-                      </TableCell>
-
-                      <TableCell className="py-4 whitespace-nowrap">
-                        <Badge
-                          variant="outline"
-                          className={`w-20 justify-center ${
-                            statusStyles[expert.status as keyof typeof statusStyles] || "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {expert.status}
-                        </Badge>
-                      </TableCell>
-
-                      <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm flex items-center gap-0.5">
-                        <Star size={14} /> {expert.rating}
-                      </TableCell>
-                      <TableCell className="py-4 whitespace-nowrap text-gray-700 text-sm">
-                        {expert.taskInvolvement} project{expert.taskInvolvement !== 1 ? 's' : ''}
-                      </TableCell>
-                      <TableCell className="py-4 whitespace-nowrap">
-                        <Button variant="outline" size="sm">
-                          View
-                        </Button>
-                      </TableCell>
-                    </TableRow>
+                    <ExpertRow key={expert.id} expert={expert} />
                   ))
                 ) : (
                   <TableRow>
