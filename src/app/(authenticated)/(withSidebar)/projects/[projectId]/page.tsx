@@ -1553,7 +1553,7 @@ const ProjectDetails = () => {
             )}
 
             {/* Metrics */}
-            <div className="flex flex-col gap-2">
+            {/* <div className="flex flex-col gap-2">
               <span className="text-[#1A1A1A] text-sm font-normal">
                 Metrics to Influence
               </span>
@@ -1563,7 +1563,7 @@ const ProjectDetails = () => {
                 <li>CPA (Cost per Acquisition)</li>
                 <li>Referral Rate</li>
               </ul>
-            </div>
+            </div> */}
 
             {/* Resources */}
             {projectDetails.resources && projectDetails.resources.length > 0 ? (
@@ -1607,7 +1607,7 @@ const ProjectDetails = () => {
             )}
 
             {/* Deliverables */}
-            <div className="flex flex-col gap-2">
+            {/* <div className="flex flex-col gap-2">
               <span className="text-[#1A1A1A] text-sm font-normal">
                 Deliverables
               </span>
@@ -1617,7 +1617,7 @@ const ProjectDetails = () => {
                 <li>Progress Updates</li>
                 <li>Final Review</li>
               </ul>
-            </div>
+            </div> */}
 
             {/* Budget */}
             <div className="flex flex-col gap-2">
