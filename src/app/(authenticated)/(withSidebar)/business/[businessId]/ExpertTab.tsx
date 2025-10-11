@@ -61,11 +61,11 @@ function ExpertRow({ expert }: { expert: any }) {
 
   // Calculate rating from performance data
   const rating = useMemo(() => {
-    if (performanceLoading) return 0; // Default while loading
+    if (performanceLoading) return 0.0; // Default while loading
     if (expertPerformance?.data?.averageScore) {
       return expertPerformance.data.averageScore;
     }
-    return 4.6; // Default if no performance data
+    return 0.0; // Default if no performance data
   }, [expertPerformance, performanceLoading]);
 
   return (
