@@ -480,7 +480,7 @@ const Overview = () => {
                                 .map((n: string) => n[0])
                                 .join("")
                                 .toUpperCase()
-                            : "?";
+                            : "P";
 
                           return expert.image ? (
                             <Image

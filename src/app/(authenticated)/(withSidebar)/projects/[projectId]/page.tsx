@@ -24,7 +24,7 @@ import {
 import { GoUnverified } from "react-icons/go";
 import { useState, useEffect } from "react";
 import { useGetProjectById, useApproveProject } from "@/hooks/useProjects";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { ProjectSkeleton } from "@/components/ui/project-skeleton";
 import Image from "next/image";

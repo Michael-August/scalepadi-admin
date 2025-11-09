@@ -1,4 +1,4 @@
-import { BanknoteArrowDown, FolderOpen, LayoutDashboard, MessageCircleMore, UserCheck2, UserCircle, Users } from "lucide-react";
+import { BanknoteArrowDown, DatabaseIcon, FolderOpen, LayoutDashboard, MessageCircleMore, UserCheck2, UserCircle, Users } from "lucide-react";
 
 export const Routes = [
     {
@@ -35,5 +35,10 @@ export const Routes = [
         name: "Users",
         route: "/users",
         icon: Users
+    },
+    {
+        name: "Plans",
+        route: "/plans",
+        icon: DatabaseIcon
     }
 ]

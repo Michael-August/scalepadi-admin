@@ -76,7 +76,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({ value, onChange }) => 
       <input
         type="search"
         placeholder="Search users..."
-        className="pl-8 pr-4 py-2.5 w-full md:w-36 text-xs border border-gray-200 rounded-xl outline-none transition-colors focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+        className="pl-8 pr-4 py-2.5 w-full md:w-52 text-sm border border-gray-200 rounded-md outline-none transition-colors focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label="Search users"
@@ -123,7 +123,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
     <div className="relative" ref={dropdownRef}>
       <button
         type="button"
-        className="flex items-center gap-2 px-3 py-2.5 capitalize text-xs text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-200"
+        className="flex items-center gap-2 px-3 py-2.5 capitalize text-sm text-gray-500 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-200"
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
@@ -142,7 +142,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
             <button
               key={option}
               type="button"
-              className={`w-full text-left px-4 py-2 capitalize text-xs first:rounded-t-xl last:rounded-b-xl transition-colors ${
+              className={`w-full text-left px-4 py-2 capitalize text-sm first:rounded-t-md last:rounded-b-md transition-colors ${
                 selectedValue === option
                   ? "bg-gray-100 text-gray-600"
                   : "text-gray-600 hover:bg-gray-50"
@@ -273,7 +273,7 @@ export const UserTable: React.FC<UserTableProps> = ({
   data,
   isLoading,
   onEditUser,
-  onAction,
+  // onAction,
 }) => {
   const router = useRouter();
 
@@ -390,19 +390,17 @@ export const UserTable: React.FC<UserTableProps> = ({
                         View profile
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={(e) =>
-                          handleDropdownItemClick(e, () => onEditUser(user))
-                        }
+                        onClick={() => router.push(`/messages`)}
                       >
                         Chat
                       </DropdownMenuItem>
-                      <DropdownMenuItem
+                      {/* <DropdownMenuItem
                         onClick={(e) =>
                           handleDropdownItemClick(e, () => onEditUser(user))
                         }
                       >
                         Assign Task
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> */}
                       <DropdownMenuItem
                         onClick={(e) =>
                           handleDropdownItemClick(e, () => onEditUser(user))
@@ -410,7 +408,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                       >
                         Edit Role
                       </DropdownMenuItem>
-                      <DropdownMenuItem
+                      {/* <DropdownMenuItem
                         className="text-red-600"
                         onClick={(e) =>
                           handleDropdownItemClick(e, () =>
@@ -419,7 +417,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                         }
                       >
                         Suspend
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> */}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

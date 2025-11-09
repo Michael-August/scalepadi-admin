@@ -48,6 +48,7 @@ export interface BusinessDetails {
   id: string;
   name: string;
   title: string;
+  summary: string;
   email: string;
   phone: string;
   password: string;
@@ -72,6 +73,12 @@ export interface Project {
   createdAt: string;
 }
 
+interface UsageData {
+  queryCount?: number;
+  lastInteraction?: string;
+  engagementIncrease?: number;
+}
+
 const BusinessId = () => {
   const [activeTab, setActiveTab] = useState<
     "about" | "aiusage" | "projects" | "experts" | "payments"
@@ -84,6 +91,7 @@ const BusinessId = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("title");
+  const [usageData, setUsageData] = useState(null); // State to hold usage data
 
   const router = useRouter();
   const { businessDetails, isLoading } = useGetBusinessById(businessId);
@@ -234,14 +242,20 @@ const BusinessId = () => {
               </span>
               <span className="flex items-center gap-[4px] text-sm text-[#878A93]">
                 <Tag className="w-4 h-4 shrink-0" />
-                Current Plan: <span className="text-[#121217]">Padi Pro</span>
+                Current Plan:{" "}
+                <span className="text-[#121217]">
+                  {businessDetails?.plan || "No plan"}
+                </span>
               </span>
             </div>
           </div>
 
           {/* Right section */}
           <div className="flex items-center justify-end gap-3 w-full xl:w-auto">
-            <Button className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full sm:w-auto">
+            <Button
+              onClick={() => router.push(`/messages`)}
+              className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full sm:w-auto"
+            >
               <MessageCircle className="w-4 h-4 mr-2" />
               Chat
             </Button>
@@ -320,15 +334,12 @@ const BusinessId = () => {
                 <span className="font-medium text-lg sm:text-[20px] text-primary">
                   Business Summary
                 </span>
-                <span className="border border-[#E7E8E9] rounded-[10px] p-2 bg-white cursor-pointer text-[#0E1426] text-sm">
+                {/* <span className="border border-[#E7E8E9] rounded-[10px] p-2 bg-white cursor-pointer text-[#0E1426] text-sm">
                   Update
-                </span>
+                </span> */}
               </div>
               <span className="text-[#353D44] text-sm">
-                👋 Hey there! I&rsquo;m Abdullahi Suleiman (sulbyee) a curious,
-                resourceful, and impact-driven UI/UX and Product Designer with
-                over 3 years of experience turning ideas into user-centered
-                digital experiences across mobile, web, and wearables.
+                {businessDetails?.summary || "No summary available."}
               </span>
             </div>
 
@@ -337,9 +348,9 @@ const BusinessId = () => {
                 <span className="font-medium text-lg sm:text-[20px] text-primary">
                   Business information
                 </span>
-                <span className="border border-[#E7E8E9] rounded-[10px] p-2 bg-white cursor-pointer text-[#0E1426] text-sm">
+                {/* <span className="border border-[#E7E8E9] rounded-[10px] p-2 bg-white cursor-pointer text-[#0E1426] text-sm">
                   Edit
-                </span>
+                </span> */}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -399,9 +410,9 @@ const BusinessId = () => {
                 <span className="font-medium text-lg sm:text-[20px] text-primary">
                   Other Information
                 </span>
-                <span className="border border-[#E7E8E9] rounded-[10px] p-2 bg-white cursor-pointer text-[#0E1426] text-sm">
+                {/* <span className="border border-[#E7E8E9] rounded-[10px] p-2 bg-white cursor-pointer text-[#0E1426] text-sm">
                   Edit
-                </span>
+                </span> */}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="flex flex-col gap-1">
@@ -425,7 +436,7 @@ const BusinessId = () => {
               </div>
             </div>
 
-            <div className="about flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
+            {/* <div className="about flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-lg sm:text-[20px] text-primary">
                   Settings
@@ -434,106 +445,90 @@ const BusinessId = () => {
                   Edit
                 </span>
               </div>
-            </div>
+            </div> */}
           </div>
         )}
 
         {activeTab === "aiusage" && (
           <div className="flex flex-col gap-4 my-4">
-            <div className="flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-3">
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-sm text-[#0E1426]">
-                  AI Assistant Usage Overview
-                </span>
-              </div>
-              <span className="text-[#353D44] text-sm">
-                This business has made 26 AI queries in the past 30 days. Their
-                last interaction was on July 4. Most queries were around funnel
-                optimisation and campaign performance. AI engagement has
-                increased 18% this month.
-              </span>
+            {usageData ? (
+              <>
+                <div className="flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm text-[#0E1426]">
+                      AI Assistant Usage Overview
+                    </span>
+                  </div>
+                  <span className="text-[#353D44] text-sm">
+                    This business has made{" "}
+                    {(usageData as UsageData).queryCount || 26} AI queries in
+                    the past 30 days. Their last interaction was on{" "}
+                    {(usageData as UsageData).lastInteraction || "July 4"}. Most
+                    queries were around funnel optimisation and campaign
+                    performance. AI engagement has increased{" "}
+                    {(usageData as UsageData).engagementIncrease || 18}% this
+                    month.
+                  </span>
 
-              <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl flex flex-col sm:flex-row gap-6 p-4 mt-5">
-                <div className="border-b sm:border-b-0 sm:border-r w-full flex flex-col gap-4 border-[#EFF2F3] pb-4 sm:pb-0">
-                  <span className="text-2xl font-bold text-[#0E1426]">26</span>
-                  <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">
-                    AI queries
-                  </span>
-                </div>
-                <div className="border-b sm:border-b-0 sm:border-r w-full flex flex-col gap-4 border-[#EFF2F3] pb-4 sm:pb-0">
-                  <span className="text-2xl font-bold text-[#0E1426]">
-                    July 4
-                  </span>
-                  <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary-hover">
-                    last interaction
-                  </span>
-                </div>
-                <div className="w-full flex flex-col gap-4">
-                  <span className="text-2xl font-bold text-[#0E1426]">18%</span>
-                  <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">
-                    AI engagement
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
-              <div className="w-full p-4 md:p-6">
-                <h1 className="text-base font-medium text-primary mb-6">
-                  Full Query
-                </h1>
-
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-                  <div className="flex items-center gap-4 flex-wrap">
-                    <Select value="all-projects" defaultValue="all-projects">
-                      <SelectTrigger className="w-[140px] h-9 text-sm border-gray-300">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all-projects">
-                          All projects
-                        </SelectItem>
-                        <SelectItem value="in-progress">In-Progress</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Select defaultValue="sort">
-                      <SelectTrigger className="w-[80px] h-9 text-sm border-gray-300">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sort">Sort</SelectItem>
-                        <SelectItem value="name">Name</SelectItem>
-                        <SelectItem value="date">Date</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl flex flex-col sm:flex-row gap-6 p-4 mt-5">
+                    <div className="border-b sm:border-b-0 sm:border-r w-full flex flex-col gap-4 border-[#EFF2F3] pb-4 sm:pb-0">
+                      <span className="text-2xl font-bold text-[#0E1426]">
+                        {(usageData as UsageData).queryCount || 26}
+                      </span>
+                      <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">
+                        AI queries
+                      </span>
+                    </div>
+                    <div className="border-b sm:border-b-0 sm:border-r w-full flex flex-col gap-4 border-[#EFF2F3] pb-4 sm:pb-0">
+                      <span className="text-2xl font-bold text-[#0E1426]">
+                        {(usageData as UsageData).lastInteraction || "July 4"}
+                      </span>
+                      <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary-hover">
+                        last interaction
+                      </span>
+                    </div>
+                    <div className="w-full flex flex-col gap-4">
+                      <span className="text-2xl font-bold text-[#0E1426]">
+                        {(usageData as UsageData).engagementIncrease || 18}%
+                      </span>
+                      <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">
+                        AI engagement
+                      </span>
+                    </div>
                   </div>
                 </div>
-
-                <div className="rounded-lg overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-50/50">
-                        <TableHead className="text-[#878A93] font-medium text-sm py-4">
-                          Date Joined
-                        </TableHead>
-                        <TableHead className="text-[#878A93] font-medium text-sm py-4">
-                          Query
-                        </TableHead>
-                        <TableHead className="text-[#878A93] font-medium text-sm py-4">
-                          Category
-                        </TableHead>
-                        <TableHead className="text-[#878A93] font-medium text-sm py-4">
-                          Action Taken
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>{/* Query data would go here */}</TableBody>
-                  </Table>
+                {/* ... rest of your table component */}
+              </>
+            ) : (
+              // Fallback component remains the same
+              <div className="flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-6 text-center">
+                <div className="flex flex-col items-center justify-center gap-3 py-8">
+                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+                    <svg
+                      className="w-6 h-6 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="font-medium text-lg text-[#0E1426]">
+                    No AI Usage Data Available
+                  </h3>
+                  <p className="text-[#878A93] text-sm max-w-md">
+                    This business hasnt used the AI assistant yet. Usage
+                    statistics will appear here once they start interacting with
+                    the AI features.
+                  </p>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -669,14 +664,14 @@ const BusinessId = () => {
                                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm">
                                   <FolderOpen
                                     className={
-                                  project.status === "active"
-                                    ? "text-[#04E762]"
-                                    : project.status === "pending"
-                                    ? "text-[#F2BB05]"
-                                    : project.status === "in-progress"
-                                    ? "text-[#053cf2]"
-                                    : " text-gray-500"
-                                }
+                                      project.status === "active"
+                                        ? "text-[#04E762]"
+                                        : project.status === "pending"
+                                        ? "text-[#F2BB05]"
+                                        : project.status === "in-progress"
+                                        ? "text-[#053cf2]"
+                                        : " text-gray-500"
+                                    }
                                   />
                                 </div>
                                 <span className="text-gray-900 text-sm">
@@ -744,10 +739,10 @@ const BusinessId = () => {
                                   >
                                     View
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem>Edit</DropdownMenuItem>
+                                  {/* <DropdownMenuItem>Edit</DropdownMenuItem>
                                   <DropdownMenuItem className="text-red-600">
                                     Delete
-                                  </DropdownMenuItem>
+                                  </DropdownMenuItem> */}
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </TableCell>

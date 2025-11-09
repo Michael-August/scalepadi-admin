@@ -13,7 +13,7 @@ import {
   User2Icon,
   Verified,
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -38,165 +38,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useParams, useRouter } from "next/navigation";
-import { useGetAdminById } from "@/hooks/useAuth";
-
-interface Project {
-  id: number;
-  name: string;
-  owner: string;
-  email: string;
-  status: "Verified" | "Pending";
-  dateJoined: string;
-  avatar: string;
-  role?: string;
-  projectsCompleted?: number;
-}
-
-const projectData: Project[] = [
-  {
-    id: 1,
-    name: "GreenMart",
-    owner: "James Peterson",
-    email: "tanya.hill@exple.com",
-    status: "Verified",
-    dateJoined: "Feb 2, 2019 19:28",
-    avatar: "🌱",
-    role: "Growth Marketing Expert",
-    projectsCompleted: 12,
-  },
-  {
-    id: 2,
-    name: "TrewCruz",
-    owner: "Asara Cruz",
-    email: "stcruz@example.com",
-    status: "Verified",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "🔵",
-    role: "SEO Specialist",
-    projectsCompleted: 8,
-  },
-  {
-    id: 3,
-    name: "XTRAbidial",
-    owner: "sandra Abidial",
-    email: "kandra@hotmail.com",
-    status: "Pending",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "👤",
-    role: "Content Strategist",
-    projectsCompleted: 5,
-  },
-  {
-    id: 4,
-    name: "Bill Sanders",
-    owner: "Bill Sanders",
-    email: "bill.saers@emple.com",
-    status: "Pending",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "🔥",
-    role: "PPC Expert",
-    projectsCompleted: 3,
-  },
-  {
-    id: 5,
-    name: "kasandra Abidial",
-    owner: "sandra Abidial",
-    email: "kandra@hotmail.com",
-    status: "Verified",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "👤",
-    role: "Social Media Manager",
-    projectsCompleted: 15,
-  },
-  {
-    id: 6,
-    name: "kasandra Abidial",
-    owner: "sandra Abidial",
-    email: "kandra@hotmail.com",
-    status: "Verified",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "👤",
-    role: "Email Marketing Specialist",
-    projectsCompleted: 7,
-  },
-  {
-    id: 7,
-    name: "kasandra Abidial",
-    owner: "sandra Abidial",
-    email: "kandra@hotmail.com",
-    status: "Pending",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "👤",
-    role: "Analytics Expert",
-    projectsCompleted: 2,
-  },
-  {
-    id: 8,
-    name: "GreenMart",
-    owner: "James Peterson",
-    email: "tanya.hill@exple.com",
-    status: "Verified",
-    dateJoined: "Feb 2, 2019 19:28",
-    avatar: "🌱",
-    role: "Conversion Rate Optimizer",
-    projectsCompleted: 9,
-  },
-  {
-    id: 9,
-    name: "kasandra Abidial",
-    owner: "sandra Abidial",
-    email: "kandra@hotmail.com",
-    status: "Verified",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "👤",
-    role: "Brand Strategist",
-    projectsCompleted: 11,
-  },
-  {
-    id: 10,
-    name: "Bill Sanders",
-    owner: "Bill Sanders",
-    email: "bill.saers@emple.com",
-    status: "Pending",
-    dateJoined: "Dec 30, 2019 05:18",
-    avatar: "🔥",
-    role: "Influencer Marketer",
-    projectsCompleted: 4,
-  },
-  {
-    id: 11,
-    name: "Sarah Johnson",
-    owner: "Sarah Johnson",
-    email: "sarah.j@example.com",
-    status: "Verified",
-    dateJoined: "Mar 15, 2020 10:45",
-    avatar: "🌸",
-    role: "UX Designer",
-    projectsCompleted: 6,
-  },
-  {
-    id: 12,
-    name: "Mike Thompson",
-    owner: "Mike Thompson",
-    email: "mike.t@example.com",
-    status: "Pending",
-    dateJoined: "Apr 22, 2020 14:30",
-    avatar: "🦁",
-    role: "Frontend Developer",
-    projectsCompleted: 1,
-  },
-  {
-    id: 13,
-    name: "Emma Wilson",
-    owner: "Emma Wilson",
-    email: "emma.w@example.com",
-    status: "Verified",
-    dateJoined: "May 10, 2020 09:15",
-    avatar: "🌟",
-    role: "Backend Developer",
-    projectsCompleted: 8,
-  },
-];
+import { useGetAdminApprovedUsers, useGetAdminById } from "@/hooks/useAuth";
 
 const AdminDetails = () => {
   const [activeTab, setActiveTab] = useState<"task">("task");
@@ -213,56 +55,13 @@ const AdminDetails = () => {
   const { AdminDetails } = useGetAdminById(id ?? "");
   console.log(AdminDetails);
 
-  // Filter and sort logic
-  const filteredData = useMemo(() => {
-    let result = [...projectData];
+  const { adminApprovedUsers, isLoading } = useGetAdminApprovedUsers(id ?? "");
+  console.log(adminApprovedUsers?.totalItems);
 
-    // Apply status filter
-    if (statusFilter !== "all-projects") {
-      result = result.filter((item) =>
-        statusFilter === "in-progress"
-          ? true // Adjust this based on your needs
-          : statusFilter === "completed"
-          ? true // Adjust this based on your needs
-          : item.status.toLowerCase() === statusFilter.toLowerCase()
-      );
-    }
-
-    // Apply search filter
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(
-        (item) =>
-          item.name.toLowerCase().includes(term) ||
-          item.owner.toLowerCase().includes(term) ||
-          item.email.toLowerCase().includes(term) ||
-          item.role?.toLowerCase().includes(term)
-      );
-    }
-
-    // Apply sorting
-    if (sortOption !== "sort") {
-      result.sort((a, b) => {
-        if (sortOption === "name") {
-          return a.name.localeCompare(b.name);
-        } else if (sortOption === "date") {
-          return (
-            new Date(a.dateJoined).getTime() - new Date(b.dateJoined).getTime()
-          );
-        }
-        return 0;
-      });
-    }
-
-    return result;
-  }, [statusFilter, searchTerm, sortOption]);
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    return filteredData.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredData, currentPage, rowsPerPage]);
+  const totalItems = adminApprovedUsers?.totalItems || 0;
+  const totalPages = adminApprovedUsers?.totalPages || 1;
+  const currentPageFromApi = adminApprovedUsers?.currentPage || 1;
+  const itemsPerPage = adminApprovedUsers?.itemsPerPage || 10;
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
@@ -371,9 +170,15 @@ const AdminDetails = () => {
                 <Calendar className="w-4 h-4" />
                 Joined Date:{" "}
                 <span className="text-[#121217]">
-                  {new Date(AdminDetails?.createdAt).toLocaleDateString() ||
-                    "May 25, 2025"}{" "}
-                  | 21: Accounts Reviewed
+                  {new Date(AdminDetails?.createdAt).toLocaleDateString(
+                    "en-US",
+                    {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    }
+                  ) || "May 25, 2025"}{" "}
+                  | {adminApprovedUsers?.totalItems} Accounts Reviewed |
                 </span>
               </span>
               <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
@@ -385,23 +190,30 @@ const AdminDetails = () => {
               </span>
             </div>
             <div className="flex flex-wrap items-center mt-3 sm:mt-5 gap-3">
-              <Button className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black">
+              <Button
+                onClick={() => router.push(`/messages`)}
+                className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black"
+              >
                 <MessageCircle className="w-4 h-4" />
                 <span className="ml-2">Chat</span>
               </Button>
-              <Button variant={"outline"} className="rounded-[14px] text-sm">
+              <Button
+                onClick={() => router.push(`/users`)}
+                variant={"outline"}
+                className="rounded-[14px] text-sm"
+              >
                 Assign new Role
               </Button>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-3 w-full md:w-auto">
+          {/* <div className="flex items-center justify-end gap-3 w-full md:w-auto">
             <Button
               variant={"outline"}
               className="rounded-[14px] hover:bg-primary-hover hover:text-black"
             >
               Suspend
             </Button>
-          </div>
+          </div> */}
         </div>
 
         <div className="flex flex-col bg-white rounded-2xl my-5 py-2 overflow-x-auto">
@@ -516,54 +328,80 @@ const AdminDetails = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paginatedData.length > 0 ? (
-                        paginatedData.map((business) => (
+                      {adminApprovedUsers?.data?.length > 0 ? (
+                        adminApprovedUsers.data.map((user: any) => (
                           <TableRow
-                            onClick={() =>
-                              router.push(`/experts/${business.id}`)
-                            }
-                            key={business.id}
+                            onClick={() => router.push(`/experts/${user.id}`)}
+                            key={user.id}
                             className="border-b border-gray-100 cursor-pointer hover:bg-gray-50/50"
                           >
                             <TableCell className="py-4">
                               <div className="flex items-center gap-3">
-                                <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-sm">
-                                  <Image
-                                    src={"/images/profile-pics.svg"}
-                                    alt="profile picture"
-                                    width={20}
-                                    height={20}
-                                  />
+                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm">
+                                  {user?.profilePicture ? (
+                                    <Image
+                                      src={user?.profilePicture}
+                                      alt={user.name}
+                                      width={32}
+                                      height={32}
+                                      className="rounded-full object-cover"
+                                    />
+                                  ) : (
+                                    <div
+                                      className="w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-sm"
+                                      style={{
+                                        backgroundColor: stringToColor(
+                                          user?.name
+                                        ),
+                                      }}
+                                    >
+                                      {getInitials(user?.name)}
+                                    </div>
+                                  )}
                                 </div>
-                                <span className="text-gray-900 text-sm whitespace-nowrap">
-                                  {business.name}
-                                </span>
+                                <div className="flex flex-col">
+                                  <span className="text-gray-900 text-sm font-medium whitespace-nowrap">
+                                    {user?.name}
+                                  </span>
+                                  <span className="text-gray-500 text-xs">
+                                    {user?.email}
+                                  </span>
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell className="text-gray-700 text-sm py-4 whitespace-nowrap">
-                              {business.role}
+                              {user.role?.[0] || "Expert"}
                             </TableCell>
                             <TableCell className="text-gray-700 text-sm py-4 whitespace-nowrap">
-                              {business.projectsCompleted}
+                              {user.projectCount || 0}
                             </TableCell>
                             <TableCell className="py-4">
                               <Badge
                                 variant={
-                                  business.status === "Verified"
+                                  user.status === "active"
                                     ? "default"
                                     : "secondary"
                                 }
                                 className={
-                                  business.status === "Verified"
+                                  user.status === "active"
                                     ? "border border-[#04E762] text-[#04E762] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent whitespace-nowrap"
                                     : "border border-[#F2BB05] text-[#F2BB05] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent whitespace-nowrap"
                                 }
                               >
-                                {business.status}
+                                {user.status === "active"
+                                  ? "Verified"
+                                  : "Pending"}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-gray-700 text-sm py-4 whitespace-nowrap">
-                              {business.dateJoined}
+                              {new Date(user.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                }
+                              )}
                             </TableCell>
                             <TableCell className="py-4">
                               <DropdownMenu>
@@ -579,10 +417,10 @@ const AdminDetails = () => {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuItem>View</DropdownMenuItem>
-                                  <DropdownMenuItem>Edit</DropdownMenuItem>
+                                  {/* <DropdownMenuItem>Edit</DropdownMenuItem>
                                   <DropdownMenuItem className="text-red-600">
                                     Delete
-                                  </DropdownMenuItem>
+                                  </DropdownMenuItem> */}
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </TableCell>
@@ -592,9 +430,11 @@ const AdminDetails = () => {
                         <TableRow>
                           <TableCell
                             colSpan={6}
-                            className="py-4 text-center text-gray-500"
+                            className="py-8 text-center text-gray-500"
                           >
-                            No results found
+                            {isLoading
+                              ? "Loading users..."
+                              : "This Admin has not reviewed any user accounts yet."}
                           </TableCell>
                         </TableRow>
                       )}
@@ -612,7 +452,7 @@ const AdminDetails = () => {
                       value={rowsPerPage.toString()}
                       onValueChange={(value) => {
                         setRowsPerPage(Number(value));
-                        setCurrentPage(1); // Reset to first page when changing rows per page
+                        setCurrentPage(1);
                       }}
                     >
                       <SelectTrigger className="w-16 h-8 text-sm border-gray-300">
@@ -629,12 +469,11 @@ const AdminDetails = () => {
 
                   <div className="flex items-center gap-4">
                     <span className="text-sm text-gray-600 whitespace-nowrap">
-                      {filteredData.length === 0
+                      {totalItems === 0
                         ? 0
-                        : (currentPage - 1) * rowsPerPage + 1}
-                      -
-                      {Math.min(currentPage * rowsPerPage, filteredData.length)}{" "}
-                      of {filteredData.length}
+                        : (currentPageFromApi - 1) * itemsPerPage + 1}
+                      -{Math.min(currentPageFromApi * itemsPerPage, totalItems)}{" "}
+                      of {totalItems}
                     </span>
                     <div className="flex items-center gap-1">
                       <Button

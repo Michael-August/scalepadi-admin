@@ -21,12 +21,20 @@ import {
   Verified,
   FolderOpen,
   User,
+  X,
+  FileText,
 } from "lucide-react";
 import { useState } from "react";
 import CircularProgress from "@/components/circular-progress";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ProjectSkeleton } from "@/components/ui/project-skeleton";
-import { useGetExpertById, useInviteExperts } from "@/hooks/useExpert";
+import {
+  useApproveExpert,
+  useGetExpertAccountDetails,
+  useGetExpertById,
+  useGetExpertPerformance,
+  useInviteExperts,
+} from "@/hooks/useExpert";
 import { useGetAllProjects } from "@/hooks/useProjects";
 import {
   Table,
@@ -44,6 +52,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import dynamic from "next/dynamic";
+
+// Dynamically import react-pdf components with no SSR
+const PDFViewer = dynamic(() => import("./PDFViewer"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex justify-center items-center py-12">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <span className="ml-3 text-gray-600">Loading PDF viewer...</span>
+    </div>
+  ),
+});
 
 export interface ExpertDetails {
   id: string;
@@ -82,6 +102,8 @@ export interface ExpertDetails {
 }
 
 const ExpertDetails = () => {
+  const [showResumePdfPreview, setShowResumePdfPreview] = useState(false);
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<
     "about" | "documents" | "performance" | "account"
   >("about");
@@ -93,18 +115,32 @@ const ExpertDetails = () => {
 
   const params = useParams();
   const expertId = params.expertId as string;
+  const { expertPerformance, isLoading } = useGetExpertPerformance(expertId);
+  const { expertAccountDetails } = useGetExpertAccountDetails(expertId);
 
-  const { expertDetails, isLoading } = useGetExpertById(expertId);
+  const { expertDetails } = useGetExpertById(expertId);
+  const [page, setPage] = useState(1);
+
   const { projectList, isLoading: projectsLoading } = useGetAllProjects(
-    1,
+    page,
     10,
     "all",
     "createdAt",
     projectSearchTerm
   );
 
-  console.log(projectList?.data);
+  const handlePageChange = (newPage: number) => {
+    if (!projectList?.totalPages) return;
+    if (newPage < 1 || newPage > projectList.totalPages) return;
+    setPage(newPage);
+  };
+
   const { mutate: inviteExperts } = useInviteExperts();
+  const { mutate: approveExpert, isPending } = useApproveExpert(expertId);
+
+  const handleApprove = () => {
+    approveExpert();
+  };
 
   if (isLoading) {
     return <ProjectSkeleton />;
@@ -170,12 +206,22 @@ const ExpertDetails = () => {
                   {expertDetails.name}
                 </span>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="flex items-center gap-[2px] font-medium text-[#0DDC0E] text-sm">
-                    <Verified className="w-4 h-4" />
-                    {expertDetails.verified
-                      ? "Verified"
-                      : "Pending Verification"}
+                  <span className="flex items-center font-medium text-sm">
+                    {expertDetails.verified ? (
+                      <>
+                        <Verified className="w-4 h-4 text-green-600" />
+                        <span className="text-green-600">Verified</span>
+                      </>
+                    ) : (
+                      <>
+                        <X className="w-4 h-4 text-red-500 mt-0.5" />
+                        <span className="text-red-500">
+                          Pending Verification
+                        </span>
+                      </>
+                    )}
                   </span>
+
                   <span className="text-[#878A93] text-sm font-medium capitalize">
                     {expertDetails.category}
                   </span>
@@ -192,7 +238,10 @@ const ExpertDetails = () => {
               </span>
               <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
                 <Star className="w-4 h-4 text-[#F2BB05] fill-[#F6CF50]" />
-                4.5/5 average rating | {expertDetails.projectCount}: Projects
+                {expertPerformance?.data?.averageScore > 0
+                  ? expertPerformance.data.averageScore.toFixed(1)
+                  : "0.0"}{" "}
+                / 5 average rating | {expertDetails.projectCount}: Projects
                 completed
               </span>
               <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
@@ -204,7 +253,10 @@ const ExpertDetails = () => {
               </span>
             </div>
             <div className="flex items-center mt-5 gap-3">
-              <Button className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black">
+              <Button
+                onClick={() => router.push(`messages`)}
+                className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black"
+              >
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Chat
               </Button>
@@ -497,225 +549,64 @@ const ExpertDetails = () => {
                           </TableRow>
                         )}
                       </TableBody>
+                      {projectList && projectList.totalPages > 1 && (
+                        <div className="flex flex-col w-full sm:flex-row items-center justify-between gap-3 px-4 py-2 border-t border-gray-100 bg-gray-50/80 backdrop-blur-sm">
+                          {/* <p className="text-xs sm:text-sm text-gray-500">
+      Showing{" "}
+      <span className="font-medium text-gray-700">
+        {(projectList.currentPage - 1) * projectList.itemsPerPage + 1}–
+        {Math.min(
+          projectList.currentPage * projectList.itemsPerPage,
+          projectList.totalItems
+        )}
+      </span>{" "}
+      of{" "}
+      <span className="font-medium text-gray-700">
+        {projectList.totalItems}
+      </span>
+    </p> */}
 
-                      {/* <TableBody>
-                        {projectsLoading ? (
-                          [...Array(5)].map((_, i) => (
-                            <TableRow key={i} className="hover:bg-gray-50/50">
-                              <TableCell className="py-4">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-4 h-4 rounded bg-gray-200 animate-pulse" />
-                                  <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
-                                </div>
-                              </TableCell>
-                              <TableCell className="py-4">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-4 h-4 rounded-full bg-gray-200 animate-pulse" />
-                                  <div className="h-4 w-28 bg-gray-200 rounded animate-pulse" />
-                                </div>
-                              </TableCell>
-                              <TableCell className="py-4">
-                                <div className="flex -space-x-2">
-                                  {[...Array(3)].map((_, j) => (
-                                    <div
-                                      key={j}
-                                      className="h-6 w-6 rounded-full bg-gray-200 animate-pulse"
-                                    />
-                                  ))}
-                                </div>
-                              </TableCell>
-                              <TableCell className="py-4">
-                                <div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse" />
-                              </TableCell>
-                              <TableCell className="py-4 text-right">
-                                <div className="h-9 w-20 bg-gray-200 rounded-md animate-pulse ml-auto" />
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : projectList?.data && projectList.data.length > 0 ? (
-                          projectList.data.map((project) => {
-                            const statusColor =
-                              project.status === "completed"
-                                ? "text-green-600"
-                                : project.status === "in-progress"
-                                ? "text-blue-600"
-                                : "text-amber-600";
-
-                            const badgeColor =
-                              project.status === "completed"
-                                ? "bg-green-100 text-green-800"
-                                : project.status === "in-progress"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-amber-100 text-amber-800";
-
-                            return (
-                              <TableRow
-                                key={project.id}
-                                className="hover:bg-gray-50/50"
-                              >
-                                <TableCell className="py-4 text-gray-700 text-sm truncate">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
-                                      <FolderOpen
-                                        className={`w-4 h-4 ${statusColor}`}
-                                      />
-                                    </div>
-                                    <span>{project.title || "N/A"}</span>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="py-4 text-gray-700 text-sm truncate">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
-                                      <User
-                                        className={`h-3 w-3 ${statusColor}`}
-                                      />
-                                    </div>
-                                    <span>
-                                      {project.businessId?.name || "N/A"}
-                                    </span>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="py-4">
-                                  <div className="flex -space-x-2">
-                                    {project.experts?.slice(0, 3).map((exp) => (
-                                      <div
-                                        key={exp.id}
-                                        className="relative h-7 w-7 rounded-full overflow-hidden border-2 border-white shadow-sm bg-gray-100 flex items-center justify-center"
-                                      >
-                                        {exp.image ? (
-                                          <Image
-                                            src={exp.image}
-                                            alt={exp.name || "Expert"}
-                                            fill
-                                            className="object-cover"
-                                          />
-                                        ) : (
-                                          <User
-                                            className={`h-4 w-4 ${statusColor}`}
-                                          />
-                                        )}
-                                      </div>
-                                    ))}
-                                    {project.experts &&
-                                      project.experts.length > 3 && (
-                                        <div className="relative h-7 w-7 rounded-full overflow-hidden border-2 border-white bg-gray-200 flex items-center justify-center text-xs font-medium">
-                                          +{project.experts.length - 3}
-                                        </div>
-                                      )}
-                                    {(!project.experts ||
-                                      project.experts.length === 0) && (
-                                      <span className="text-xs text-gray-500">
-                                        None
-                                      </span>
-                                    )}
-                                  </div>
-                                </TableCell>
-                                <TableCell className="py-4">
-                                  <span
-                                    className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${badgeColor}`}
-                                  >
-                                    {project.status.replace("-", " ")}
-                                  </span>
-                                </TableCell>
-                                <TableCell className="py-4 text-right">
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        {(() => {
-                                          const isExpertAssigned =
-                                            project?.experts?.some(
-                                              (expert) => expert?.id === expertId
-                                            );
-                                          return (
-                                            <Button
-                                              onClick={() => {
-                                                setAssigningProjects((prev) =>
-                                                  new Set(prev).add(project?.id)
-                                                );
-                                                inviteExperts(
-                                                  {
-                                                    projectId: project?.id,
-                                                    expertIds: [expertId],
-                                                  },
-                                                  {
-                                                    onSuccess: () => {
-                                                      setAssigningProjects(
-                                                        (prev) => {
-                                                          const newSet =
-                                                            new Set(prev);
-                                                          newSet?.delete(
-                                                            project?.id
-                                                          );
-                                                          return newSet;
-                                                        }
-                                                      );
-                                                    },
-                                                    onError: () => {
-                                                      setAssigningProjects(
-                                                        (prev) => {
-                                                          const newSet =
-                                                            new Set(prev);
-                                                          newSet?.delete(
-                                                            project?.id
-                                                          );
-                                                          return newSet;
-                                                        }
-                                                      );
-                                                    },
-                                                  }
-                                                );
-                                              }}
-                                              size="sm"
-                                              className="bg-primary text-primary-foreground hover:bg-primary/90 ml-auto"
-                                              disabled={
-                                                isExpertAssigned ||
-                                                assigningProjects?.has(
-                                                  project?.id
-                                                )
-                                              }
-                                            >
-                                              {assigningProjects.has(project?.id)
-                                                ? "Assigning..."
-                                                : "Assign"}
-                                            </Button>
-                                          );
-                                        })()}
-                                      </TooltipTrigger>
-                                      {project.experts?.some(
-                                        (expert) => expert?.id === expertId
-                                      ) && (
-                                        <TooltipContent>
-                                          <p>
-                                            This expert is already assigned to
-                                            this project.
-                                          </p>
-                                        </TooltipContent>
-                                      )}
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })
-                        ) : (
-                          <TableRow>
-                            <TableCell
-                              colSpan={5}
-                              className="text-center py-12 text-gray-500"
+                          <div className="flex items-center gap-1 sm:gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs sm:text-sm text-gray-600 hover:text-gray-800"
+                              disabled={
+                                projectsLoading || projectList.currentPage === 1
+                              }
+                              onClick={() =>
+                                handlePageChange(projectList.currentPage - 1)
+                              }
                             >
-                              <div className="flex flex-col items-center justify-center gap-2">
-                                <FolderOpen className="h-10 w-10 text-gray-300" />
-                                <p>No projects found</p>
-                                {projectSearchTerm && (
-                                  <p className="text-sm">
-                                    Try adjusting your search term
-                                  </p>
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody> */}
+                              ← Prev
+                            </Button>
+
+                            <div className="flex items-center bg-white border border-gray-200 rounded-md px-3 py-1 text-xs sm:text-sm font-medium text-gray-700">
+                              Page {projectList.currentPage}
+                              <span className="text-gray-400">
+                                &nbsp;/&nbsp;
+                              </span>
+                              {projectList.totalPages}
+                            </div>
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs sm:text-sm text-gray-600 hover:text-gray-800"
+                              disabled={
+                                projectsLoading ||
+                                projectList.currentPage ===
+                                  projectList.totalPages
+                              }
+                              onClick={() =>
+                                handlePageChange(projectList.currentPage + 1)
+                              }
+                            >
+                              Next →
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </Table>
                   </div>
                 </SheetContent>
@@ -724,8 +615,25 @@ const ExpertDetails = () => {
           </div>
           <div className="flex items-center justify-end gap-3 w-full lg:w-auto">
             <Button
+              onClick={handleApprove}
+              disabled={isPending || expertDetails?.verified}
+              variant="outline"
+              className={`rounded-[14px] ${
+                expertDetails?.verified
+                  ? "bg-green-500 text-white cursor-not-allowed"
+                  : "text-white bg-primary hover:bg-primary-hover hover:text-black"
+              }`}
+            >
+              {expertDetails?.verified
+                ? "Verified"
+                : isPending
+                ? "Verifying..."
+                : "Verify Expert"}
+            </Button>
+
+            <Button
               variant={"outline"}
-              className="rounded-[14px] hover:bg-primary-hover hover:text-black"
+              className="rounded-[14px] bg-red-500 text-white hover:bg-primary-hover hover:text-black"
             >
               {expertDetails.status === "active" ? "Suspend" : "Activate"}
             </Button>
@@ -807,9 +715,9 @@ const ExpertDetails = () => {
                   <span className="font-medium text-lg sm:text-[20px] text-primary">
                     Onboarding Status
                   </span>
-                  <span className="border border-[#E7E8E9] rounded-[10px] p-2 bg-white cursor-pointer text-[#0E1426] text-sm">
+                  {/* <span className="border border-[#E7E8E9] rounded-[10px] p-2 bg-white cursor-pointer text-[#0E1426] text-sm">
                     Mark Onboarding as complete
-                  </span>
+                  </span> */}
                 </div>
 
                 <div className="p-5 flex flex-col gap-4">
@@ -1095,19 +1003,114 @@ const ExpertDetails = () => {
 
           {activeTab === "documents" && (
             <div className="flex flex-col gap-4 my-5">
-              <div className="portfolio flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-lg sm:text-[20px] text-primary">
-                    Resume
-                  </span>
-                </div>
+              <div className="flex flex-col gap-4">
+                {expertDetails?.resume ? (
+                  <div className="portfolio flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-lg sm:text-[20px] text-primary">
+                        Resume
+                      </span>
+                      <div className="flex gap-2">
+                        <a
+                          href={expertDetails.resume}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1 bg-primary text-white rounded text-sm transition-colors"
+                        >
+                          Download
+                        </a>
+                        <button
+                          onClick={() =>
+                            setShowResumePdfPreview(!showResumePdfPreview)
+                          }
+                          className="px-3 py-1 bg-gray-600 text-white rounded text-sm transition-colors"
+                        >
+                          {showResumePdfPreview ? "Hide Preview" : "Preview"}
+                        </button>
+                      </div>
+                    </div>
+                    {showResumePdfPreview && (
+                      <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                        <PDFViewer
+                          fileUrl={expertDetails.resume}
+                          type="resume"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <FileText className="w-8 h-8 text-yellow-600" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-yellow-800">
+                        No Resume Uploaded
+                      </p>
+                      <p className="text-xs text-yellow-600">
+                        Upload your resume to complete your profile
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="portfolio flex flex-col rounded-[14px] bg-white border border-[#D1DAEC80] gap-3 p-4">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-lg sm:text-[20px] text-primary">
+                  <span className="font-medium text-[20px] text-primary">
                     Identity
                   </span>
+                </div>
+
+                {/* Identity Type and ID Image */}
+                <div className="flex flex-col gap-4">
+                  {/* <div className="flex flex-col gap-1">
+                    <span className="text-[#878A93] text-sm font-normal">
+                      Identity Type
+                    </span>
+                    <span className="text-[#1A1A1A] text-base font-semibold">
+                      {expertDetails?.identification?.type
+                        ? expertDetails.identification.type
+                            .replace(/([A-Z])/g, " $1")
+                            .replace(/^./, (str: string) => str.toUpperCase())
+                        : "Not specified"}
+                    </span>
+                  </div> */}
+
+                  {/* ID Image Display */}
+                  {expertDetails?.identification?.idImage && (
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[#878A93] text-sm font-normal">
+                        ID Document
+                      </span>
+
+                      <div className="relative w-full h-[100px] sm:h-[100px] md:h-[200px] max-h-[200px]">
+                        <Image
+                          src={expertDetails.identification.idImage}
+                          alt="ID Document"
+                          fill
+                          className="rounded-lg border border-gray-200 object-contain bg-gray-50"
+                          unoptimized
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {!expertDetails?.identification?.idImage && (
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[#878A93] text-sm font-normal">
+                        ID Document
+                      </span>
+                      <div className="flex items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                        <div className="text-center">
+                          <div className="text-gray-400 text-sm mb-2">
+                            No ID document uploaded
+                          </div>
+                          {/* <div className="text-xs text-gray-500">
+                            Upload your ID document to get verified
+                          </div> */}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1116,13 +1119,14 @@ const ExpertDetails = () => {
           {activeTab === "performance" && (
             <div className="flex flex-col gap-4 my-5">
               <div className="flex flex-col lg:flex-row gap-4">
+                {/* Performance Stats */}
                 <div className="bg-white border flex flex-col border-[#EFF2F3] rounded-3xl p-4 w-full">
                   <div className="flex flex-col gap-2 border-b border-[#EFF2F3] pb-4 mb-4">
                     <span className="text-base text-[#878A93] font-medium">
                       Projects Completed
                     </span>
                     <span className="font-bold text-[32px] text-[#121217]">
-                      {expertDetails.projectCount}
+                      {expertDetails?.projectCount || 0}
                     </span>
                   </div>
                   <div className="flex flex-col gap-2">
@@ -1130,318 +1134,202 @@ const ExpertDetails = () => {
                       Average Project Duration
                     </span>
                     <span className="font-bold text-[24px] text-[#121217]">
-                      3 months
+                      {expertDetails?.projectCount || 0} month(s)
                     </span>
                   </div>
                 </div>
+
+                {/* Rating Overview */}
                 <div className="bg-white border border-[#EFF2F3] flex flex-col lg:flex-row gap-6 rounded-3xl p-4 flex-1">
                   <div className="flex flex-col lg:gap-5 lg:mt-4">
                     <span className="font-bold text-4xl lg:text-[84px] text-[#0E1426]">
-                      4.0
+                      {expertPerformance?.data?.averageScore > 0
+                        ? expertPerformance.data.averageScore.toFixed(1)
+                        : "0.0"}
                     </span>
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-1">
-                        <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                        <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                        <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                        <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                        <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
+                        {Array.from({ length: 5 }, (_, index) => (
+                          <Star
+                            key={index}
+                            className={`w-[13.33px] h-[13.33px] ${
+                              index <
+                              Math.floor(
+                                expertPerformance?.data?.averageScore || 0
+                              )
+                                ? "text-[#F2BB05] fill-[#F6CF50]"
+                                : "text-[#CFD0D4] fill-[#E7ECEE]"
+                            }`}
+                          />
+                        ))}
                       </div>
                       <span className="text-[#878A93] text-sm font-normal">
-                        Client&rsquo;s Reviews
+                        {expertPerformance?.data?.totalRatings || 0} Client
+                        Review
+                        {expertPerformance?.data?.totalRatings !== 1 ? "s" : ""}
                       </span>
                     </div>
                   </div>
+
+                  {/* Rating Distribution */}
                   <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-1">
-                      <div className="w-full lg:w-[245px] h-[6px] bg-[#F5F5F5] rounded-[4px]">
-                        <div className="w-[40%] h-[6px] bg-[#CCCCCC] rounded-[4px]"></div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
+                    {[5, 4, 3, 2, 1].map((stars) => {
+                      const ratingCount =
+                        expertPerformance?.data?.ratings?.filter(
+                          (rating: any) => Math.round(rating?.score) === stars
+                        ).length || 0;
+
+                      const percentage =
+                        expertPerformance?.data?.totalRatings > 0
+                          ? (ratingCount /
+                              expertPerformance.data.totalRatings) *
+                            100
+                          : 0;
+
+                      return (
+                        <div key={stars} className="flex items-center gap-1">
+                          <div className="w-full lg:w-[245px] h-[6px] bg-[#F5F5F5] rounded-[4px]">
+                            <div
+                              className="h-[6px] bg-[#CCCCCC] rounded-[4px] transition-all duration-300"
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1">
+                              {Array.from({ length: 5 }, (_, index) => (
+                                <Star
+                                  key={index}
+                                  className={`w-[13.33px] h-[13.33px] ${
+                                    index < stars
+                                      ? "text-[#F2BB05] fill-[#F6CF50]"
+                                      : "text-[#CFD0D4] fill-[#E7ECEE]"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-[#0E1426] text-sm font-normal">
+                              {percentage.toFixed(0)}%
+                            </span>
+                          </div>
                         </div>
-                        <span className="text-[#0E1426] text-sm font-normal">
-                          40%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-full lg:w-[245px] h-[6px] bg-[#F5F5F5] rounded-[4px]">
-                        <div className="w-[20%] h-[6px] bg-[#CCCCCC] rounded-[4px]"></div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                        </div>
-                        <span className="text-[#0E1426] text-sm font-normal">
-                          20%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-full lg:w-[245px] h-[6px] bg-[#F5F5F5] rounded-[4px]">
-                        <div className="w-[15%] h-[6px] bg-[#CCCCCC] rounded-[4px]"></div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                        </div>
-                        <span className="text-[#0E1426] text-sm font-normal">
-                          15%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-full lg:w-[245px] h-[6px] bg-[#F5F5F5] rounded-[4px]">
-                        <div className="w-[15%] h-[6px] bg-[#CCCCCC] rounded-[4px]"></div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                        </div>
-                        <span className="text-[#0E1426] text-sm font-normal">
-                          15%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-full lg:w-[245px] h-[6px] bg-[#F5F5F5] rounded-[4px]">
-                        <div className="w-[10%] h-[6px] bg-[#CCCCCC] rounded-[4px]"></div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                          <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                        </div>
-                        <span className="text-[#0E1426] text-sm font-normal">
-                          10%
-                        </span>
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
 
+              {/* Individual Reviews */}
               <div className="bg-white border border-[#D1DAEC80] rounded-3xl p-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="bg-[#FBFCFC] rounded-[18px] p-4 flex flex-col gap-[10px]">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <Image
-                        className="w-[22px] h-[22px] rounded-full border border-[#EFF2F3]"
-                        src={"/images/dp.svg"}
-                        width={22}
-                        height={22}
-                        alt="user picture"
-                      />
-                      <span className="text-xs text-[#3E4351] font-medium">
-                        Darlene Robertson
-                      </span>
-                    </div>
-                    <Dot className="text-[#CFD0D4] w-6 h-6" />
-                    <span className="text-xs text-[#3E4351] font-normal">
-                      AI & ML Smitre ltd
+                {expertPerformance?.data?.ratings?.length > 0 ? (
+                  expertPerformance.data.ratings.map(
+                    (rating: any, index: number) => (
+                      <div
+                        key={rating.id || index}
+                        className="bg-[#FBFCFC] rounded-[18px] p-4 flex flex-col gap-[10px]"
+                      >
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: 5 }, (_, index) => (
+                            <Star
+                              key={index}
+                              className={`w-[13.33px] h-[13.33px] ${
+                                index < Math.floor(rating.score)
+                                  ? "text-[#F2BB05] fill-[#F6CF50]"
+                                  : "text-[#CFD0D4] fill-[#E7ECEE]"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            <Image
+                              className="w-[22px] h-[22px] rounded-full border border-[#EFF2F3]"
+                              src={"/images/dp.svg"}
+                              width={22}
+                              height={22}
+                              alt="reviewer picture"
+                            />
+                            <span className="text-xs text-[#3E4351] font-medium">
+                              {rating.ratingBy || "Anonymous"}
+                            </span>
+                          </div>
+                          <Dot className="text-[#CFD0D4] w-6 h-6" />
+                          <span className="text-xs text-[#3E4351] font-normal">
+                            {new Date(rating.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <span className="text-[#878A93] text-base font-normal">
+                          {rating.note || "No review text provided"}
+                        </span>
+                      </div>
+                    )
+                  )
+                ) : (
+                  <div className="col-span-2 text-center py-8">
+                    <span className="text-[#878A93] text-lg">
+                      No reviews yet
                     </span>
                   </div>
-                  <span className="text-[#878A93] text-base font-normal">
-                    made scaling our business feel exciting and achievable!
-                    Their strategic guidance was crystal clear, their expertise
-                    was invaluable, and their collaborative approach gave us the
-                    support we needed to hit our growth targets.{" "}
-                  </span>
-                </div>
-                <div className="bg-[#FBFCFC] rounded-[18px] p-4 flex flex-col gap-[10px]">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <Image
-                        className="w-[22px] h-[22px] rounded-full border border-[#EFF2F3]"
-                        src={"/images/dp.svg"}
-                        width={22}
-                        height={22}
-                        alt="user picture"
-                      />
-                      <span className="text-xs text-[#3E4351] font-medium">
-                        Darlene Robertson
-                      </span>
-                    </div>
-                    <Dot className="text-[#CFD0D4] w-6 h-6" />
-                    <span className="text-xs text-[#3E4351] font-normal">
-                      AI & ML Smitre ltd
-                    </span>
-                  </div>
-                  <span className="text-[#878A93] text-base font-normal">
-                    made scaling our business feel exciting and achievable!
-                    Their strategic guidance was crystal clear, their expertise
-                    was invaluable, and their collaborative approach gave us the
-                    support we needed to hit our growth targets.{" "}
-                  </span>
-                </div>
-                <div className="bg-[#FBFCFC] rounded-[18px] p-4 flex flex-col gap-[10px]">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <Image
-                        className="w-[22px] h-[22px] rounded-full border border-[#EFF2F3]"
-                        src={"/images/dp.svg"}
-                        width={22}
-                        height={22}
-                        alt="user picture"
-                      />
-                      <span className="text-xs text-[#3E4351] font-medium">
-                        Darlene Robertson
-                      </span>
-                    </div>
-                    <Dot className="text-[#CFD0D4] w-6 h-6" />
-                    <span className="text-xs text-[#3E4351] font-normal">
-                      AI & ML Smitre ltd
-                    </span>
-                  </div>
-                  <span className="text-[#878A93] text-base font-normal">
-                    made scaling our business feel exciting and achievable!
-                    Their strategic guidance was crystal clear, their expertise
-                    was invaluable, and their collaborative approach gave us the
-                    support we needed to hit our growth targets.{" "}
-                  </span>
-                </div>
-                <div className="bg-[#FBFCFC] rounded-[18px] p-4 flex flex-col gap-[10px]">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <Image
-                        className="w-[22px] h-[22px] rounded-full border border-[#EFF2F3]"
-                        src={"/images/dp.svg"}
-                        width={22}
-                        height={22}
-                        alt="user picture"
-                      />
-                      <span className="text-xs text-[#3E4351] font-medium">
-                        Darlene Robertson
-                      </span>
-                    </div>
-                    <Dot className="text-[#CFD0D4] w-6 h-6" />
-                    <span className="text-xs text-[#3E4351] font-normal">
-                      AI & ML Smitre ltd
-                    </span>
-                  </div>
-                  <span className="text-[#878A93] text-base font-normal">
-                    made scaling our business feel exciting and achievable!
-                    Their strategic guidance was crystal clear, their expertise
-                    was invaluable, and their collaborative approach gave us the
-                    support we needed to hit our growth targets.{" "}
-                  </span>
-                </div>
-                <div className="bg-[#FBFCFC] rounded-[18px] p-4 flex flex-col gap-[10px]">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <Image
-                        className="w-[22px] h-[22px] rounded-full border border-[#EFF2F3]"
-                        src={"/images/dp.svg"}
-                        width={22}
-                        height={22}
-                        alt="user picture"
-                      />
-                      <span className="text-xs text-[#3E4351] font-medium">
-                        Darlene Robertson
-                      </span>
-                    </div>
-                    <Dot className="text-[#CFD0D4] w-6 h-6" />
-                    <span className="text-xs text-[#3E4351] font-normal">
-                      AI & ML Smitre ltd
-                    </span>
-                  </div>
-                  <span className="text-[#878A93] text-base font-normal">
-                    made scaling our business feel exciting and achievable!
-                    Their strategic guidance was crystal clear, their expertise
-                    was invaluable, and their collaborative approach gave us the
-                    support we needed to hit our growth targets.{" "}
-                  </span>
-                </div>
-                <div className="bg-[#FBFCFC] rounded-[18px] p-4 flex flex-col gap-[10px]">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]" />
-                    <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <Image
-                        className="w-[22px] h-[22px] rounded-full border border-[#EFF2F3]"
-                        src={"/images/dp.svg"}
-                        width={22}
-                        height={22}
-                        alt="user picture"
-                      />
-                      <span className="text-xs text-[#3E4351] font-medium">
-                        Darlene Robertson
-                      </span>
-                    </div>
-                    <Dot className="text-[#CFD0D4] w-6 h-6" />
-                    <span className="text-xs text-[#3E4351] font-normal">
-                      AI & ML Smitre ltd
-                    </span>
-                  </div>
-                  <span className="text-[#878A93] text-base font-normal">
-                    made scaling our business feel exciting and achievable!
-                    Their strategic guidance was crystal clear, their expertise
-                    was invaluable, and their collaborative approach gave us the
-                    support we needed to hit our growth targets.{" "}
-                  </span>
-                </div>
+                )}
               </div>
+            </div>
+          )}
+
+          {activeTab === "account" && (
+            <div className="flex flex-col gap-4 my-5">
+              {expertAccountDetails?.data ? (
+                <div className="bg-white p-6 rounded-lg border border-[#D1DAEC80]">
+                  <h3 className="font-medium text-lg sm:text-[20px] text-primary">
+                    Account Details
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm text-gray-500">
+                        Account Name
+                      </label>
+                      <p className="font-medium">
+                        {expertAccountDetails.data.accountName}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm text-gray-500">
+                        Account Number
+                      </label>
+                      <p className="font-medium">
+                        {expertAccountDetails.data.accountNumber}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm text-gray-500">Bank Name</label>
+                      <p className="font-medium">
+                        {expertAccountDetails.data.bankName}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm text-gray-500">Sort Code</label>
+                      <p className="font-medium">
+                        {expertAccountDetails.data.sortCode}
+                      </p>
+                    </div>
+
+                    {expertAccountDetails.data.branch && (
+                      <div>
+                        <label className="text-sm text-gray-500">Branch</label>
+                        <p className="font-medium">
+                          {expertAccountDetails.data.branch}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No account details found
+                </div>
+              )}
             </div>
           )}
         </div>
