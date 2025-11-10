@@ -315,8 +315,6 @@ const ProjectDetails = () => {
 			{
 				projectId,
 				approved: approvalStatus,
-				totalCost: proposedTotalCost,
-				discount: finalDiscount,
 			},
 			{
 				onSuccess: () => {
@@ -471,6 +469,10 @@ const ProjectDetails = () => {
 			</div>
 		);
 	}
+
+	const formattedText = projectDetails?.brief
+		.replace(/\\r\\n/g, "<br />")
+		.replace(/\\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
 
 	return (
 		<div className="flex w-full flex-col gap-6">
@@ -1572,10 +1574,13 @@ const ProjectDetails = () => {
 							</Button>
 						) : (
 							<Button
-								onClick={() => setIsApprovalModalOpen(true)}
+								disabled={approveProjectMutation.isPending}
+								onClick={() => handleApprove()}
 								className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full lg:w-auto"
 							>
-								Approve
+								{approveProjectMutation.isPending
+									? "Approving..."
+									: "Approve"}
 							</Button>
 						)}
 					</div>
@@ -1670,10 +1675,12 @@ const ProjectDetails = () => {
 							<span className="text-[#1A1A1A] text-sm font-normal">
 								Project brief
 							</span>
-							<span className="text-sm text-[#727374]">
-								{projectDetails.brief ||
-									"No project brief provided."}
-							</span>
+							<div
+								className="whitespace-pre-line text-sm text-[#727374] leading-relaxed"
+								dangerouslySetInnerHTML={{
+									__html: formattedText,
+								}}
+							/>
 						</div>
 
 						<div className="flex flex-col gap-2">
@@ -1690,7 +1697,7 @@ const ProjectDetails = () => {
 								Challenge
 							</span>
 							<span className="text-sm text-[#727374]">
-								{projectDetails.brief ||
+								{projectDetails.challengeId?.description ||
 									"No challenge description provided."}
 							</span>
 						</div>
