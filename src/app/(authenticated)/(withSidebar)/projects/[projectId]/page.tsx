@@ -1575,7 +1575,7 @@ const ProjectDetails = () => {
 						) : (
 							<Button
 								disabled={approveProjectMutation.isPending}
-								onClick={() => handleApprove()}
+								onClick={() => setIsApprovalModalOpen(true)}
 								className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full lg:w-auto"
 							>
 								{approveProjectMutation.isPending
