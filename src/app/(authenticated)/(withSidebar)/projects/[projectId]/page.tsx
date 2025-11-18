@@ -1702,6 +1702,43 @@ const ProjectDetails = () => {
 							</span>
 						</div>
 
+						<div className="flex flex-col gap-2">
+							<span className="text-[#1A1A1A] text-sm font-normal">
+								Kind of Expert needed
+							</span>
+							<span className="text-sm text-[#727374]">
+								{projectDetails?.kindOfExperts ||
+									"No Prefered kind of expert provided."}
+							</span>
+						</div>
+						<div className="flex flex-col gap-2">
+							<span className="text-[#1A1A1A] text-sm font-normal">
+								Location
+							</span>
+							<span className="text-sm text-[#727374]">
+								{projectDetails?.location ||
+									"No Prefered location provided."}
+							</span>
+						</div>
+						<div className="flex flex-col gap-2">
+							<span className="text-[#1A1A1A] text-sm font-normal">
+								Working Preference
+							</span>
+							<span className="text-sm text-[#727374]">
+								{projectDetails?.workingPreference ||
+									"No Prefered working preference provided."}
+							</span>
+						</div>
+						<div className="flex flex-col gap-2">
+							<span className="text-[#1A1A1A] text-sm font-normal">
+								Expert experience level
+							</span>
+							<span className="text-sm text-[#727374]">
+								{projectDetails?.expertsExperienceLevel ||
+									"No Prefered experience level provided."}
+							</span>
+						</div>
+
 						{projectDetails.resources &&
 							projectDetails.resources.length > 0 && (
 								<div className="flex flex-col gap-2">
