@@ -357,6 +357,7 @@ const DashboardNav = ({ withLogo = true }: { withLogo?: boolean }) => {
 			)}
 			{withLogo && (
 				<Image
+					onClick={() => router.push("/overview")}
 					src={"/logo.svg"}
 					alt="Logo"
 					width={104}
