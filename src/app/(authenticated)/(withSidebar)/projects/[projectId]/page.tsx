@@ -474,6 +474,10 @@ const ProjectDetails = () => {
 		.replace(/\\r\\n/g, "<br />")
 		.replace(/\\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
 
+	const formattedKindOfExperts = projectDetails?.kindOfExperts
+		.replace(/\\r\\n/g, "<br />")
+		.replace(/\\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
+
 	return (
 		<div className="flex w-full flex-col gap-6">
 			{/* Delete Confirmation Modal */}
@@ -1706,10 +1710,12 @@ const ProjectDetails = () => {
 							<span className="text-[#1A1A1A] text-sm font-normal">
 								Kind of Expert needed
 							</span>
-							<span className="text-sm text-[#727374]">
-								{projectDetails?.kindOfExperts ||
-									"No Prefered kind of expert provided."}
-							</span>
+							<div
+								className="whitespace-pre-line text-sm text-[#727374] leading-relaxed"
+								dangerouslySetInnerHTML={{
+									__html: formattedKindOfExperts,
+								}}
+							/>
 						</div>
 						<div className="flex flex-col gap-2">
 							<span className="text-[#1A1A1A] text-sm font-normal">
