@@ -1564,9 +1564,9 @@ const ProjectDetails = () => {
 							<Plus className="w-4 h-4" />
 							Add Task
 						</Button>
-						<Button className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full lg:w-auto">
+						{/* <Button className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full lg:w-auto">
 							Change Status
-						</Button>
+						</Button> */}
 
 						{projectDetails.adminApproved ? (
 							<Button
@@ -1989,7 +1989,7 @@ const ProjectDetails = () => {
 															</span>
 														</div>
 													</div>
-													<div className="flex items-center gap-2">
+													{/* <div className="flex items-center gap-2">
 														<Button
 															variant="outline"
 															size="sm"
@@ -2004,7 +2004,7 @@ const ProjectDetails = () => {
 														>
 															Reassign
 														</Button>
-													</div>
+													</div> */}
 												</div>
 											</div>
 										)}
