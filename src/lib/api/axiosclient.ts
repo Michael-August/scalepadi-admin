@@ -11,7 +11,7 @@ const axiosClient: AxiosInstance = axios.create({
 	timeout: 5000000,
 });
 
-const publicEndpoints = ["/login/admin"];
+const publicEndpoints = ["/login/admin", "/invite/admin/"];
 
 axiosClient.interceptors.request.use(
 	async (config) => {
