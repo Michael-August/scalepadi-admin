@@ -15,7 +15,9 @@ export type Project = {
   goal?: string;
   resources?: string[];
   proposedTotalCost?: number;
+  totalCost?: number;
   paymentStatus?: string;
+  location?: string;
   adminApproved?: boolean;
   requestSupervisor?: boolean;
   businessId?: {
@@ -26,6 +28,7 @@ export type Project = {
     verified?: boolean;
     status?: string;
     id: string;
+    country?: string;
   };
   experts?: { id: { id: string }; name: string; image: string }[];
 };

@@ -25,6 +25,7 @@ import { useGetAdminList } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { ChatWindowSkeleton } from "@/components/skeletons/messages.skeleton";
+import { useSearchParams } from "next/navigation";
 
 interface Participant {
 	id: string;
@@ -116,6 +117,16 @@ export default function MessagesPage() {
 					console.log(res);
 					setFindUsersToChat(false);
 					setChatMessagesToFetch(res?.data?.id);
+
+					// Set selected expert from response if available
+					if (res?.data?.participants) {
+						const otherParticipant = res.data.participants.find(
+							(p: any) => p.user?._id === userId || p.user === userId
+						);
+						if (otherParticipant) {
+							setSelectedExpert(otherParticipant);
+						}
+					}
 				},
 				onError: (error) => {
 					toast.error(`${error.message}`);
@@ -123,6 +134,10 @@ export default function MessagesPage() {
 			}
 		);
 	};
+
+	// ... (rest of component function)
+
+
 
 	const handleSendMessage = () => {
 		if (!input.trim()) return;
@@ -189,7 +204,7 @@ export default function MessagesPage() {
 				};
 			}
 		);
-		const business: IUserToChat[] = (expertList?.data?.data ?? []).map(
+		const business: IUserToChat[] = (businessList?.data?.data ?? []).map(
 			(business: any) => {
 				return {
 					id: business?.id,
@@ -206,6 +221,19 @@ export default function MessagesPage() {
 	useEffect(() => {
 		setLoggedInUser(JSON.parse(localStorage.getItem("user") || "{}"));
 	}, []);
+
+	const searchParams = useSearchParams();
+	const userIdParam = searchParams.get("userId");
+	const roleParam = searchParams.get("role");
+
+	useEffect(() => {
+		if (userIdParam && roleParam) {
+			// Only initiate chat if not already active or loading
+			if (!chatMessagesToFetch && !isPending) {
+				handleCreateChat(userIdParam, roleParam);
+			}
+		}
+	}, [userIdParam, roleParam, chatMessagesToFetch, isPending]);
 
 	useEffect(() => {
 		setMessages(chatMessages);
@@ -251,16 +279,15 @@ export default function MessagesPage() {
 									)
 								);
 							}}
-							className={`flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-gray-100 ${
-								selectedExpert?._id ===
+							className={`flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-gray-100 ${selectedExpert?._id ===
 								chat.participants.find(
 									(p: {
 										user: { _id: string; name: string };
 									}) => p?.user?._id !== loggedInUser?.id
 								)?._id
-									? "bg-gray-100"
-									: ""
-							}`}
+								? "bg-gray-100"
+								: ""
+								}`}
 						>
 							<div className="w-10 h-10 rounded-full overflow-hidden">
 								<Avatar className="w-10 h-10">
@@ -385,22 +412,20 @@ export default function MessagesPage() {
 								return (
 									<div
 										key={idx}
-										className={`flex flex-col mb-2 ${
-											isMe
-												? "items-end text-right"
-												: "items-start text-left"
-										}`}
+										className={`flex flex-col mb-2 ${isMe
+											? "items-end text-right"
+											: "items-start text-left"
+											}`}
 									>
 										<div className="text-xs text-gray-500 mb-1">
 											{isMe ? "You" : msg.sender.model}{" "}
 											{/* show "You" or the sender's model */}
 										</div>
 										<div
-											className={`p-2 rounded-lg max-w-xs text-sm ${
-												isMe
-													? "bg-blue-100 text-blue-900"
-													: "bg-gray-100 text-gray-900"
-											}`}
+											className={`p-2 rounded-lg max-w-xs text-sm ${isMe
+												? "bg-blue-100 text-blue-900"
+												: "bg-gray-100 text-gray-900"
+												}`}
 										>
 											{msg.content}
 										</div>

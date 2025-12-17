@@ -7,6 +7,9 @@ import {
   FolderOpen,
   MoreHorizontal,
   Search,
+  CheckCircle,
+  XCircle,
+  Activity,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -35,6 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { useGetAllBusiness, useSearchBusiness } from "@/hooks/useBusiness";
 import { Skeleton } from "@/components/ui/skeleton";
+import CountUp from "react-countup";
 
 export type BusinessType = {
   id: string;
@@ -59,6 +63,15 @@ const Business = () => {
     currentPage,
     parseInt(rowsPerPage)
   );
+
+  // Separate fetches for global stats
+  const { businessList: activeBusinessList, isLoading: activeLoading } =
+    useGetAllBusiness(1, 1, "active");
+  const { businessList: inactiveBusinessList, isLoading: inactiveLoading } =
+    useGetAllBusiness(1, 1, "inactive");
+  const { businessList: verifiedBusinessList, isLoading: verifiedLoading } =
+    useGetAllBusiness(1, 1, "", true);
+
   const [query, setQuery] = useState("");
 
   const { businessList: searchResults } = useSearchBusiness(
@@ -98,16 +111,12 @@ const Business = () => {
   );
 
   const totalBusinesses = businessList?.data?.totalItems || 0;
-  const verifiedCount =
-    businessList?.data?.data?.filter((b: BusinessType) => b.verified).length ||
-    0;
-  const inactiveCount =
-    businessList?.data?.data?.filter(
-      (b: BusinessType) => b.status === "inactive"
-    ).length || 0;
-  const activeCount =
-    businessList?.data?.data?.filter((b: BusinessType) => b.status === "active")
-      .length || 0;
+  const verifiedCount = verifiedBusinessList?.data?.totalItems || 0;
+  const inactiveCount = inactiveBusinessList?.data?.totalItems || 0;
+  const activeCount = activeBusinessList?.data?.totalItems || 0;
+
+  const isStatsLoading =
+    isLoading || activeLoading || inactiveLoading || verifiedLoading;
 
   const handlePageChange = (direction: "next" | "prev") => {
     if (
@@ -130,32 +139,74 @@ const Business = () => {
         <div className="flex flex-col gap-2 w-full">
           <span className="text-sm text-[#878A93] font-medium">
             Total Registered Businesses:{" "}
-            <span className="text-[#3E4351]">{totalBusinesses}</span>
+            <span className="text-[#3E4351]">
+              {isStatsLoading ? (
+                <Skeleton className="h-4 w-10 inline-block" />
+              ) : (
+                <CountUp end={totalBusinesses} duration={2} />
+              )}
+            </span>
           </span>
           <div className="bg-[#FBFCFC] border border-[#EFF2F3] rounded-2xl flex flex-col sm:flex-row gap-6 p-4">
             <div className="border-r sm:w-1/3 w-full flex flex-col gap-4 border-[#EFF2F3]">
-              <span className="text-2xl font-bold text-[#0E1426]">
-                {verifiedCount}
-              </span>
-              <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">
-                Verified
-              </span>
+              {isStatsLoading ? (
+                <>
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-[#0E1426]">
+                      <CountUp end={verifiedCount} duration={2} />
+                    </span>
+                    <CheckCircle className="w-5 h-5 text-[#04E762]" />
+                  </div>
+                  <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">
+                    Verified
+                  </span>
+                </>
+              )}
             </div>
             <div className="border-r sm:w-1/3 w-full flex flex-col gap-4 border-[#EFF2F3]">
-              <span className="text-2xl font-bold text-[#0E1426]">
-                {inactiveCount}
-              </span>
-              <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary-hover">
-                Inacive Business
-              </span>
+              {isStatsLoading ? (
+                <>
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-[#0E1426]">
+                      <CountUp end={inactiveCount} duration={2} />
+                    </span>
+                    <XCircle className="w-5 h-5 text-destructive" />
+                  </div>
+                  <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-destructive">
+                    Inactive Business
+                  </span>
+                </>
+              )}
             </div>
             <div className="sm:w-1/3 w-full flex flex-col gap-4">
-              <span className="text-2xl font-bold text-[#0E1426]">
-                {activeCount}
-              </span>
-              <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">
-                Active Business
-              </span>
+              {isStatsLoading ? (
+                <>
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-[#0E1426]">
+                      <CountUp end={activeCount} duration={2} />
+                    </span>
+                    <Activity className="w-5 h-5 text-[#04E762]" />
+                  </div>
+                  <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">
+                    Active Business
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>

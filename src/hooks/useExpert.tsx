@@ -7,18 +7,27 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
 
-export const useGetAllExpert = (page: number = 1, limit: number = 10) => {
+export const useGetAllExpert = (
+  page: number = 1,
+  limit: number = 10,
+  status: string = "",
+  verified?: boolean | string,
+  search: string = ""
+) => {
   const { data, isLoading } = useQuery<{
     status: boolean;
     message: string;
     data: PaginatedExperts;
   }>({
-    queryKey: ["expert", page, limit],
+    queryKey: ["expert", page, limit, status, verified, search],
     queryFn: async () => {
       try {
-        const response = await axiosClient.get(
-          `/experts?page=${page}&limit=${limit}`
-        );
+        let url = `/experts?page=${page}&limit=${limit}`;
+        if (status && status !== "all") url += `&status=${status}`;
+        if (verified !== undefined && verified !== "all") url += `&verified=${verified}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+
+        const response = await axiosClient.get(url);
         if (response.data?.status === false) {
           throw new Error(response.data?.message || "Failed to fetch experts.");
         }
@@ -131,10 +140,9 @@ export const useGetAllBusinessProjects = (
     queryFn: async () => {
       try {
         const response = await axiosClient.get(
-          `/projects/account/admin?businessId=${businessId}&page=${currentPage}&limit=${itemsPerPage}${
-            statusFilter && statusFilter !== "all"
-              ? `&status=${statusFilter}`
-              : ""
+          `/projects/account/admin?businessId=${businessId}&page=${currentPage}&limit=${itemsPerPage}${statusFilter && statusFilter !== "all"
+            ? `&status=${statusFilter}`
+            : ""
           }&sort=${sortBy}&search=${searchQuery}`
         );
         if (response.data?.status === false) {
@@ -257,10 +265,9 @@ export const useGetExpertsCount = (
     queryFn: async () => {
       try {
         const response = await axiosClient.get(
-          `/projects/experts-count/${businessId}?page=${currentPage}&limit=${itemsPerPage}${
-            statusFilter && statusFilter !== "all"
-              ? `status=${statusFilter}`
-              : ""
+          `/projects/experts-count/${businessId}?page=${currentPage}&limit=${itemsPerPage}${statusFilter && statusFilter !== "all"
+            ? `status=${statusFilter}`
+            : ""
           }&sort=${sortBy}&search=${searchQuery}`
         );
         if (response.data?.status === false) {
@@ -307,7 +314,7 @@ export const useGetExpertPerformance = (id: string) => {
         if (error instanceof AxiosError) {
           toast.error(
             error.response?.data?.message ||
-              "Failed to fetch expert performance."
+            "Failed to fetch expert performance."
           );
         } else if (error instanceof Error) {
           toast.error(error.message);
@@ -346,7 +353,7 @@ export const useGetExpertAccountDetails = (id: string) => {
           }
           toast.error(
             error.response?.data?.message ||
-              "Failed to fetch expert account details."
+            "Failed to fetch expert account details."
           );
         } else if (error instanceof Error) {
           toast.error(error.message);

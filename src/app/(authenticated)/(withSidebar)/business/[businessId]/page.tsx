@@ -43,6 +43,7 @@ import ExpertTab from "./ExpertTab";
 import { ProjectSkeleton } from "@/components/ui/project-skeleton";
 import { useGetBusinessById } from "@/hooks/useBusiness";
 import { useGetAllBusinessProjects } from "@/hooks/useExpert";
+import Link from "next/link";
 
 export interface BusinessDetails {
   id: string;
@@ -252,13 +253,14 @@ const BusinessId = () => {
 
           {/* Right section */}
           <div className="flex items-center justify-end gap-3 w-full xl:w-auto">
-            <Button
-              onClick={() => router.push(`/messages`)}
-              className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full sm:w-auto"
-            >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Chat
-            </Button>
+            <Link href={`/messages?userId=${businessId}&role=Business`}>
+              <Button
+                className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full sm:w-auto"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Chat
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
@@ -267,11 +269,10 @@ const BusinessId = () => {
           <div
             className={`flex cursor-pointer w-full items-center justify-center border-b-2 pb-3 min-w-max
                         hover:border-[#3A96E8] transition-colors 
-                        ${
-                          activeTab === "about"
-                            ? "border-[#3A96E8] text-[#3A96E8]"
-                            : "border-transparent"
-                        }`}
+                        ${activeTab === "about"
+                ? "border-[#3A96E8] text-[#3A96E8]"
+                : "border-transparent"
+              }`}
             onClick={() => setActiveTab("about")}
           >
             <span className="text-sm">About</span>
@@ -280,11 +281,10 @@ const BusinessId = () => {
           <div
             className={`flex cursor-pointer w-full items-center justify-center border-b-2 pb-3 min-w-max
                         hover:border-[#3A96E8] transition-colors 
-                        ${
-                          activeTab === "aiusage"
-                            ? "border-[#3A96E8] text-[#3A96E8]"
-                            : "border-transparent"
-                        }`}
+                        ${activeTab === "aiusage"
+                ? "border-[#3A96E8] text-[#3A96E8]"
+                : "border-transparent"
+              }`}
             onClick={() => setActiveTab("aiusage")}
           >
             <span className="text-sm">AI Usage Summary</span>
@@ -292,23 +292,21 @@ const BusinessId = () => {
           <div
             className={`flex cursor-pointer w-full items-center justify-center border-b-2 pb-3 min-w-max
                         hover:border-[#3A96E8] transition-colors 
-                        ${
-                          activeTab === "projects"
-                            ? "border-[#3A96E8] text-[#3A96E8]"
-                            : "border-transparent"
-                        }`}
+                        ${activeTab === "projects"
+                ? "border-[#3A96E8] text-[#3A96E8]"
+                : "border-transparent"
+              }`}
             onClick={() => setActiveTab("projects")}
           >
-            <span className="text-sm">Projects ({projects.length})</span>
+            <span className="text-sm">Projects ({paginationInfo.totalItems})</span>
           </div>
           <div
             className={`flex cursor-pointer w-full items-center justify-center border-b-2 pb-3 min-w-max
                         hover:border-[#3A96E8] transition-colors 
-                        ${
-                          activeTab === "experts"
-                            ? "border-[#3A96E8] text-[#3A96E8]"
-                            : "border-transparent"
-                        }`}
+                        ${activeTab === "experts"
+                ? "border-[#3A96E8] text-[#3A96E8]"
+                : "border-transparent"
+              }`}
             onClick={() => setActiveTab("experts")}
           >
             <span className="text-sm">Experts</span>
@@ -316,11 +314,10 @@ const BusinessId = () => {
           <div
             className={`flex cursor-pointer w-full items-center justify-center border-b-2 pb-3 min-w-max
                         hover:border-[#3A96E8] transition-colors 
-                        ${
-                          activeTab === "payments"
-                            ? "border-[#3A96E8] text-[#3A96E8]"
-                            : "border-transparent"
-                        }`}
+                        ${activeTab === "payments"
+                ? "border-[#3A96E8] text-[#3A96E8]"
+                : "border-transparent"
+              }`}
             onClick={() => setActiveTab("payments")}
           >
             <span className="text-sm">Payments</span>
@@ -359,7 +356,7 @@ const BusinessId = () => {
                     Full Name
                   </span>
                   <span className="text-[#1A1A1A] text-base font-semibold">
-                    {businessDetails.name}
+                    {businessDetails.name || "N/A"}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -367,7 +364,7 @@ const BusinessId = () => {
                     Email
                   </span>
                   <span className="text-[#1A1A1A] text-base font-semibold">
-                    {businessDetails.email}
+                    {businessDetails.email || "N/A"}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -375,7 +372,7 @@ const BusinessId = () => {
                     Phone number
                   </span>
                   <span className="text-[#1A1A1A] text-base font-semibold">
-                    {businessDetails.phone}
+                    {businessDetails.phone || "N/A"}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -383,7 +380,7 @@ const BusinessId = () => {
                     Account Status
                   </span>
                   <span className="text-[#1A1A1A] text-base font-semibold capitalize">
-                    {businessDetails.status}
+                    {businessDetails.status || "N/A"}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -399,7 +396,9 @@ const BusinessId = () => {
                     Last Login
                   </span>
                   <span className="text-[#1A1A1A] text-base font-semibold">
-                    {formatDate(businessDetails.lastLogin)}
+                    {businessDetails.lastLogin
+                      ? formatDate(businessDetails.lastLogin)
+                      : "N/A"}
                   </span>
                 </div>
               </div>
@@ -667,10 +666,10 @@ const BusinessId = () => {
                                       project.status === "active"
                                         ? "text-[#04E762]"
                                         : project.status === "pending"
-                                        ? "text-[#F2BB05]"
-                                        : project.status === "in-progress"
-                                        ? "text-[#053cf2]"
-                                        : " text-gray-500"
+                                          ? "text-[#F2BB05]"
+                                          : project.status === "in-progress"
+                                            ? "text-[#053cf2]"
+                                            : " text-gray-500"
                                     }
                                   />
                                 </div>
@@ -695,17 +694,17 @@ const BusinessId = () => {
                                   project.status === "active"
                                     ? "default"
                                     : project.status === "pending"
-                                    ? "secondary"
-                                    : "outline"
+                                      ? "secondary"
+                                      : "outline"
                                 }
                                 className={
                                   project.status === "active"
                                     ? "border border-[#04E762] text-[#04E762] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
                                     : project.status === "pending"
-                                    ? "border border-[#F2BB05] text-[#F2BB05] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
-                                    : project.status === "in-progress"
-                                    ? "border border-[#053cf2] text-[#053cf2] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
-                                    : "border border-gray-300 text-gray-500 text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
+                                      ? "border border-[#F2BB05] text-[#F2BB05] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
+                                      : project.status === "in-progress"
+                                        ? "border border-[#053cf2] text-[#053cf2] text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
+                                        : "border border-gray-300 text-gray-500 text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent"
                                 }
                               >
                                 {project.status?.charAt(0).toUpperCase() +

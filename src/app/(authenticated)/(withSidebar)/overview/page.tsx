@@ -44,6 +44,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { useGetAdminByToken } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import CountUp from "react-countup";
 
 const monthNames = [
   "Jan",
@@ -69,6 +70,17 @@ const Overview = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const { insights, isLoading: insightLoading } = useGrowthInsight(year);
 
+  // Separate fetches for stats
+  const { expertList: activeExpertsList, isLoading: activeExpertsLoading } = useGetAllExpert(1, 1, "active");
+  const { expertList: verifiedExpertsList, isLoading: verifiedExpertsLoading } = useGetAllExpert(1, 1, "active", true);
+
+  const { businessList: activeBusinessList, isLoading: activeBusinessLoading } = useGetAllBusiness(1, 1, "active");
+  const { businessList: verifiedBusinessList, isLoading: verifiedBusinessLoading } = useGetAllBusiness(1, 1, "", true);
+
+  const { projectList: pendingProjectsList, isLoading: pendingProjectsLoading } = useGetAllProjects(1, 1, "pending");
+  const { projectList: completedProjectsList, isLoading: completedProjectsLoading } = useGetAllProjects(1, 1, "completed");
+
+
   const data =
     insights?.data?.map(
       (item: {
@@ -84,28 +96,18 @@ const Overview = () => {
       })
     ) ?? [];
 
-  console.log(projectList);
-
   const isLoading =
     projectsLoading ||
     businessLoading ||
     expertsLoading ||
     adminLoading ||
-    insightLoading;
-
-  const statusCounts = useMemo(() => {
-    if (!projectList?.data)
-      return { pending: 0, "in-progress": 0, completed: 0 };
-
-    const data = projectList?.data;
-    return {
-      pending: data.filter((project) => project.status === "pending").length,
-      "in-progress": data.filter((project) => project.status === "in-progress")
-        .length,
-      completed: data.filter((project) => project.status === "completed")
-        .length,
-    };
-  }, [projectList]);
+    insightLoading ||
+    activeExpertsLoading ||
+    verifiedExpertsLoading ||
+    activeBusinessLoading ||
+    verifiedBusinessLoading ||
+    pendingProjectsLoading ||
+    completedProjectsLoading;
 
   //   EXPERT
   const experts: Expert[] = useMemo(
@@ -113,6 +115,8 @@ const Overview = () => {
     [expertList]
   );
   const totalItems = expertList?.data?.totalItems ?? 0;
+  const activeExpertsCount = activeExpertsList?.data?.totalItems ?? 0;
+  const verifiedExpertsCount = verifiedExpertsList?.data?.totalItems ?? 0;
 
   //   BUSINESS
   const businesses: BusinessType[] = useMemo(
@@ -120,15 +124,19 @@ const Overview = () => {
     [businessList]
   );
   const totalBusinesses = businessList?.data?.totalItems || 0;
-  const verifiedCount =
-    businesses.filter((b: BusinessType) => b.verified).length || 0;
-  const activeCount =
-    businesses.filter((b: BusinessType) => b.status === "active").length || 0;
+  // Note: verifiedBusinessList fetches verified=true regardless of status. If you need explicitly verified AND active, update hook call.
+  // Assuming 'Verified' usually implies a checked state. If the UI meant "Verfied Account", verified=true is correct.
+  const verifiedCount = verifiedBusinessList?.data?.totalItems || 0;
+  const activeCount = activeBusinessList?.data?.totalItems || 0;
 
   const projects = useMemo(
     () => projectList?.data?.slice(0, 3) ?? [],
     [projectList]
   );
+
+  const pendingProjectsCount = pendingProjectsList?.totalItems || 0;
+  const completedProjectsCount = completedProjectsList?.totalItems || 0;
+
 
   const recentSignups = useMemo(() => {
     const businessSignups = businesses.slice(0, 3).map((business) => ({
@@ -193,7 +201,7 @@ const Overview = () => {
               {isLoading ? (
                 <Skeleton className="h-4 w-10 inline-block" />
               ) : (
-                totalItems
+                <CountUp end={totalItems} duration={2} />
               )}
             </span>
           </span>
@@ -213,10 +221,7 @@ const Overview = () => {
               <>
                 <div className="border-r w-full flex flex-col gap-4 border-[#EFF2F3]">
                   <span className="text-2xl font-bold text-[#0E1426]">
-                    {
-                      experts.filter((e: Expert) => e.status === "active")
-                        .length
-                    }
+                    <CountUp end={activeExpertsCount} duration={2} />
                   </span>
                   <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary">
                     Active
@@ -224,12 +229,7 @@ const Overview = () => {
                 </div>
                 <div className="w-full flex flex-col gap-4 border-[#EFF2F3]">
                   <span className="text-2xl font-bold text-[#0E1426]">
-                    {
-                      experts.filter(
-                        (e: Expert) =>
-                          e.verified === true && e.status === "active"
-                      ).length
-                    }
+                    <CountUp end={verifiedExpertsCount} duration={2} />
                   </span>
                   <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary-hover">
                     Verified
@@ -248,7 +248,7 @@ const Overview = () => {
               {isLoading ? (
                 <Skeleton className="h-4 w-10 inline-block" />
               ) : (
-                totalBusinesses
+                <CountUp end={totalBusinesses} duration={2} />
               )}
             </span>
           </span>
@@ -268,7 +268,7 @@ const Overview = () => {
               <>
                 <div className="border-r w-full flex flex-col gap-4 border-[#EFF2F3]">
                   <span className="text-2xl font-bold text-[#0E1426]">
-                    {verifiedCount}
+                    <CountUp end={verifiedCount} duration={2} />
                   </span>
                   <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-primary">
                     Verified
@@ -276,7 +276,7 @@ const Overview = () => {
                 </div>
                 <div className="w-full flex flex-col gap-4 border-[#EFF2F3]">
                   <span className="text-2xl font-bold text-[#0E1426]">
-                    {activeCount}
+                    <CountUp end={activeCount} duration={2} />
                   </span>
                   <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#04E762]">
                     Active
@@ -295,7 +295,7 @@ const Overview = () => {
               {isLoading ? (
                 <Skeleton className="h-4 w-10 inline-block" />
               ) : (
-                projectList?.totalItems || 0
+                <CountUp end={projectList?.totalItems || 0} duration={2} />
               )}
             </span>
           </span>
@@ -315,7 +315,7 @@ const Overview = () => {
               <>
                 <div className="border-r w-full flex flex-col gap-4 border-[#EFF2F3]">
                   <span className="text-2xl font-bold text-[#0E1426]">
-                    {statusCounts.pending}
+                    <CountUp end={pendingProjectsCount} duration={2} />
                   </span>
                   <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#1E88E5]">
                     Pending
@@ -323,7 +323,7 @@ const Overview = () => {
                 </div>
                 <div className="w-full flex flex-col gap-4 border-[#EFF2F3]">
                   <span className="text-2xl font-bold text-[#0E1426]">
-                    {statusCounts.completed}
+                    <CountUp end={completedProjectsCount} duration={2} />
                   </span>
                   <span className="text-sm text-[#878A93] font-medium pl-2 border-l-[2px] border-[#1E88E5]">
                     Completed
@@ -455,13 +455,12 @@ const Overview = () => {
                         alt={`${project.status} icon`}
                       />
                       <span
-                        className={`text-xs ${
-                          project.status === "completed"
-                            ? "text-[#04E762]"
-                            : project.status === "in-progress"
+                        className={`text-xs ${project.status === "completed"
+                          ? "text-[#04E762]"
+                          : project.status === "in-progress"
                             ? "text-[#3A5EFC]"
                             : "text-[#FF9500]"
-                        }`}
+                          }`}
                       >
                         {project.status.charAt(0).toUpperCase() +
                           project.status.slice(1)}
@@ -476,10 +475,10 @@ const Overview = () => {
                         project.experts.map((expert, idx: number) => {
                           const initials = expert.name
                             ? expert.name
-                                .split(" ")
-                                .map((n: string) => n[0])
-                                .join("")
-                                .toUpperCase()
+                              .split(" ")
+                              .map((n: string) => n[0])
+                              .join("")
+                              .toUpperCase()
                             : "P";
 
                           return expert.image ? (
@@ -489,16 +488,14 @@ const Overview = () => {
                               alt={expert.name || "profile picture"}
                               width={20}
                               height={20}
-                              className={`w-5 h-5 rounded-full ${
-                                idx > 0 ? "-ml-2" : ""
-                              }`}
+                              className={`w-5 h-5 rounded-full ${idx > 0 ? "-ml-2" : ""
+                                }`}
                             />
                           ) : (
                             <div
                               key={idx}
-                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium text-white ${
-                                idx > 0 ? "-ml-2" : ""
-                              }`}
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium text-white ${idx > 0 ? "-ml-2" : ""
+                                }`}
                               style={{
                                 backgroundColor:
                                   "#" +
@@ -525,7 +522,7 @@ const Overview = () => {
 
                   <span className="text-sm text-[#878A93]">
                     {project.businessId &&
-                    typeof project.businessId === "object"
+                      typeof project.businessId === "object"
                       ? `Business: ${project.businessId.name}`
                       : "Business information not available"}
                   </span>
@@ -630,10 +627,9 @@ const Overview = () => {
                     key={user.id}
                     onClick={() =>
                       router.push(
-                        `${
-                          user.accountType === "Business"
-                            ? `/business/${user.id}`
-                            : `/experts/${user.id}`
+                        `${user.accountType === "Business"
+                          ? `/business/${user.id}`
+                          : `/experts/${user.id}`
                         }`
                       )
                     }

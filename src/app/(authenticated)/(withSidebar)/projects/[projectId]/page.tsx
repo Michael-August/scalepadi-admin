@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ChevronRight, MessageSquare } from "lucide-react";
 import {
   Clock,
   Church,
@@ -21,6 +23,11 @@ import {
   Trash2,
   UserPlus,
   Check,
+  User,
+  CreditCard,
+  Banknote,
+  MapPin,
+  Mail,
 } from "lucide-react";
 import { GoUnverified } from "react-icons/go";
 import { useState, useEffect } from "react";
@@ -46,13 +53,13 @@ type Task = {
   title: string;
   description: string;
   status:
-    | "pending"
-    | "in-progress"
-    | "completed"
-    | "approved"
-    | "need-changes"
-    | "assigned"
-    | "not-assigned";
+  | "pending"
+  | "in-progress"
+  | "completed"
+  | "approved"
+  | "need-changes"
+  | "assigned"
+  | "not-assigned";
   dueDate: string;
   link?: string[];
   document?: string[];
@@ -71,6 +78,7 @@ type Task = {
   };
   createdAt: string;
   updatedAt: string;
+  cost?: number;
 };
 
 type Expert = {
@@ -164,11 +172,10 @@ const ExpertAssignmentItem = ({
               </div>
             )}
             <span
-              className={`text-xs px-2 py-0.5 rounded-full capitalize ${
-                expert.status === "active"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-gray-100 text-gray-800"
-              }`}
+              className={`text-xs px-2 py-0.5 rounded-full capitalize ${expert.status === "active"
+                ? "bg-green-100 text-green-800"
+                : "bg-gray-100 text-gray-800"
+                }`}
             >
               {expert.status}
             </span>
@@ -289,7 +296,7 @@ const ProjectDetails = () => {
       setTaskForm({
         title: editingTask.title,
         description: editingTask.description,
-        dueDate: format(new Date(editingTask.dueDate), "yyyy-MM-dd'T'HH:mm"),
+        dueDate: editingTask.dueDate ? format(new Date(editingTask.dueDate), "yyyy-MM-dd'T'HH:mm") : "",
         link: editingTask.link || [],
         documents: [],
         newLink: "",
@@ -792,8 +799,8 @@ const ProjectDetails = () => {
                 className="bg-primary text-white hover:bg-primary-hover"
               >
                 {uploading ||
-                createTaskMutation.isPending ||
-                updateTaskMutation.isPending ? (
+                  createTaskMutation.isPending ||
+                  updateTaskMutation.isPending ? (
                   <>{editingTask ? "Updating..." : "Creating..."}</>
                 ) : (
                   <>{editingTask ? "Update Task" : "Create Task"}</>
@@ -828,28 +835,27 @@ const ProjectDetails = () => {
                     </h4>
                     <div className="flex flex-wrap items-center gap-4">
                       <span
-                        className={`px-3 py-1 rounded-full text-sm capitalize font-medium ${
-                          selectedTask.status === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : selectedTask.status === "approved"
+                        className={`px-3 py-1 rounded-full text-sm capitalize font-medium ${selectedTask.status === "completed"
+                          ? "bg-green-100 text-green-800"
+                          : selectedTask.status === "approved"
                             ? "bg-blue-100 text-blue-800"
                             : selectedTask.status === "in-progress"
-                            ? "bg-indigo-100 text-indigo-800"
-                            : selectedTask.status === "assigned"
-                            ? "bg-orange-100 text-orange-800"
-                            : selectedTask.status === "not-assigned"
-                            ? "bg-gray-100 text-gray-800"
-                            : selectedTask.status === "need-changes"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                              ? "bg-indigo-100 text-indigo-800"
+                              : selectedTask.status === "assigned"
+                                ? "bg-orange-100 text-orange-800"
+                                : selectedTask.status === "not-assigned"
+                                  ? "bg-gray-100 text-gray-800"
+                                  : selectedTask.status === "need-changes"
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-yellow-100 text-yellow-800"
+                          }`}
                       >
                         {selectedTask.status}
                       </span>
                       <span className="flex items-center gap-2 text-sm text-gray-600">
                         <CalendarIcon className="w-4 h-4" />
                         Due:{" "}
-                        {format(new Date(selectedTask.dueDate), "PPP 'at' p")}
+                        {selectedTask.dueDate ? format(new Date(selectedTask.dueDate), "PPP 'at' p") : "No due date"}
                       </span>
                     </div>
                   </div>
@@ -875,6 +881,14 @@ const ProjectDetails = () => {
                 <p className="text-gray-700 bg-gray-50 rounded-lg p-4">
                   {selectedTask.description || "No description provided."}
                 </p>
+                {selectedTask.cost !== undefined && (
+                  <div className="mt-4 flex items-center gap-2">
+                    <span className="text-sm font-semibold text-gray-900">Cost:</span>
+                    <span className="text-sm font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-100">
+                      {new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(selectedTask.cost)}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Task Timeline */}
@@ -885,17 +899,21 @@ const ProjectDetails = () => {
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Created:</span>
                       <span className="text-sm font-medium">
-                        {format(
+                        {selectedTask.createdAt ? format(
                           new Date(selectedTask.createdAt),
                           "MMM d, yyyy"
-                        )}
+                        ) : "N/A"}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Due Date:</span>
                       <span className="text-sm font-medium">
-                        {format(new Date(selectedTask.dueDate), "MMM d, yyyy")}
+                        {selectedTask.dueDate ? format(
+                          new Date(selectedTask.dueDate),
+                          "MMM d, yyyy"
+                        ) : "No due date"}
                       </span>
+
                     </div>
                   </div>
                 </div>
@@ -982,13 +1000,15 @@ const ProjectDetails = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="rounded-xl"
-                      >
-                        Message Expert
-                      </Button>
+                      <Link href={`/messages?userId=${selectedTask.assignedTo.id}&role=Expert`}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-xl"
+                        >
+                          Message Expert
+                        </Button>
+                      </Link>
                       <Button
                         variant="outline"
                         size="sm"
@@ -1005,67 +1025,67 @@ const ProjectDetails = () => {
               {((selectedTask.link && selectedTask.link.length > 0) ||
                 (selectedTask.document &&
                   selectedTask.document.length > 0)) && (
-                <div className="flex flex-col gap-3">
-                  <h5 className="font-semibold">Task Resources</h5>
+                  <div className="flex flex-col gap-3">
+                    <h5 className="font-semibold">Task Resources</h5>
 
-                  {/* Links */}
-                  {selectedTask.link && selectedTask.link.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {selectedTask.link.map((link, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-2 p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
-                        >
-                          <Link2 />
-                          <input
-                            type="text"
-                            className="w-full outline-none text-sm text-[#727374] bg-transparent"
-                            value={link}
-                            readOnly
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Documents */}
-                  {selectedTask.document &&
-                    selectedTask.document.length > 0 && (
+                    {/* Links */}
+                    {selectedTask.link && selectedTask.link.length > 0 && (
                       <div className="flex flex-wrap gap-2">
-                        {selectedTask.document.map((doc, index) => (
+                        {selectedTask.link.map((link, index) => (
                           <div
                             key={index}
-                            className="flex items-center justify-between p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
+                            className="flex items-center gap-2 p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
                           >
-                            <div className="flex items-center gap-2">
-                              <Image
-                                src="/icons/file-icon.svg"
-                                alt="file icon"
-                                width={16}
-                                height={16}
-                              />
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-sm font-medium text-[#1A1A1A] truncate">
-                                  Document {index + 1}
-                                </span>
-                                <span className="text-xs text-[#878A93]">
-                                  PDF File
-                                </span>
-                              </div>
-                            </div>
-                            <a
-                              href={doc}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <Download className="w-4 h-4 text-[#878A93] cursor-pointer hover:text-primary" />
-                            </a>
+                            <Link2 />
+                            <input
+                              type="text"
+                              className="w-full outline-none text-sm text-[#727374] bg-transparent"
+                              value={link}
+                              readOnly
+                            />
                           </div>
                         ))}
                       </div>
                     )}
-                </div>
-              )}
+
+                    {/* Documents */}
+                    {selectedTask.document &&
+                      selectedTask.document.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {selectedTask.document.map((doc, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Image
+                                  src="/icons/file-icon.svg"
+                                  alt="file icon"
+                                  width={16}
+                                  height={16}
+                                />
+                                <div className="flex flex-col min-w-0">
+                                  <span className="text-sm font-medium text-[#1A1A1A] truncate">
+                                    Document {index + 1}
+                                  </span>
+                                  <span className="text-xs text-[#878A93]">
+                                    PDF File
+                                  </span>
+                                </div>
+                              </div>
+                              <a
+                                href={doc}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <Download className="w-4 h-4 text-[#878A93] cursor-pointer hover:text-primary" />
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                )}
 
               {/* Task Progress Actions */}
               {selectedTask.assignee && !selectedTask.submission?.length && (
@@ -1332,144 +1352,180 @@ const ProjectDetails = () => {
       )}
 
       {/* Main Content */}
-      <div className="flex flex-col gap-4 border-b border-[#EDEEF3] pb-4">
-        <div className="flex flex-col lg:flex-row w-full items-start lg:items-center justify-between gap-4">
-          {/* Left section */}
-          <div className="top w-full flex flex-col lg:flex-row items-start lg:items-center gap-4">
-            <div className="bg-[#D1F7FF] flex items-center justify-center p-[5.84px] text-[#1A1A1A] text-2xl font-bold h-[54px] w-[54px] rounded-[11.68px]">
-              {projectDetails?.title?.charAt(0) || "P"}
+      {/* Main Content - Redesigned Header */}
+      <div className="flex flex-col gap-6 bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-6">
+        <div className="flex flex-col lg:flex-row w-full items-start justify-between gap-6">
+          {/* Left section: Project Info */}
+          <div className="flex items-start gap-4 flex-1">
+            <div className="bg-blue-50 flex items-center justify-center h-16 w-16 rounded-xl border border-blue-100 shrink-0">
+              <span className="text-blue-600 text-2xl font-bold">
+                {projectDetails?.title?.charAt(0) || "P"}
+              </span>
             </div>
 
-            <div className="flex flex-col gap-2 flex-1">
-              <span className="text-sm text-[#878A93] break-words">
+            <div className="flex flex-col gap-2 w-full">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <Badge variant="outline" className={`capitalize px-3 py-1 rounded-full ${projectDetails?.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' :
+                  projectDetails?.status === 'in-progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                    'bg-yellow-50 text-yellow-700 border-yellow-200'
+                  }`}>
+                  {projectDetails?.status || "Pending"}
+                </Badge>
+
+                {projectDetails?.paymentStatus && (
+                  <Badge variant="outline" className={`capitalize px-3 py-1 rounded-full ${projectDetails.paymentStatus === 'completed' || projectDetails.paymentStatus === 'paid' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-100 text-gray-700 border-gray-200'
+                    }`}>
+                    <CreditCard className="w-3 h-3 mr-1.5" />
+                    {projectDetails.paymentStatus}
+                  </Badge>
+                )}
+
+                {projectDetails?.dueDate && (
+                  <span className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-200">
+                    <Clock className="w-3.5 h-3.5" />
+                    Due {new Date(projectDetails.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </span>
+                )}
+              </div>
+
+              <h1 className="text-2xl font-bold text-gray-900 leading-tight">
                 {projectDetails?.title || "Untitled Project"}
-              </span>
+              </h1>
 
-              <div className="flex flex-wrap items-center gap-4">
-                <span className="flex items-center gap-[4px] text-sm text-[#878A93]">
-                  <Clock className="w-4 h-4 shrink-0" />
-                  Due:
-                  <span className="text-[#121217]">
-                    {projectDetails?.dueDate
-                      ? new Date(projectDetails?.dueDate).toLocaleDateString(
-                          "en-US",
-                          {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          }
-                        )
-                      : "No due date"}
-                  </span>
+              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mt-1">
+                <span className="flex items-center gap-1.5">
+                  <span className="font-mono text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">ID: {projectDetails?.id?.toUpperCase()}</span>
+                  {/* <span className="font-mono text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">ID: {projectDetails?.id?.slice(-6).toUpperCase()}</span> */}
                 </span>
-
-                <span className="flex items-center gap-[4px] text-sm text-[#878A93]">
-                  <Church className="w-4 h-4 shrink-0" />
-                  Status:
-                  <span className="text-[#121217] capitalize">
-                    {projectDetails?.status || "N/A"}
+                {(projectDetails?.location || projectDetails?.businessId?.country) && (
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5" />
+                    {projectDetails.location || projectDetails.businessId?.country}
                   </span>
-                </span>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Right section */}
-          <div className="flex items-center gap-2 justify-end flex-nowrap">
-            <Button
-              variant="outline"
-              className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full lg:w-auto"
-              onClick={() => setIsTaskModalOpen(true)}
-            >
-              <Plus className="w-4 h-4" />
-              Add Task
-            </Button>
-
-            {projectDetails?.adminApproved ? (
-              <Button
-                disabled
-                className="bg-[#fcce37] text-white rounded-[14px] w-full lg:w-auto flex items-center gap-2"
-              >
+          {/* Right section: Actions */}
+          <div className="flex items-center gap-3 w-full lg:w-auto mt-2 lg:mt-0">
+            {/* {projectDetails?.adminApproved ? (
+              <div className="px-4 py-2 bg-green-50 text-green-700 rounded-lg border border-green-200 flex items-center gap-2 font-medium text-sm">
                 <CheckCircle className="w-4 h-4" />
-                Approved
-              </Button>
+                Verified & Approved
+              </div>
             ) : (
               <Button
                 onClick={() => setIsApprovalModalOpen(true)}
-                className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full lg:w-auto"
+                className="bg-primary hover:bg-primary/90 text-white rounded-lg px-6"
               >
-                <Check className="w-4 h-4" />
-                Approve
+                <Check className="w-4 h-4 mr-2" />
+                Approve Project
               </Button>
-            )}
+            )} */}
+
+            <Button
+              variant="outline"
+              className="border-gray-200 hover:bg-secondary text-gray-700 bg-primary text-white rounded-lg"
+              onClick={() => setIsTaskModalOpen(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Task
+            </Button>
           </div>
         </div>
 
-        {/* Business section */}
-        {projectDetails?.businessId ? (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="w-[52px] relative h-[52px] rounded-full bg-gray-200 flex items-center justify-center">
-              <span className="text-lg font-medium">
-                {projectDetails.businessId?.name?.charAt(0) || "B"}
-              </span>
-            </div>
+        <div className="h-px w-full bg-gray-100" />
 
-            <div className="flex flex-col gap-2">
-              <span className="text-[#1A1A1A] font-medium text-[20px]">
-                {projectDetails.businessId?.name || "Unknown Business"}
-              </span>
+        {/* Business/Client Section */}
+        <div className="flex flex-col">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Business Information</h3>
 
-              <div className="flex items-center gap-1">
-                {[...Array(4)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-[13.33px] h-[13.33px] text-[#F2BB05] fill-[#F6CF50]"
-                  />
-                ))}
-                <Star className="w-[13.33px] h-[13.33px] text-[#CFD0D4] fill-[#E7ECEE]" />
+          {projectDetails?.businessId ? (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+              <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm text-lg font-bold text-primary shrink-0">
+                {(projectDetails.businessId?.title || projectDetails.businessId?.name)?.charAt(0) || "B"}
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                {/* Verification */}
-                <span className="flex items-center gap-[2px] font-medium text-[#878A93] text-sm">
-                  {projectDetails.businessId?.verified ? (
-                    <div className="flex items-center gap-1">
-                      <Verified className="w-4 h-4 text-green-600" />
-                      <span className="text-green-600">Verified</span>
+              <div className="flex flex-col gap-3 flex-1 w-full">
+                <div className="flex items-center justify-between w-full flex-wrap gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-gray-900 font-bold text-lg">
+                      {projectDetails.businessId?.title || projectDetails.businessId?.name || "Unknown Business"}
+                    </span>
+                    {projectDetails.businessId?.verified && (
+                      <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">
+                        <Verified className="w-3 h-3" /> Verified
+                      </span>
+                    )}
+                  </div>
+
+                  {/* {projectDetails?.totalCost !== undefined && (
+                    <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
+                      <Banknote className="w-4 h-4 text-green-600" />
+                      <span className="text-sm font-medium text-gray-500">Total Cost:</span>
+                      <span className="text-sm font-bold text-gray-900">
+                        {new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(projectDetails.totalCost)}
+                      </span>
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-1">
-                      <GoUnverified className="w-4 h-4 text-red-600" />
-                      <span>Not Verified</span>
+                  )} */}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 bg-white p-3 rounded-lg border border-gray-100">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-gray-400 font-medium uppercase">Contact Person</span>
+                    <div className="flex items-center gap-2 font-medium text-gray-900">
+                      <User className="w-3.5 h-3.5 text-gray-400" />
+                      {projectDetails.businessId?.name || "N/A"}
                     </div>
-                  )}
-                </span>
+                  </div>
 
-                {/* Location (fallback placeholder) */}
-                <span className="flex items-center gap-[2px] font-medium text-[#878A93] text-sm">
-                  <Pin className="w-4 h-4 text-[#878A93]" />
-                  {projectDetails.businessId?.country || "Location N/A"}
-                </span>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-gray-400 font-medium uppercase">Email Address</span>
+                    <div className="flex items-center gap-2 truncate" title={projectDetails.businessId?.email}>
+                      <Mail className="w-3.5 h-3.5 text-gray-400" />
+                      {projectDetails.businessId?.email || "N/A"}
+                    </div>
+                  </div>
 
-                {/* Status */}
-                <span className="flex capitalize items-center gap-[2px] font-medium text-green-600 text-sm">
-                  <Clock className="w-4 h-4 text-green-600" />
-                  {projectDetails.businessId?.status || "Inactive"}
-                </span>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-gray-400 font-medium uppercase">Phone Number</span>
+                    <div className="flex items-center gap-2">
+                      <PhoneOutgoingIcon className="w-3.5 h-3.5 text-gray-400" />
+                      {projectDetails.businessId?.phone || "N/A"}
+                    </div>
+                  </div>
 
-                {/* Contact */}
-                <span className="flex items-center gap-2 text-[#878A93] font-medium text-sm">
-                  <PhoneOutgoingIcon className="w-4 h-4" />
-                  {projectDetails.businessId?.phone || "No phone available"}
-                </span>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-gray-400 font-medium uppercase">Account Status</span>
+                    <div className={`flex items-center gap-1.5 capitalize font-medium ${projectDetails.businessId?.status === 'active' ? 'text-green-600' : 'text-gray-500'}`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${projectDetails.businessId?.status === 'active' ? 'bg-green-600' : 'bg-gray-400'}`} />
+                      {projectDetails.businessId?.status || "Inactive"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <Link href={`/business/${projectDetails.businessId?.id}`}>
+                    <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-900">
+                      View Profile <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </Link>
+                  <Link href={`/messages?userId=${projectDetails.businessId?.id}&role=Business`}>
+                    <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50">
+                      <Mail className="w-4 h-4 mr-2" />
+                      Message
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="text-sm text-[#727374] italic">
-            No business information linked to this project.
-          </div>
-        )}
+          ) : (
+            <div className="p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-sm text-gray-500 text-center">
+              No business information linked to this project.
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="project-details w-full">
@@ -1477,11 +1533,10 @@ const ProjectDetails = () => {
           <div
             className={`flex cursor-pointer w-full items-center justify-center border-b-2 pb-3
             hover:border-[#3A96E8] transition-colors 
-            ${
-              activeTab === "projectOverview"
+            ${activeTab === "projectOverview"
                 ? "border-[#3A96E8] text-[#3A96E8]"
                 : "border-transparent"
-            }`}
+              }`}
             onClick={() => setActiveTab("projectOverview")}
           >
             <span className="text-sm">Project Overview</span>
@@ -1490,11 +1545,10 @@ const ProjectDetails = () => {
           <div
             className={`flex cursor-pointer w-full items-center justify-center border-b-2 pb-3
             hover:border-[#3A96E8] transition-colors 
-            ${
-              activeTab === "taskTracker"
+            ${activeTab === "taskTracker"
                 ? "border-[#3A96E8] text-[#3A96E8]"
                 : "border-transparent"
-            }`}
+              }`}
             onClick={() => setActiveTab("taskTracker")}
           >
             <span className="text-sm">Task Tracker</span>
@@ -1691,7 +1745,7 @@ const ProjectDetails = () => {
             {/* Enhanced Tasks List */}
             <div className="p-3 flex flex-col gap-4 rounded-3xl bg-[#FBFCFC]">
               {Array.isArray(projectTasks?.data) &&
-              projectTasks.data.length > 0 ? (
+                projectTasks.data.length > 0 ? (
                 projectTasks.data.map((task: Task) => (
                   <div
                     key={task.id}
@@ -1705,9 +1759,8 @@ const ProjectDetails = () => {
                             {task.title}
                           </h4>
                           <span
-                            className={`px-2 py-1 rounded-full text-xs capitalize font-medium ${
-                              statusColors[task?.status] || statusColors.default
-                            }`}
+                            className={`px-2 py-1 rounded-full text-xs capitalize font-medium ${statusColors[task?.status] || statusColors.default
+                              }`}
                           >
                             {task.status}
                           </span>
@@ -1715,14 +1768,19 @@ const ProjectDetails = () => {
                         <p className="text-sm text-[#727374] line-clamp-2">
                           {task.description}
                         </p>
+                        {task.cost !== undefined && (
+                          <span className="text-sm font-bold text-gray-900 block mt-1">
+                            {new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(task.cost)}
+                          </span>
+                        )}
                         <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-[#878A93]">
                           <span className="flex items-center gap-1">
                             <CalendarIcon className="w-4 h-4" />
-                            Due: {format(new Date(task.dueDate), "MMM d, yyyy")}
+                            Due: {task.dueDate ? format(new Date(task.dueDate), "MMM d, yyyy") : "No due date"}
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-4 h-4" />
-                            Created: {format(new Date(task.createdAt), "MMM d")}
+                            Created: {task.createdAt ? format(new Date(task.createdAt), "MMM d") : "N/A"}
                           </span>
                         </div>
                       </div>
@@ -1736,8 +1794,20 @@ const ProjectDetails = () => {
                           className="flex items-center gap-1"
                         >
                           <Eye className="w-4 h-4" />
-                          <span className="hidden sm:inline">View</span>
+                          <span className="hidden sm:inline">View Details</span>
                         </Button>
+                        {task.assignedTo && (
+                          <Link href={`/messages?userId=${task.assignedTo.id}&role=Expert`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-1 border-gray-200 text-gray-700 hover:bg-gray-50"
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                              <span className="hidden sm:inline">Message</span>
+                            </Button>
+                          </Link>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
@@ -1813,14 +1883,14 @@ const ProjectDetails = () => {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Button
+                            {/* <Button
                               variant="outline"
                               size="sm"
                               className="rounded-xl"
                               onClick={() => router.push(`/messages`)}
                             >
                               Message Expert
-                            </Button>
+                            </Button> */}
                             {/* <Button
                               variant="outline"
                               size="sm"
@@ -1836,64 +1906,64 @@ const ProjectDetails = () => {
                     {/* Task Resources */}
                     {((task.link && task.link.length > 0) ||
                       (task.document && task.document.length > 0)) && (
-                      <div className="flex flex-col gap-3">
-                        {/* Links */}
-                        {task.link && task.link.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {task.link.map((link, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center gap-2 p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
-                              >
-                                <Link2 />
-                                <input
-                                  type="text"
-                                  className="w-full outline-none text-sm text-[#727374] bg-transparent"
-                                  value={link}
-                                  readOnly
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Documents */}
-                        {task.document && task.document.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {task.document.map((doc, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <Image
-                                    src="/icons/file-icon.svg"
-                                    alt="file icon"
-                                    width={16}
-                                    height={16}
-                                  />
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="text-sm font-medium text-[#1A1A1A] truncate">
-                                      Document {index + 1}
-                                    </span>
-                                    <span className="text-xs text-[#878A93]">
-                                      PDF File
-                                    </span>
-                                  </div>
-                                </div>
-                                <a
-                                  href={doc}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                        <div className="flex flex-col gap-3">
+                          {/* Links */}
+                          {task.link && task.link.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {task.link.map((link, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center gap-2 p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
                                 >
-                                  <Download className="w-4 h-4 text-[#878A93] cursor-pointer hover:text-primary" />
-                                </a>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                                  <Link2 />
+                                  <input
+                                    type="text"
+                                    className="w-full outline-none text-sm text-[#727374] bg-transparent"
+                                    value={link}
+                                    readOnly
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Documents */}
+                          {task.document && task.document.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {task.document.map((doc, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <Image
+                                      src="/icons/file-icon.svg"
+                                      alt="file icon"
+                                      width={16}
+                                      height={16}
+                                    />
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="text-sm font-medium text-[#1A1A1A] truncate">
+                                        Document {index + 1}
+                                      </span>
+                                      <span className="text-xs text-[#878A93]">
+                                        PDF File
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <a
+                                    href={doc}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <Download className="w-4 h-4 text-[#878A93] cursor-pointer hover:text-primary" />
+                                  </a>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                     {/* Task Actions for Assigned Tasks */}
                     {task.assignee && (
