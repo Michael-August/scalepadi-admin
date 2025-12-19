@@ -31,6 +31,7 @@ export const useGetChats = () => {
 				throw error;
 			}
 		},
+		refetchInterval: 3000, // Poll sidebar every 3s
 	});
 
 	return { chats: data, isLoading };
@@ -47,7 +48,7 @@ export const useCreateChat = () => {
 				if (res.data?.status === false) {
 					throw new Error(
 						res.data?.message ||
-							"An error occurred while creating chat"
+						"An error occurred while creating chat"
 					);
 				}
 				return res.data;
@@ -87,7 +88,7 @@ export const useGetChatMessages = (chatId: string) => {
 				if (error instanceof AxiosError) {
 					toast.error(
 						error.response?.data?.message ||
-							"Failed to fetch messages"
+						"Failed to fetch messages"
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);
@@ -101,6 +102,7 @@ export const useGetChatMessages = (chatId: string) => {
 			}
 		},
 		enabled: !!chatId,
+		refetchInterval: 3000, // Poll messages every 3s for real-time feel
 	});
 
 	return { messages: data, isLoading };
@@ -115,12 +117,11 @@ export const useSendMessages = (chatId: string) => {
 				if (res.data?.status === false) {
 					throw new Error(
 						res.data?.message ||
-							"An error occurred while sending message"
+						"An error occurred while sending message"
 					);
 				}
 				return res.data;
 			} catch (error: any) {
-				// If backend sent a message, preserve it
 				const backendMessage =
 					error?.response?.data?.message ||
 					error?.message ||
@@ -133,6 +134,7 @@ export const useSendMessages = (chatId: string) => {
 			queryClient.invalidateQueries({
 				queryKey: ["Admin Messages", chatId],
 			});
+			queryClient.invalidateQueries({ queryKey: ["Admin Chats"] }); // Update sidebar last message
 		},
 	});
 
