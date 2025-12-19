@@ -72,7 +72,7 @@ const Overview = () => {
 
   // Separate fetches for stats
   const { expertList: activeExpertsList, isLoading: activeExpertsLoading } = useGetAllExpert(1, 1, "active");
-  const { expertList: verifiedExpertsList, isLoading: verifiedExpertsLoading } = useGetAllExpert(1, 1, "active", true);
+  const { expertList: verifiedExpertsList, isLoading: verifiedExpertsLoading } = useGetAllExpert(1, 1, "active", "", "", "", true);
 
   const { businessList: activeBusinessList, isLoading: activeBusinessLoading } = useGetAllBusiness(1, 1, "active");
   const { businessList: verifiedBusinessList, isLoading: verifiedBusinessLoading } = useGetAllBusiness(1, 1, "", true);
@@ -556,7 +556,7 @@ const Overview = () => {
       </div>
 
       {/* Sign-up feeds Section */}
-      <div className="flex flex-col gap-4 mt-4">
+      <div className="flex flex-col gap-4 my-4 md:my-6">
         <div className="flex items-center justify-between">
           <span className="text-[20px] font-medium text-[#878A93]">
             Sign-up feeds

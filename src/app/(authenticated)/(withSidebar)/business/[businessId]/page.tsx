@@ -599,14 +599,14 @@ const BusinessId = () => {
                     </div>
                   </div>
 
-                  <Button
+                  {/* <Button
                     variant="outline"
                     size="sm"
                     className="h-9 text-sm border-gray-300 bg-transparent"
                   >
                     <Calendar className="h-4 w-4 mr-2" />
                     Date
-                  </Button>
+                  </Button> */}
                 </div>
 
                 {/* Table */}

@@ -109,18 +109,24 @@ const exportToCSV = (data: AdminUser[]) => {
 };
 
 export default function UsersListPage() {
-  const { AdminUserList, isLoading } = useGetAdminList();
-  const { createAdmin, isPending: isCreating } = useCreateAdmin();
-  const { updateAdminBySuperAdmin, isPending: isUpdating } = useUpdateAdminBySuperAdmin();
-
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState("All roles");
   const [selectedStatus, setSelectedStatus] = useState("All statuses");
-  const [showRoleFilter, setShowRoleFilter] = useState(false);
-  const [showStatusFilter, setShowStatusFilter] = useState(false);
-
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const { AdminUserList, isLoading } = useGetAdminList(
+    currentPage,
+    rowsPerPage,
+    selectedStatus,
+    searchQuery,
+    selectedRole
+  );
+  const { createAdmin, isPending: isCreating } = useCreateAdmin();
+  const { updateAdminBySuperAdmin, isPending: isUpdating } = useUpdateAdminBySuperAdmin();
+
+  const [showRoleFilter, setShowRoleFilter] = useState(false);
+  const [showStatusFilter, setShowStatusFilter] = useState(false);
 
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -131,31 +137,12 @@ export default function UsersListPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const filteredUsers = useMemo(() => {
-    if (!Array.isArray(AdminUserList)) return [];
+  const admins = useMemo(() => {
+    return AdminUserList?.data || [];
+  }, [AdminUserList?.data]);
 
-    return AdminUserList.filter((user) => {
-      const matchesSearch =
-        !searchQuery ||
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesRole =
-        selectedRole === "All roles" || user.role === selectedRole;
-
-      const matchesStatus =
-        selectedStatus === "All statuses" || user.status === selectedStatus;
-
-      return matchesSearch && matchesRole && matchesStatus;
-    });
-  }, [AdminUserList, searchQuery, selectedRole, selectedStatus]);
-
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    return filteredUsers.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredUsers, currentPage, rowsPerPage]);
-
-  const totalPages = Math.ceil(filteredUsers.length / rowsPerPage);
+  const totalPages = AdminUserList?.totalPages || 0;
+  const totalItems = AdminUserList?.totalItems || 0;
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
@@ -239,9 +226,9 @@ export default function UsersListPage() {
 
   const handleAction = useCallback(
     (id: number, action: string) => {
-      if (!Array.isArray(AdminUserList)) return;
-      
-      const user = AdminUserList.find((u) => u.id === id);
+      if (!Array.isArray(AdminUserList?.data)) return;
+
+      const user = AdminUserList.data.find((u: AdminUser) => u.id === id);
       if (!user) return;
 
       switch (action) {
@@ -256,8 +243,8 @@ export default function UsersListPage() {
   );
 
   const handleExportCSV = useCallback(() => {
-    exportToCSV(filteredUsers);
-  }, [filteredUsers]);
+    exportToCSV(admins);
+  }, [admins]);
 
   const getRoleDescription = (role: string) => {
     return ROLE_DESCRIPTIONS[role] || "Manage specific admin functions.";
@@ -306,14 +293,14 @@ export default function UsersListPage() {
             </div>
 
             <div className="flex justify-end items-center gap-3">
-              <button
+              {/* <button
                 onClick={handleExportCSV}
                 disabled={filteredUsers.length === 0}
                 className="flex items-center gap-2 px-4 py-2 text-xs text-gray-600 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Download className="w-3 h-3" />
                 Export CSV
-              </button>
+              </button> */}
 
               <button
                 onClick={handleOpenAddModal}
@@ -328,20 +315,23 @@ export default function UsersListPage() {
           {/* Table */}
           <UserTable
             isLoading={isLoading}
-            data={paginatedData}
+            data={admins}
             onEditUser={handleEditUser}
             onAction={handleAction}
           />
 
           {/* Pagination */}
-          {filteredUsers.length > 0 && (
+          {admins.length > 0 && (
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
               rowsPerPage={rowsPerPage}
-              totalItems={filteredUsers.length}
+              totalItems={totalItems}
               onPageChange={setCurrentPage}
-              onRowsPerPageChange={setRowsPerPage}
+              onRowsPerPageChange={(value) => {
+                setRowsPerPage(value);
+                setCurrentPage(1);
+              }}
             />
           )}
         </section>

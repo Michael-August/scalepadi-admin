@@ -624,8 +624,10 @@ const Projects = () => {
     expertCurrentPage,
     10,
     expertStatusFilter,
-    expertVerifiedFilter !== "all" ? (expertVerifiedFilter === "true") : undefined,
-    expertSearchTerm
+    expertSearchTerm,
+    "", // role
+    "", // skill
+    expertVerifiedFilter !== "all" ? (expertVerifiedFilter === "true") : undefined
   );
 
   const { mutate: inviteExperts } = useInviteExperts();
@@ -833,7 +835,7 @@ const Projects = () => {
         </Button> */}
       </div>
 
-      <div className="w-full bg-white overflow-x-auto p-6 rounded-lg border border-gray-200">
+      <div className="w-full bg-white overflow-x-auto p-6 rounded-lg border border-gray-200 my-4 md:my-6">
         {/* Header */}
         <h1 className="text-xl md:text-2xl font-medium text-[#878A93] mb-6">
           Project List

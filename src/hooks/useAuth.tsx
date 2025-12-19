@@ -91,7 +91,7 @@ export const useForgotPassword = () => {
         if (res.data?.status === false) {
           throw new Error(
             res.data?.message ||
-              "An error occurred during password reset request"
+            "An error occurred during password reset request"
           );
         }
         console.log(res.data);
@@ -201,16 +201,27 @@ export const useLogout = () => {
   return { logout, isPending };
 };
 
-export const useGetAdminList = () => {
+export const useGetAdminList = (
+  page: number = 1,
+  limit: number = 10,
+  status: string = "",
+  search: string = "",
+  role: string = ""
+) => {
   const { data, isLoading } = useQuery({
-    queryKey: ["profile"],
+    queryKey: ["profile", page, limit, status, search, role],
     queryFn: async () => {
       try {
-        const response = await axiosClient.get(`/admin`);
+        let url = `/admin?page=${page}&limit=${limit}`;
+        if (status && status !== "All statuses") url += `&status=${status}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        if (role && role !== "All roles") url += `&role=${encodeURIComponent(role)}`;
+
+        const response = await axiosClient.get(url);
         if (response.data?.status === false) {
           throw new Error(response.data?.message || "Failed to fetch admin");
         }
-        return response.data.data.data;
+        return response.data.data;
       } catch (error: any) {
         if (error instanceof AxiosError) {
           toast.error(error.response?.data?.message || "Failed to fetch admin");
@@ -342,7 +353,7 @@ export const useAcceptDeclineMatch = () => {
         if (error instanceof AxiosError) {
           toast.error(
             error.response?.data?.message ||
-              `Failed to ${data.inviteStatus} match`
+            `Failed to ${data.inviteStatus} match`
           );
         } else if (error instanceof Error) {
           toast.error(error.message);

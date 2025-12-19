@@ -11,21 +11,25 @@ export const useGetAllExpert = (
   page: number = 1,
   limit: number = 10,
   status: string = "",
-  verified?: boolean | string,
-  search: string = ""
+  search: string = "",
+  role: string = "",
+  skill: string = "",
+  verified?: boolean | string
 ) => {
   const { data, isLoading } = useQuery<{
     status: boolean;
     message: string;
     data: PaginatedExperts;
   }>({
-    queryKey: ["expert", page, limit, status, verified, search],
+    queryKey: ["expert", page, limit, status, search, role, skill, verified],
     queryFn: async () => {
       try {
         let url = `/experts?page=${page}&limit=${limit}`;
         if (status && status !== "all") url += `&status=${status}`;
-        if (verified !== undefined && verified !== "all") url += `&verified=${verified}`;
         if (search) url += `&search=${encodeURIComponent(search)}`;
+        if (role && role !== "all") url += `&role=${encodeURIComponent(role)}`;
+        if (skill && skill !== "all") url += `&skill=${encodeURIComponent(skill)}`;
+        if (verified !== undefined && verified !== "all") url += `&verified=${verified}`;
 
         const response = await axiosClient.get(url);
         if (response.data?.status === false) {
@@ -78,38 +82,58 @@ export const useGetExpertById = (id: string) => {
   return { expertDetails: data, isLoading };
 };
 
-export const useSearchExpert = (
-  search: string,
-  page: number = 1,
-  limit: number = 10
-) => {
+interface SearchExpertParams {
+  search?: string;
+  page?: number;
+  limit?: number;
+  status?: string;
+  role?: string;
+  skill?: string;
+  verified?: boolean | string;
+}
+
+export const useSearchExpert = ({
+  search = "",
+  page = 1,
+  limit = 10,
+  status = "",
+  role = "",
+  skill = "",
+  verified,
+}: SearchExpertParams = {}) => {
+  const queryKey = ["expert", "search", { search, page, limit, status, role, skill, verified }];
+
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["expert", search, page, limit],
+    queryKey,
     queryFn: async () => {
       try {
-        const response = await axiosClient.get(
-          `/experts?page=${page}&limit=${limit}&search=${encodeURIComponent(
-            search
-          )}`
-        );
+        let url = `/experts?page=${page}&limit=${limit}`;
+
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        if (status && status !== "all") url += `&status=${status}`;
+        if (role && role !== "all") url += `&role=${encodeURIComponent(role)}`;
+        if (skill && skill !== "all") url += `&skill=${encodeURIComponent(skill)}`;
+        if (verified !== undefined && verified !== "all") url += `&verified=${verified}`;
+
+        const response = await axiosClient.get(url);
 
         if (response.data?.status === false) {
-          throw new Error(response.data?.message || "Failed to fetch expert.");
+          throw new Error(response.data?.message || "Failed to search experts.");
         }
 
         return response.data;
       } catch (err: unknown) {
         if (err instanceof AxiosError) {
-          toast.error(err.response?.data?.message || "Failed to fetch expert.");
+          toast.error(err.response?.data?.message || "Failed to search experts.");
         } else if (err instanceof Error) {
           toast.error(err.message);
         } else {
-          toast.error("An unexpected error occurred while fetching experts.");
+          toast.error("An unexpected error occurred while searching experts.");
         }
         throw err;
       }
     },
-    enabled: !!search,
+    enabled: !!search || status !== "" || role !== "" || skill !== "" || verified !== undefined,
   });
 
   return { expertList: data, isLoading, isError, error };
@@ -266,7 +290,7 @@ export const useGetExpertsCount = (
       try {
         const response = await axiosClient.get(
           `/projects/experts-count/${businessId}?page=${currentPage}&limit=${itemsPerPage}${statusFilter && statusFilter !== "all"
-            ? `status=${statusFilter}`
+            ? `&status=${statusFilter}`
             : ""
           }&sort=${sortBy}&search=${searchQuery}`
         );

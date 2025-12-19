@@ -47,6 +47,7 @@ import {
 import { toast } from "sonner";
 import { useGetAllExpert } from "@/hooks/useExpert";
 import Link from "next/link";
+import { Pagination } from "../../users/User";
 
 type Task = {
   id: string;
@@ -116,6 +117,40 @@ interface TaskFormData {
   newLink: string;
 }
 
+const renderFormattedText = (text: string) => {
+  if (!text) return null;
+
+  // Split by numbered patterns like "1. ", "2. ", "1) ", etc.
+  const parts = text.split(/(\d+[\.\)]\s+)/);
+
+  if (parts.length === 1) return <span>{text}</span>;
+
+  const result: React.ReactNode[] = [];
+
+  // First part is intro text before any numbers
+  if (parts[0].trim()) {
+    result.push(
+      <p key="intro" className="mb-2">
+        {parts[0].trim()}
+      </p>
+    );
+  }
+
+  for (let i = 1; i < parts.length; i += 2) {
+    const marker = parts[i];
+    const content = parts[i + 1] || "";
+
+    result.push(
+      <div key={i} className="flex gap-2 mb-1.5 ml-2 items-start">
+        <span className="font-semibold text-primary shrink-0">{marker}</span>
+        <span>{content.trim()}</span>
+      </div>
+    );
+  }
+
+  return <div className="flex flex-col">{result}</div>;
+};
+
 const ExpertAssignmentItem = ({
   expert,
   taskId,
@@ -144,14 +179,14 @@ const ExpertAssignmentItem = ({
   return (
     <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden shrink-0">
           {expert.profilePicture ? (
             <Image
               src={expert.profilePicture}
-              alt="Expert"
+              alt={expert.name}
               width={40}
               height={40}
-              className="rounded-full object-fit"
+              className="rounded-full w-full h-full object-cover"
             />
           ) : (
             <span className="text-sm font-medium">{expert.name.charAt(0)}</span>
@@ -223,6 +258,9 @@ const ProjectDetails = () => {
   });
   const [uploading, setUploading] = useState(false);
 
+  const [expertPage, setExpertPage] = useState(1);
+  const [expertLimit, setExpertLimit] = useState(10);
+
   const [showNoteInput, setShowNoteInput] = useState<
     "approved" | "needs-changes" | null
   >(null);
@@ -262,7 +300,11 @@ const ProjectDetails = () => {
   const { projectTasks, isLoading: tasksLoading } =
     useGetProjectTasks(projectId);
   console.log(projectDetails);
-  const { expertList, isLoading: expertsLoading } = useGetAllExpert();
+  const { expertList, isLoading: expertsLoading } = useGetAllExpert(
+    expertPage,
+    expertLimit,
+    "active" // Only show active experts for assignment
+  );
   console.log(expertList);
   console.log(projectTasks);
   const createTaskMutation = useCreateTask();
@@ -1339,6 +1381,22 @@ const ProjectDetails = () => {
               )}
             </div>
 
+            {expertList?.data && expertList.data.totalPages > 1 && (
+              <div className="mt-6 border-t pt-4">
+                <Pagination
+                  currentPage={expertPage}
+                  totalPages={expertList.data.totalPages}
+                  rowsPerPage={expertLimit}
+                  totalItems={expertList.data.totalItems}
+                  onPageChange={setExpertPage}
+                  onRowsPerPageChange={(value: number) => {
+                    setExpertLimit(value);
+                    setExpertPage(1);
+                  }}
+                />
+              </div>
+            )}
+
             <div className="flex justify-end gap-3 mt-6">
               <Button
                 variant="outline"
@@ -1352,11 +1410,12 @@ const ProjectDetails = () => {
       )}
 
       {/* Main Content */}
-      {/* Main Content - Redesigned Header */}
-      <div className="flex flex-col gap-6 bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-6">
+      <div className="flex flex-col gap-6 bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-3">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Project Information</h3>
         <div className="flex flex-col lg:flex-row w-full items-start justify-between gap-6">
           {/* Left section: Project Info */}
           <div className="flex items-start gap-4 flex-1">
+
             <div className="bg-blue-50 flex items-center justify-center h-16 w-16 rounded-xl border border-blue-100 shrink-0">
               <span className="text-blue-600 text-2xl font-bold">
                 {projectDetails?.title?.charAt(0) || "P"}
@@ -1528,7 +1587,7 @@ const ProjectDetails = () => {
         </div>
       </div>
 
-      <div className="project-details w-full">
+      <div className="project-details w-full mb-4 md:mb-6">
         <div className="tab pt-2 w-full flex items-center gap-5 bg-[#F9FAFB]">
           <div
             className={`flex cursor-pointer w-full items-center justify-center border-b-2 pb-3
@@ -1563,9 +1622,9 @@ const ProjectDetails = () => {
                 <span className="text-[#1A1A1A] text-sm font-normal">
                   Project Brief
                 </span>
-                <span className="text-sm text-[#727374]">
-                  {projectDetails.brief}
-                </span>
+                <div className="text-sm text-[#727374]">
+                  {renderFormattedText(projectDetails.brief)}
+                </div>
               </div>
             )}
             {!projectDetails.brief && (
@@ -1595,9 +1654,9 @@ const ProjectDetails = () => {
                 <span className="text-[#1A1A1A] text-sm font-normal">
                   Challenge
                 </span>
-                <span className="text-sm text-[#727374]">
-                  {projectDetails.challengeId.description}
-                </span>
+                <div className="text-sm text-[#727374]">
+                  {renderFormattedText(projectDetails.challengeId.description)}
+                </div>
               </div>
             )}
             {!projectDetails.challengeId?.description && (
