@@ -25,6 +25,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { ChatWindowSkeleton } from "@/components/skeletons/messages.skeleton";
 import { useSearchParams } from "next/navigation";
+import { formatDistanceToNow, isToday, format } from "date-fns";
+import { useMemo } from "react";
 
 interface Participant {
 	id: string;
@@ -92,7 +94,6 @@ function MessagesContent() {
 
 	const { expertList } = useGetAllExpert();
 	const { businessList } = useGetAllBusiness();
-	// const { AdminUserList, isLoading: isLoadingAdminUsers } = useGetAdminList(1, 100);
 
 	const { messages: chatMessages, isLoading: isLoadingMessages } =
 		useGetChatMessages(chatMessagesToFetch);
@@ -103,6 +104,8 @@ function MessagesContent() {
 	const [loggedInUser, setLoggedInUser] = useState<any>();
 
 	const [input, setInput] = useState("");
+	const [sidebarSearch, setSidebarSearch] = useState("");
+	const hasProcessedParams = useRef(false);
 
 	const handleCreateChat = (userId: string, role: string) => {
 		if (!userId || !role) {
@@ -114,11 +117,9 @@ function MessagesContent() {
 			{ participants: [{ user: userId, userModel: role }] },
 			{
 				onSuccess: (res) => {
-					console.log(res);
 					setFindUsersToChat(false);
 					setChatMessagesToFetch(res?.data?.id);
 
-					// Set selected expert from response if available
 					if (res?.data?.participants) {
 						const otherParticipant = res.data.participants.find(
 							(p: any) => p.user?._id === userId || p.user === userId
@@ -135,16 +136,11 @@ function MessagesContent() {
 		);
 	};
 
-	// ... (rest of component function)
-
-
-
 	const handleSendMessage = () => {
 		if (!input.trim()) return;
 
-		// Create a temporary optimistic message
 		const tempMessage: Message = {
-			id: `temp-${Date.now()}`, // unique temp id
+			id: `temp-${Date.now()}`,
 			chatId: chatMessagesToFetch,
 			content: input,
 			sender: {
@@ -172,9 +168,7 @@ function MessagesContent() {
 				onError: () => {
 					setMessages((prev) =>
 						prev.map((msg) =>
-							msg.id === tempMessage.id
-								? { ...msg }
-								: msg
+							msg.id === tempMessage.id ? { ...msg } : msg
 						)
 					);
 					toast.error("Failed to send message");
@@ -184,38 +178,28 @@ function MessagesContent() {
 	};
 
 	useEffect(() => {
-		// const admins: IUserToChat[] = (AdminUserList?.data ?? [])?.map(
-		// 	(admin: any) => {
-		// 		return {
-		// 			id: admin?.id,
-		// 			name: admin?.name,
-		// 			email: admin?.email,
-		// 			role: "Admin",
-		// 		};
-		// 	}
-		// );
 		const experts: IUserToChat[] = (expertList?.data?.data ?? []).map(
-			(expert: any) => {
-				return {
-					id: expert?.id,
-					name: expert?.name,
-					email: expert?.email,
-					role: "Expert",
-				};
-			}
+			(expert: any) => ({
+				id: expert?.id,
+				name: expert?.name,
+				email: expert?.email,
+				role: "Expert",
+				avatar: expert?.profilePicture || expert?.image,
+			})
 		);
 		const business: IUserToChat[] = (businessList?.data?.data ?? []).map(
-			(business: any) => {
-				return {
-					id: business?.id,
-					name: business?.name,
-					email: business?.email,
-					role: "Business",
-				};
-			}
+			(business: any) => ({
+				id: business?.id,
+				name: business?.name,
+				email: business?.email,
+				role: "Business",
+				avatar: business?.avatar,
+			})
 		);
 
-		setUsers([...(experts ?? []), ...(business ?? [])]);
+		const allUsers = [...experts, ...business];
+		const uniqueUsers = Array.from(new Map(allUsers.map((u) => [u.id, u])).values());
+		setUsers(uniqueUsers);
 	}, [expertList, businessList]);
 
 	useEffect(() => {
@@ -227,30 +211,117 @@ function MessagesContent() {
 	const roleParam = searchParams.get("role");
 
 	useEffect(() => {
-		if (userIdParam && roleParam) {
-			// Only initiate chat if not already active or loading
-			if (!chatMessagesToFetch && !isPending) {
+		if (userIdParam && roleParam && chats && !isPending && !hasProcessedParams.current) {
+			const myId = loggedInUser?.id || loggedInUser?._id;
+
+			// Find if a chat with this user already exists
+			const existingChat = chats.find((chat: any) =>
+				chat.participants.some((p: any) => {
+					const pId = p.user?._id || p.user?.id || p.user;
+					return pId === userIdParam && p.userModel === roleParam;
+				})
+			);
+
+			if (existingChat) {
+				setChatMessagesToFetch(existingChat._id);
+				const otherParticipant = existingChat.participants.find((p: any) => {
+					const pId = p.user?._id || p.user?.id || p.user;
+					return pId !== myId;
+				});
+				if (otherParticipant) setSelectedExpert(otherParticipant);
+				hasProcessedParams.current = true;
+			} else {
 				handleCreateChat(userIdParam, roleParam);
+				hasProcessedParams.current = true;
 			}
 		}
-	}, [userIdParam, roleParam, chatMessagesToFetch, isPending]);
+	}, [userIdParam, roleParam, chats, isPending, loggedInUser]);
 
 	useEffect(() => {
-		setMessages(chatMessages);
+		setMessages(chatMessages || []);
 		bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 	}, [chatMessages]);
 
+	const uniqueChats = useMemo(() => {
+		if (!chats) return [];
+		const myId = loggedInUser?.id || loggedInUser?._id;
+
+		return chats.filter((chat: any) => {
+			const hasMessages = chat.lastMessage || (chat.messages && chat.messages.length > 0);
+			const isCurrentlySelected = chat._id === chatMessagesToFetch;
+			return hasMessages || isCurrentlySelected;
+		}).map((chat: any) => {
+			const otherParticipant = chat.participants.find((p: any) => {
+				const pId = p.user?._id || p.user?.id || p.user;
+				return pId !== myId;
+			});
+
+			// Calculate unread count specifically for the admin
+			// 1. If the admin sent the last message, unread count for the admin should be 0
+			// 2. If the chat is currently selected, unread count should be 0
+			const isLastSenderMe = chat.lastMessage?.sender?.id === myId || chat.lastMessage?.sender?._id === myId;
+			const isCurrentlyActive = chat._id === chatMessagesToFetch;
+
+			let unreadCount = chat.unreadCount || 0;
+			if (isLastSenderMe || isCurrentlyActive) {
+				unreadCount = 0;
+			}
+
+			return {
+				...chat,
+				otherParticipant,
+				unreadCount
+			};
+		});
+	}, [chats, loggedInUser, chatMessagesToFetch]);
+
+	const filteredChats = useMemo(() => {
+		if (!sidebarSearch.trim()) return uniqueChats;
+		const s = sidebarSearch.toLowerCase();
+		return uniqueChats.filter((chat: any) => {
+			const other = chat.participants.find((p: any) => {
+				const pId = p.user?._id || p.user?.id || p.user;
+				return pId !== (loggedInUser?.id || loggedInUser?._id);
+			});
+			return other?.user?.name?.toLowerCase().includes(s);
+		});
+	}, [uniqueChats, sidebarSearch, loggedInUser]);
+
+	const [searchUser, setSearchUser] = useState("");
+
+	const filteredUsers = useMemo(() => {
+		if (!searchUser.trim()) return users;
+		const s = searchUser.toLowerCase();
+		return users.filter(u => u.name.toLowerCase().includes(s) || u.email?.toLowerCase().includes(s));
+	}, [users, searchUser]);
+
 	return (
-		<div className="flex h-[90vh] w-full">
-			<div className="w-72 p-4 flex flex-col">
-				<div className="flex items-center gap-2 border border-[#D1DAEC] p-2 rounded-[10px]">
-					<Search className="w-4 h-4 text-gray-500" />
-					<input
-						placeholder="Search expert"
-						className="flex-1 outline-none text-sm"
-					/>
+		<div className="flex h-[88vh] w-full bg-white rounded-2xl border border-[#EFF2F3] overflow-hidden shadow-sm">
+			{/* Sidebar */}
+			<div className="w-80 border-r border-[#EFF2F3] flex flex-col bg-[#FBFCFC]">
+				<div className="p-4 space-y-4">
+					<div className="flex items-center justify-between">
+						<h1 className="text-xl font-bold text-[#0E1426]">Messages</h1>
+						<div
+							onClick={() => setFindUsersToChat(true)}
+							className="p-2 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all cursor-pointer"
+						>
+							<Plus className="w-5 h-5" />
+						</div>
+					</div>
+
+					<div className="relative group">
+						<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-primary transition-colors" />
+						<input
+							placeholder="Search conversations..."
+							value={sidebarSearch}
+							onChange={(e) => setSidebarSearch(e.target.value)}
+							className="w-full bg-white border border-[#D1DAEC] pl-10 pr-4 py-2 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+						/>
+					</div>
 				</div>
-				<div className="flex-1 flex flex-col relative gap-2 py-2 px-1 max-h-full mt-4 overflow-y-auto hide-scrollbar">
+
+				<div className="flex-1 overflow-y-auto px-2 pb-4 space-y-1 scrollbar-thin">
 					{isLoading && <ChatListSkeleton />}
 					{!isLoading && chats?.length === 0 && (
 						<div className="flex flex-col items-center justify-center h-full p-6 text-center">
@@ -262,291 +333,224 @@ function MessagesContent() {
 							</h3>
 							<p className="text-sm text-gray-500 mt-1">
 								Start a new conversation to connect with others.
-								Click the button below
 							</p>
 						</div>
 					)}
-					{chats?.map((chat: any) => (
-						<div
-							key={chat?._id}
-							onClick={() => {
-								setChatMessagesToFetch(chat?._id);
-								setSelectedExpert(
-									chat.participants.find(
-										(p: {
-											user: { _id: string; name: string };
-										}) => p?.user?._id !== loggedInUser?.id
-									)
-								);
-							}}
-							className={`flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-gray-100 ${selectedExpert?._id ===
-								chat.participants.find(
-									(p: {
-										user: { _id: string; name: string };
-									}) => p?.user?._id !== loggedInUser?.id
-								)?._id
-								? "bg-gray-100"
-								: ""
-								}`}
-						>
-							<div className="w-10 h-10 rounded-full overflow-hidden">
-								<Avatar className="w-10 h-10">
-									<AvatarImage
-										src={
-											chat.participants.find(
-												(p: {
-													user: {
-														_id: string;
-														name: string;
-													};
-												}) =>
-													p?.user?._id !==
-													loggedInUser?.id
-											)?.user?.avatar
-										}
-										alt={
-											chat.participants.find(
-												(p: {
-													user: {
-														_id: string;
-														name: string;
-													};
-												}) =>
-													p?.user?._id !==
-													loggedInUser?.id
-											)?.user?.name
-										}
-									/>
-									<AvatarFallback
-										className={`${getColorForUser(
-											chat.participants.find(
-												(p: {
-													user: {
-														_id: string;
-														name: string;
-													};
-												}) =>
-													p?.user?._id !==
-													loggedInUser?.id
-											)?.user?.name
-										)} text-white font-semibold`}
-									>
-										{chat.participants
-											.find(
-												(p: {
-													user: {
-														_id: string;
-														name: string;
-													};
-												}) =>
-													p?.user?._id !==
-													loggedInUser?.id
-											)
-											?.user?.name?.[0]?.toUpperCase() ||
-											"?"}
-									</AvatarFallback>
-								</Avatar>
-							</div>
-							<div className="flex flex-col gap-1">
-								<div className="text-sm font-semibold">
-									{
-										chat.participants.find(
-											(p: {
-												user: {
-													_id: string;
-													name: string;
-												};
-											}) =>
-												p?.user?._id !==
-												loggedInUser?.id
-										)?.user?.name
-									}
+					{filteredChats.map((chat: any) => {
+						const otherParticipant = chat.otherParticipant;
+						if (!otherParticipant) return null;
+
+						const otherId = otherParticipant.user?._id || otherParticipant.user?.id || otherParticipant.user;
+						const isSelected = chatMessagesToFetch === chat._id;
+
+						const lastMsg = chat.lastMessage;
+						const unreadCount = chat.unreadCount;
+
+						return (
+							<div
+								key={chat._id}
+								onClick={() => {
+									setChatMessagesToFetch(chat._id);
+									setSelectedExpert(otherParticipant);
+								}}
+								className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${isSelected
+									? "bg-white shadow-md border-l-4 border-l-primary"
+									: "hover:bg-gray-100 border-l-4 border-l-transparent"
+									}`}
+							>
+								<div className="relative flex-shrink-0">
+									<Avatar className="h-12 w-12 border-2 border-white shadow-sm">
+										<AvatarImage
+											src={otherParticipant.user?.avatar || otherParticipant.user?.profilePicture || otherParticipant.user?.image}
+											alt={otherParticipant.user?.name}
+										/>
+										<AvatarFallback
+											className={`${getColorForUser(
+												otherParticipant.user?.name || "?"
+											)} text-white text-xs font-bold`}
+										>
+											{otherParticipant.user?.name?.[0]?.toUpperCase() || "?"}
+										</AvatarFallback>
+									</Avatar>
+									{chat.online && (
+										<span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+									)}
 								</div>
-								<div className="text-xs text-gray-500 truncate w-40">
-									{
-										chat.participants.find(
-											(p: {
-												user: {
-													_id: string;
-													name: string;
-												};
-											}) =>
-												p?.user?._id !==
-												loggedInUser?.id
-										)?.userModel
-									}
+
+								<div className="flex-1 min-w-0">
+									<div className="flex items-center justify-between mb-0.5">
+										<h3 className="text-sm font-bold text-[#0E1426] truncate max-w-[120px]">
+											{otherParticipant.user?.name || "Unknown User"}
+										</h3>
+										{lastMsg?.createdAt && (
+											<span className="text-[10px] text-gray-400 font-medium">
+												{isToday(new Date(lastMsg.createdAt))
+													? format(new Date(lastMsg.createdAt), "h:mm a")
+													: formatDistanceToNow(new Date(lastMsg.createdAt), { addSuffix: false })}
+											</span>
+										)}
+									</div>
+
+									<div className="flex items-center justify-between">
+										<p className={`text-xs truncate max-w-[140px] ${unreadCount > 0 ? "text-[#0E1426] font-bold" : "text-gray-500"
+											}`}>
+											{lastMsg?.content || `Start a conversation...`}
+										</p>
+										{unreadCount > 0 && (
+											<span className="flex items-center justify-center min-w-[18px] h-[18px] bg-primary text-white text-[10px] font-bold rounded-full px-1 shadow-sm">
+												{unreadCount}
+											</span>
+										)}
+									</div>
 								</div>
 							</div>
-						</div>
-					))}
+						);
+					})}
 				</div>
 			</div>
 
-			{!chatMessagesToFetch && (
-				<div className="flex-1 border rounded-xl flex flex-col gap-4 items-center justify-center">
-					<Image
-						src={"/logo.svg"}
-						alt={"Logo"}
-						width={250}
-						height={250}
-					/>
-					<span className="text-2xl font-semibold text-primary text-center">
-						Scalepadi chats
-					</span>
-					<span className="text-sm text-gray-500 text-center">
-						Select a chat to see messages
-					</span>
-				</div>
-			)}
-
-			{chatMessagesToFetch && (
-				<div className="flex-1 flex flex-col">
-					<div className="border-b border-[#F2F2F2] p-4 text-lg font-semibold flex items-center">
-						{selectedExpert?.user?.name}
+			{!chatMessagesToFetch ? (
+				<div className="flex-1 flex flex-col gap-6 items-center justify-center bg-gray-50/30">
+					<div className="relative">
+						<div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full"></div>
+						<Image
+							src={"/logo.svg"}
+							alt={"Logo"}
+							width={160}
+							height={160}
+							className="relative opacity-20 grayscale"
+						/>
 					</div>
-					{chatMessages?.length > 0 && (
-						<div className="flex-1 p-4 max-h-full overflow-y-auto flex flex-col gap-4">
-							{messages?.map((msg, idx) => {
-								const isMe = msg.sender.id === loggedInUser.id;
-
-								return (
-									<div
-										key={idx}
-										className={`flex flex-col mb-2 ${isMe
-											? "items-end text-right"
-											: "items-start text-left"
-											}`}
-									>
-										<div className="text-xs text-gray-500 mb-1">
-											{isMe ? "You" : msg.sender.model}{" "}
-											{/* show "You" or the sender's model */}
-										</div>
-										<div
-											className={`p-2 rounded-lg max-w-xs text-sm ${isMe
-												? "bg-blue-100 text-blue-900"
-												: "bg-gray-100 text-gray-900"
-												}`}
-										>
-											{msg.content}
-										</div>
-									</div>
-								);
-							})}
-							<div ref={bottomRef} />
+					<div className="text-center space-y-2">
+						<h2 className="text-2xl font-bold text-[#0E1426]">Scalepadi Chats</h2>
+						<p className="text-sm text-gray-500 max-w-[280px]">
+							Select a conversation from the sidebar or start a new one to begin messaging.
+						</p>
+					</div>
+					<button
+						onClick={() => setFindUsersToChat(true)}
+						className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl font-semibold shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+					>
+						<Plus className="w-5 h-5" />
+						Start New Chat
+					</button>
+				</div>
+			) : (
+				<div className="flex-1 flex flex-col bg-white">
+					<div className="border-b border-[#EFF2F3] p-4 bg-[#FBFCFC] flex items-center justify-between">
+						<div className="flex items-center gap-3">
+							<Avatar className="h-10 w-10 border border-[#EFF2F3]">
+								<AvatarImage src={selectedExpert?.user?.avatar || selectedExpert?.user?.profilePicture} />
+								<AvatarFallback className={`${getColorForUser(selectedExpert?.user?.name)} text-white font-bold`}>
+									{selectedExpert?.user?.name?.[0]?.toUpperCase()}
+								</AvatarFallback>
+							</Avatar>
+							<div>
+								<h2 className="text-sm font-bold text-[#0E1426] leading-none mb-1">
+									{selectedExpert?.user?.name}
+								</h2>
+								<div className="flex items-center gap-1.5">
+									<span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+									<span className="text-[10px] text-gray-400 font-medium">Active now</span>
+								</div>
+							</div>
 						</div>
-					)}
-					{isLoadingMessages && (
-						<div className="flex-1 p-4 max-h-full overflow-y-auto flex flex-col gap-4">
-							<ChatWindowSkeleton />
-						</div>
-					)}
-					{chatMessages?.length === 0 && (
-						<div className="flex-1 p-4 max-h-full overflow-y-auto flex flex-col gap-4">
+					</div>
+					<div className="flex-1 p-4 max-h-full overflow-y-auto flex flex-col gap-4">
+						{messages?.length === 0 && !isLoadingMessages && (
 							<div className="flex flex-col items-center justify-center h-full text-center p-8">
 								<div className="w-16 h-16 flex items-center justify-center rounded-full bg-gray-100 mb-4">
 									<MessageSquare className="h-8 w-8 text-gray-400" />
 								</div>
-								<h3 className="text-lg font-medium text-gray-700">
-									No messages yet
-								</h3>
-								<p className="text-sm text-gray-500 mt-1">
-									Start the conversation and it will appear
-									here.
-								</p>
+								<h3 className="text-lg font-medium text-gray-700">No messages yet</h3>
+								<p className="text-sm text-gray-500 mt-1">Start the conversation below.</p>
 							</div>
-						</div>
-					)}
-					<div className="pt-4 border-t -mx-2 px-2 lg:-mx-6 lg:px-6 border-[#F2F2F2]">
-						<div className="flex items-center w-full justify-between bg-[#F7F7F8] py-1 px-[6px]">
-							<div className="flex w-full items-center gap-1">
-								{/* <Image
-								src={"/images/scalepadi-ai-logo.svg"}
-								alt="ScalePadi AI Logo"
-								width={126}
-								height={36}
-							/> */}
-								<Plus className="w-6 h-6 text-[#878A93] cursor-pointer" />
-								<Input
-									value={input}
-									onChange={(e) => setInput(e.target.value)}
-									className="w-full bg-[#F7F7F8] border-none focus:outline-none"
-									autoFocus={true}
-									onKeyDown={(e) => {
-										if (e.key === "Enter") {
-											handleSendMessage();
-										}
-									}}
-								/>
-							</div>
-							<div
+						)}
+						{isLoadingMessages && <ChatWindowSkeleton />}
+						{messages?.map((msg, idx) => {
+							const isMe = msg.sender.id === loggedInUser?.id || msg.sender.id === loggedInUser?._id;
+							return (
+								<div
+									key={idx}
+									className={`flex flex-col mb-2 ${isMe ? "items-end" : "items-start"}`}
+								>
+									<div className="text-[10px] text-gray-400 mb-1 px-1">
+										{isMe ? "You" : (selectedExpert?.user?.name || msg.sender.model)}
+									</div>
+									<div
+										className={`p-3 rounded-2xl max-w-sm text-sm shadow-sm ${isMe
+											? "bg-primary text-white rounded-tr-none"
+											: "bg-gray-100 text-gray-900 rounded-tl-none"
+											}`}
+									>
+										{msg.content}
+									</div>
+									<div className="text-[9px] text-gray-400 mt-1 px-1">
+										{format(new Date(msg.createdAt), "h:mm a")}
+									</div>
+								</div>
+							);
+						})}
+						<div ref={bottomRef} />
+					</div>
+					<div className="p-4 border-t border-[#EFF2F3] bg-[#FBFCFC]">
+						<div className="flex items-center gap-2 bg-white border border-[#D1DAEC] rounded-xl p-1.5 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+							<button className="p-2 text-gray-400 hover:text-primary transition-colors">
+								<Plus className="w-5 h-5" />
+							</button>
+							<Input
+								value={input}
+								onChange={(e) => setInput(e.target.value)}
+								placeholder="Type a message..."
+								className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+								onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+							/>
+							<button
 								onClick={handleSendMessage}
-								className="p-1 rounded-[8px] bg-primary text-white flex items-center cursor-pointer"
+								disabled={!input.trim()}
+								className="p-2.5 rounded-lg bg-primary text-white disabled:opacity-50 disabled:grayscale hover:scale-105 active:scale-95 transition-all shadow-md shadow-primary/20"
 							>
-								<SendHorizontal className="-rotate-90" />
-							</div>
+								<SendHorizontal className="w-5 h-5 -rotate-45" />
+							</button>
 						</div>
 					</div>
 				</div>
 			)}
-			<div
-				onClick={() => setFindUsersToChat(true)}
-				className="text-white w-12 h-12 flex-shrink-0 flex-none flex items-center justify-center rounded-full bg-primary hover:bg-primary-hover hover:text-black fixed bottom-24 left-[500px] cursor-pointer"
-			>
-				<Plus />
-			</div>
 
 			<Dialog open={findUsersToChat} onOpenChange={setFindUsersToChat}>
-				<DialogContent className="!rounded-3xl">
-					<DialogTitle className="text-primary text-[20px]">
-						Find Busines, Expert or Admin to text
+				<DialogContent className="sm:max-w-[425px] !rounded-3xl p-6">
+					<DialogTitle className="text-xl font-bold text-[#0E1426] mb-4">
+						New Message
 					</DialogTitle>
 
-					<div className="flex flex-col gap-6">
-						<div className="flex items-center gap-2 border border-[#D1DAEC] p-2 rounded-[10px]">
-							<Search className="w-4 h-4 text-gray-500" />
+					<div className="space-y-6">
+						<div className="relative group">
+							<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-primary transition-colors" />
 							<input
-								placeholder="Search user"
-								className="flex-1 outline-none text-sm"
+								placeholder="Search people..."
+								value={searchUser}
+								onChange={(e) => setSearchUser(e.target.value)}
+								className="w-full bg-gray-50 border border-[#D1DAEC] pl-10 pr-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
 							/>
 						</div>
 
-						<div className="flex flex-col gap-2 users max-h-96 overflow-y-auto">
-							{users?.map((user) => (
+						<div className="flex flex-col gap-1 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
+							{filteredUsers?.map((user) => (
 								<div
-									key={user.name}
-									className="flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-gray-100"
-									onClick={() => {
-										if (isPending) {
-											toast.info(
-												`Creating chat with ${user.name}, hold on`
-											);
-											return;
-										}
-										handleCreateChat(user?.id, user?.role);
-									}}
+									key={user.id}
+									className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
+									onClick={() => handleCreateChat(user?.id, user?.role)}
 								>
-									<Avatar className="w-8 h-8">
-										<AvatarImage
-											src={user?.avatar}
-											alt={user?.name}
-										/>
-										<AvatarFallback
-											className={`${getColorForUser(
-												user?.name
-											)} text-white font-semibold`}
-										>
-											{user?.name?.[0]?.toUpperCase() ||
-												"?"}
+									<Avatar className="h-10 w-10 border border-white shadow-sm font-bold">
+										<AvatarImage src={user?.avatar} />
+										<AvatarFallback className={`${getColorForUser(user?.name)} text-white`}>
+											{user?.name?.[0]?.toUpperCase()}
 										</AvatarFallback>
 									</Avatar>
 
-									<div className="flex flex-col gap-1">
-										<div className="text-sm font-semibold">
-											{user.name}
-										</div>
-										<div className="text-xs text-gray-500 truncate w-40">
-											{user.role}
-										</div>
+									<div className="flex-1 min-w-0">
+										<div className="text-sm font-bold text-[#0E1426] truncate">{user.name}</div>
+										<div className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">{user.role}</div>
 									</div>
 								</div>
 							))}
@@ -560,7 +564,12 @@ function MessagesContent() {
 
 export default function MessagesPage() {
 	return (
-		<Suspense fallback={<div className="flex h-screen items-center justify-center">Loading chats...</div>}>
+		<Suspense fallback={<div className="flex h-[88vh] items-center justify-center bg-white rounded-2xl border border-[#EFF2F3]">
+			<div className="flex flex-col items-center gap-4">
+				<div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+				<span className="text-sm text-gray-500 font-medium">Loading your conversations...</span>
+			</div>
+		</div>}>
 			<MessagesContent />
 		</Suspense>
 	);

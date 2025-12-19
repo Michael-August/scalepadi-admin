@@ -24,9 +24,10 @@ axiosClient.interceptors.request.use(
 		const token = localStorage.getItem("token");
 
 		if (!token) {
-			window.location.href = "/"; // forces a redirect on the client
+			// If no token, redirect to signin for protected routes
+			window.location.href = "/signin";
 			return Promise.reject(
-				new Error("No access token found in session")
+				new Error("Authentication required")
 			);
 		}
 
@@ -42,36 +43,34 @@ axiosClient.interceptors.request.use(
 );
 
 axiosClient.interceptors.response.use(
-	(response) => {
-		return response;
-	},
+	(response) => response,
 	async (error: AxiosError) => {
-		const originalRequest = error.config as InternalAxiosRequestConfig & {
-			_retry?: boolean;
-		};
-
 		if (error.response) {
 			const status = error.response.status;
-			const message =
-				(error.response?.data as { message?: string })?.message ||
-				"An error occurred";
+			const message = (error.response?.data as { message?: string })?.message || "";
 
-			if (status === 500) {
-			}
+			// Check for any variant of unauthorized or invalid token errors
+			const isAuthError =
+				status === 401 ||
+				(status === 403 &&
+					(message.toLowerCase().includes("token") ||
+						message.toLowerCase().includes("denied") ||
+						message.toLowerCase().includes("unauthorized")));
 
-			if (status === 403 && message === "Access Denied: Invalid Token.") {
-				localStorage.clear();
-				window.location.href = "/signin";
-			}
-
-			if (status === 401 && message === "Unauthorized admin") {
-				toast.info(
-					"Please log in with correct credentials to view this"
-				);
-				window.location.href = "/signin";
+			if (isAuthError) {
+				const currentPath = window.location.pathname;
+				if (currentPath !== "/signin" && currentPath !== "/") {
+					localStorage.clear();
+					toast.error("Session Expired", {
+						description: "Your session has timed out. Please sign in again.",
+						duration: 5000,
+					});
+					setTimeout(() => {
+						window.location.href = "/signin";
+					}, 1000);
+				}
 			}
 		}
-
 		return Promise.reject(error);
 	}
 );

@@ -268,7 +268,7 @@ const Experts = () => {
         />
       </div>
 
-      <div className="w-full bg-white">
+      <div className="w-full bg-white my-4 md:my-6">
         {/* Header */}
         <h1 className="text-2xl font-medium text-[#878A93] mb-6">
           Experts List
@@ -555,7 +555,7 @@ const Experts = () => {
         </div>
 
         {/* Pagination */}
-        <div className="flex flex-col md:flex-row items-center justify-between mt-4 gap-4">
+        <div className="flex flex-col md:flex-row items-center justify-between mt-4 mx-4 md:mx-6 gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">Rows per page</span>
             <Select value={rowsPerPage} onValueChange={setRowsPerPage}>
