@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import {
 	Send,
 	Search,
@@ -21,7 +21,6 @@ import { ChatListSkeleton } from "@/components/skeletons/chats.skeleton";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useGetAllExpert } from "@/hooks/useExpert";
 import { useGetAllBusiness } from "@/hooks/useBusiness";
-import { useGetAdminList } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { ChatWindowSkeleton } from "@/components/skeletons/messages.skeleton";
@@ -70,13 +69,15 @@ const colors = [
 function getColorForUser(name: string) {
 	// create a simple hash based on name
 	let hash = 0;
-	for (let i = 0; i < name.length; i++) {
-		hash = name.charCodeAt(i) + ((hash << 5) - hash);
+	if (name) {
+		for (let i = 0; i < name.length; i++) {
+			hash = name.charCodeAt(i) + ((hash << 5) - hash);
+		}
 	}
 	return colors[Math.abs(hash) % colors.length];
 }
 
-export default function MessagesPage() {
+function MessagesContent() {
 	const [selectedExpert, setSelectedExpert] = useState<any>();
 	const [messages, setMessages] = useState<Message[]>([]);
 
@@ -89,14 +90,13 @@ export default function MessagesPage() {
 
 	const [chatMessagesToFetch, setChatMessagesToFetch] = useState("");
 
-	const { expertList, isLoading: isLoadingExperts } = useGetAllExpert();
-	const { businessList, isLoading: isLoadingBusinesses } =
-		useGetAllBusiness();
+	const { expertList } = useGetAllExpert();
+	const { businessList } = useGetAllBusiness();
 	// const { AdminUserList, isLoading: isLoadingAdminUsers } = useGetAdminList(1, 100);
 
 	const { messages: chatMessages, isLoading: isLoadingMessages } =
 		useGetChatMessages(chatMessagesToFetch);
-	const { sendMessage, isPending: isPendingSendMessage } =
+	const { sendMessage } =
 		useSendMessages(chatMessagesToFetch);
 
 	const [users, setUsers] = useState<IUserToChat[]>([]);
@@ -161,7 +161,7 @@ export default function MessagesPage() {
 		sendMessage(
 			{ chatId: chatMessagesToFetch, text: input },
 			{
-				onSuccess: (res) => {
+				onSuccess: (res: any) => {
 					setMessages((prev) =>
 						prev.map((msg) =>
 							msg.id === tempMessage.id ? res.data : msg
@@ -173,7 +173,7 @@ export default function MessagesPage() {
 					setMessages((prev) =>
 						prev.map((msg) =>
 							msg.id === tempMessage.id
-								? { ...msg, status: "failed" }
+								? { ...msg }
 								: msg
 						)
 					);
@@ -555,5 +555,13 @@ export default function MessagesPage() {
 				</DialogContent>
 			</Dialog>
 		</div>
+	);
+}
+
+export default function MessagesPage() {
+	return (
+		<Suspense fallback={<div className="flex h-screen items-center justify-center">Loading chats...</div>}>
+			<MessagesContent />
+		</Suspense>
 	);
 }

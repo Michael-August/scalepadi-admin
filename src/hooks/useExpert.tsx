@@ -87,14 +87,21 @@ export const useGetExpertById = (id: string) => {
 	return { expertDetails: data, isLoading };
 };
 
-export const useGetHires = (page: number = 1, limit: number = 10) => {
+export const useGetHires = (
+	page: number = 1,
+	limit: number = 10,
+	status: string = "",
+	search: string = ""
+) => {
 	const { data, isLoading } = useQuery({
-		queryKey: ["hires", page, limit],
+		queryKey: ["hires", page, limit, status, search],
 		queryFn: async () => {
 			try {
-				const response = await axiosClient.get(
-					`/hires/admin?page=${page}&limit=${limit}`
-				);
+				let url = `/hires/admin?page=${page}&limit=${limit}`;
+				if (status && status !== "all") url += `&status=${status}`;
+				if (search) url += `&search=${encodeURIComponent(search)}`;
+
+				const response = await axiosClient.get(url);
 				if (response.data?.status === false) {
 					throw new Error(
 						response.data?.message || "Failed to fetch hires."
