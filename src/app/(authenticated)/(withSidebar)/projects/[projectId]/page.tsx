@@ -355,8 +355,6 @@ const ProjectDetails = () => {
       {
         projectId,
         approved: approvalStatus,
-        totalCost: proposedTotalCost,
-        discount: finalDiscount,
       },
       {
         onSuccess: () => {
@@ -512,6 +510,14 @@ const ProjectDetails = () => {
     );
   }
 
+  const formattedText = projectDetails?.brief
+    .replace(/\\r\\n/g, "<br />")
+    .replace(/\\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
+
+  const formattedKindOfExperts = projectDetails?.kindOfExperts
+    .replace(/\\r\\n/g, "<br />")
+    .replace(/\\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
+
   return (
     <div className="flex w-full flex-col gap-6">
       {/* Delete Confirmation Modal */}
@@ -532,8 +538,8 @@ const ProjectDetails = () => {
 
             <div className="space-y-4">
               <p className="text-gray-600">
-                Are you sure you want to delete this task? This action cannot be
-                undone.
+                Are you sure you want to delete this task? This
+                action cannot be undone.
               </p>
             </div>
 
@@ -550,7 +556,9 @@ const ProjectDetails = () => {
                 disabled={deleteTaskMutation.isPending}
                 className="bg-red-600 text-white hover:bg-red-700"
               >
-                {deleteTaskMutation.isPending ? "Deleting..." : "Delete Task"}
+                {deleteTaskMutation.isPending
+                  ? "Deleting..."
+                  : "Delete Task"}
               </Button>
             </div>
           </div>
@@ -562,7 +570,9 @@ const ProjectDetails = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Approve Project</h3>
+              <h3 className="text-lg font-semibold">
+                Approve Project
+              </h3>
               <button
                 onClick={() => setIsApprovalModalOpen(false)}
                 className="p-1 rounded-full hover:bg-gray-100"
@@ -578,7 +588,11 @@ const ProjectDetails = () => {
                 </label>
                 <select
                   value={approvalStatus.toString()}
-                  onChange={(e) => setApprovalStatus(e.target.value === "true")}
+                  onChange={(e) =>
+                    setApprovalStatus(
+                      e.target.value === "true"
+                    )
+                  }
                   className="w-full p-2 border border-gray-300 rounded-lg"
                 >
                   <option value="true">Approve</option>
@@ -593,7 +607,11 @@ const ProjectDetails = () => {
                 <input
                   type="number"
                   value={proposedTotalCost}
-                  onChange={(e) => setProposedTotalCost(Number(e.target.value))}
+                  onChange={(e) =>
+                    setProposedTotalCost(
+                      Number(e.target.value)
+                    )
+                  }
                   min="0"
                   className="w-full p-2 border border-gray-300 rounded-lg"
                 />
@@ -607,8 +625,15 @@ const ProjectDetails = () => {
                   type="number"
                   value={discount}
                   onChange={(e) => {
-                    const newDiscount = Number(e.target.value);
-                    setDiscount(Math.min(newDiscount, proposedTotalCost));
+                    const newDiscount = Number(
+                      e.target.value
+                    );
+                    setDiscount(
+                      Math.min(
+                        newDiscount,
+                        proposedTotalCost
+                      )
+                    );
                   }}
                   min="0"
                   max={proposedTotalCost}
@@ -621,7 +646,11 @@ const ProjectDetails = () => {
                   Final Amount
                 </label>
                 <div className="p-2 bg-gray-100 rounded-lg font-medium">
-                  ₦{Math.max(0, proposedTotalCost - discount).toLocaleString()}
+                  ₦
+                  {Math.max(
+                    0,
+                    proposedTotalCost - discount
+                  ).toLocaleString()}
                 </div>
               </div>
             </div>
@@ -639,7 +668,9 @@ const ProjectDetails = () => {
                 disabled={approveProjectMutation.isPending}
                 className="bg-primary text-white hover:bg-primary-hover"
               >
-                {approveProjectMutation.isPending ? "Processing..." : "Confirm"}
+                {approveProjectMutation.isPending
+                  ? "Processing..."
+                  : "Confirm"}
               </Button>
             </div>
           </div>
@@ -671,7 +702,10 @@ const ProjectDetails = () => {
                   type="text"
                   value={taskForm.title}
                   onChange={(e) =>
-                    setTaskForm((prev) => ({ ...prev, title: e.target.value }))
+                    setTaskForm((prev) => ({
+                      ...prev,
+                      title: e.target.value,
+                    }))
                   }
                   placeholder="Enter task title"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
@@ -701,7 +735,7 @@ const ProjectDetails = () => {
                   Due Date *
                 </label>
                 <input
-                  type="date"
+                  type="datetime-local"
                   value={taskForm.dueDate}
                   onChange={(e) =>
                     setTaskForm((prev) => ({
@@ -719,7 +753,10 @@ const ProjectDetails = () => {
                 </label>
                 <div className="space-y-2">
                   {taskForm.link.map((link, index) => (
-                    <div key={index} className="flex items-center gap-2">
+                    <div
+                      key={index}
+                      className="flex items-center gap-2"
+                    >
                       <Link2 className="w-4 h-4 text-gray-500" />
                       <input
                         type="text"
@@ -728,7 +765,9 @@ const ProjectDetails = () => {
                         className="flex-1 p-2 border border-gray-300 rounded-lg bg-gray-50"
                       />
                       <button
-                        onClick={() => removeLink(index)}
+                        onClick={() =>
+                          removeLink(index)
+                        }
                         className="p-1 text-red-500 hover:bg-red-50 rounded"
                       >
                         <X className="w-4 h-4" />
@@ -747,7 +786,9 @@ const ProjectDetails = () => {
                       }
                       placeholder="Paste link here"
                       className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                      onKeyPress={(e) => e.key === "Enter" && addLink()}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" && addLink()
+                      }
                     />
                     <Button
                       type="button"
@@ -770,11 +811,14 @@ const ProjectDetails = () => {
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <Upload className="w-8 h-8 mb-3 text-gray-400" />
                       <p className="mb-2 text-sm text-gray-500">
-                        <span className="font-semibold">Click to upload</span>{" "}
+                        <span className="font-semibold">
+                          Click to upload
+                        </span>{" "}
                         or drag and drop
                       </p>
                       <p className="text-xs text-gray-500">
-                        PNG, JPG, JPEG, PDF, DOC, DOCX up to 10MB
+                        PNG, JPG, JPEG, PDF, DOC, DOCX
+                        up to 10MB
                       </p>
                     </div>
                     <input
@@ -788,28 +832,43 @@ const ProjectDetails = () => {
 
                   {taskForm.documents.length > 0 && (
                     <div className="space-y-2">
-                      {taskForm.documents.map((file, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
-                        >
-                          <div className="flex items-center gap-3">
-                            <FileText className="w-5 h-5 text-gray-400" />
-                            <div>
-                              <p className="text-sm font-medium">{file.name}</p>
-                              <p className="text-xs text-gray-500">
-                                {(file.size / 1024 / 1024).toFixed(2)} MB
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => removeFile(index)}
-                            className="p-1 text-red-500 hover:bg-red-50 rounded"
+                      {taskForm.documents.map(
+                        (file, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
                           >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
+                            <div className="flex items-center gap-3">
+                              <FileText className="w-5 h-5 text-gray-400" />
+                              <div>
+                                <p className="text-sm font-medium">
+                                  {file.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {(
+                                    file.size /
+                                    1024 /
+                                    1024
+                                  ).toFixed(
+                                    2
+                                  )}{" "}
+                                  MB
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() =>
+                                removeFile(
+                                  index
+                                )
+                              }
+                              className="p-1 text-red-500 hover:bg-red-50 rounded"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )
+                      )}
                     </div>
                   )}
                 </div>
@@ -858,7 +917,9 @@ const ProjectDetails = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold">Task Details</h3>
+              <h3 className="text-xl font-semibold">
+                Task Details
+              </h3>
               <button
                 onClick={() => setIsTaskDetailsModalOpen(false)}
                 className="p-1 rounded-full hover:bg-gray-100"
@@ -963,12 +1024,19 @@ const ProjectDetails = () => {
                 {/* Assigned Expert */}
                 {selectedTask.assignee && (
                   <div>
-                    <h5 className="font-semibold mb-3">Assigned Expert</h5>
+                    <h5 className="font-semibold mb-3">
+                      Assigned Expert
+                    </h5>
                     <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
                       <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                        {selectedTask.assignee.profilePicture ? (
+                        {selectedTask.assignee
+                          .profilePicture ? (
                           <Image
-                            src={selectedTask.assignee.profilePicture}
+                            src={
+                              selectedTask
+                                ?.assignee
+                                ?.profilePicture
+                            }
                             alt="Assignee"
                             width={48}
                             height={48}
@@ -976,19 +1044,28 @@ const ProjectDetails = () => {
                           />
                         ) : (
                           <span className="text-lg font-medium">
-                            {selectedTask.assignee.name.charAt(0)}
+                            {selectedTask?.assignee.name.charAt(
+                              0
+                            )}
                           </span>
                         )}
                       </div>
                       <div>
                         <p className="font-medium">
-                          {selectedTask.assignee.name}
+                          {
+                            selectedTask?.assignee
+                              .name
+                          }
                         </p>
-                        {selectedTask.assignee.email && (
-                          <p className="text-sm text-gray-600">
-                            {selectedTask.assignee.email}
-                          </p>
-                        )}
+                        {selectedTask.assignee
+                          .email && (
+                            <p className="text-sm text-gray-600">
+                              {
+                                selectedTask
+                                  .assignee.email
+                              }
+                            </p>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -1130,36 +1207,44 @@ const ProjectDetails = () => {
                 )}
 
               {/* Task Progress Actions */}
-              {selectedTask.assignee && !selectedTask.submission?.length && (
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[#878A93] text-sm font-medium">
-                      Task Progress
-                    </span>
-                    <span className="text-[#727374] text-sm">
-                      Track completion and review submissions
-                    </span>
+              {selectedTask.assignee &&
+                !selectedTask.submission?.length && (
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[#878A93] text-sm font-medium">
+                        Task Progress
+                      </span>
+                      <span className="text-[#727374] text-sm">
+                        Track completion and review
+                        submissions
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl"
+                        onClick={() =>
+                          setShowNoteInput(
+                            "needs-changes"
+                          )
+                        }
+                      >
+                        Request Update
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl hover:bg-primary-hover"
+                        onClick={() =>
+                          setShowNoteInput("approved")
+                        }
+                      >
+                        Mark as Completed
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-xl"
-                      onClick={() => setShowNoteInput("needs-changes")}
-                    >
-                      Request Update
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-xl hover:bg-primary-hover"
-                      onClick={() => setShowNoteInput("approved")}
-                    >
-                      Mark as Completed
-                    </Button>
-                  </div>
-                </div>
-              )}
+                )}
 
               {/* Submissions Section */}
               {selectedTask.submission &&
@@ -1171,7 +1256,8 @@ const ProjectDetails = () => {
                           Task Progress
                         </span>
                         <span className="text-[#727374] text-sm">
-                          Track completion and review submissions
+                          Track completion and review
+                          submissions
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1179,7 +1265,11 @@ const ProjectDetails = () => {
                           variant="outline"
                           size="sm"
                           className="rounded-xl"
-                          onClick={() => setShowNoteInput("needs-changes")}
+                          onClick={() =>
+                            setShowNoteInput(
+                              "needs-changes"
+                            )
+                          }
                         >
                           Request Update
                         </Button>
@@ -1187,7 +1277,11 @@ const ProjectDetails = () => {
                           variant="outline"
                           size="sm"
                           className="rounded-xl hover:bg-primary-hover"
-                          onClick={() => setShowNoteInput("approved")}
+                          onClick={() =>
+                            setShowNoteInput(
+                              "approved"
+                            )
+                          }
                         >
                           Mark as Completed
                         </Button>
@@ -1200,14 +1294,19 @@ const ProjectDetails = () => {
                         <div className="flex flex-col gap-3">
                           <label className="text-sm font-medium text-gray-700">
                             Add a note for{" "}
-                            {showNoteInput === "approved"
+                            {showNoteInput ===
+                              "approved"
                               ? "approval"
                               : "changes"}
                             :
                           </label>
                           <textarea
                             value={note}
-                            onChange={(e) => setNote(e.target.value)}
+                            onChange={(e) =>
+                              setNote(
+                                e.target.value
+                              )
+                            }
                             placeholder="Enter your feedback here..."
                             className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             rows={3}
@@ -1217,7 +1316,9 @@ const ProjectDetails = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                setShowNoteInput(null);
+                                setShowNoteInput(
+                                  null
+                                );
                                 setNote("");
                               }}
                             >
@@ -1233,7 +1334,9 @@ const ProjectDetails = () => {
                                   selectedTask?.id
                                 )
                               }
-                              disabled={updateTaskChangesMutation.isPending}
+                              disabled={
+                                updateTaskChangesMutation.isPending
+                              }
                             >
                               {updateTaskChangesMutation.isPending
                                 ? "Updating..."
@@ -1246,7 +1349,9 @@ const ProjectDetails = () => {
 
                     <div className="flex flex-col gap-3">
                       <span className="text-[#878A93] text-sm font-medium mt-4">
-                        Submissions ({selectedTask.submission.length})
+                        Submissions (
+                        {selectedTask.submission.length}
+                        )
                       </span>
 
                       {/* Links */}
@@ -1254,62 +1359,79 @@ const ProjectDetails = () => {
                         {(
                           selectedTask?.submission?.filter(
                             (item: string) =>
-                              !item.includes("res.cloudinary.com")
+                              !item.includes(
+                                "res.cloudinary.com"
+                              )
                           ) || []
-                        )?.map((link: string, index: number) => (
-                          <Link
-                            href={link}
-                            target="_blank"
-                            key={index}
-                            className="flex items-center cursor-pointer gap-2 p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
-                          >
-                            <Link2 />
-                            <input
-                              type="text"
-                              className="w-full outline-none text-sm text-[#727374] bg-transparent"
-                              value={link}
-                              readOnly
-                            />
-                          </Link>
-                        ))}
+                        )?.map(
+                          (
+                            link: string,
+                            index: number
+                          ) => (
+                            <Link
+                              href={link}
+                              target="_blank"
+                              key={index}
+                              className="flex items-center cursor-pointer gap-2 p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
+                            >
+                              <Link2 />
+                              <input
+                                type="text"
+                                className="w-full outline-none text-sm text-[#727374] bg-transparent"
+                                value={link}
+                                readOnly
+                              />
+                            </Link>
+                          )
+                        )}
                       </div>
 
                       {/* Documents */}
                       <div className="flex flex-wrap gap-2">
                         {(
-                          selectedTask?.submission?.filter((item: string) =>
-                            item.includes("res.cloudinary.com")
+                          selectedTask?.submission?.filter(
+                            (item: string) =>
+                              item.includes(
+                                "res.cloudinary.com"
+                              )
                           ) || []
-                        )?.map((doc: string, index: number) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
-                          >
-                            <div className="flex items-center gap-2">
-                              <Image
-                                src="/icons/file-icon.svg"
-                                alt="file icon"
-                                width={16}
-                                height={16}
-                              />
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-sm font-medium text-[#1A1A1A] truncate">
-                                  Document {index + 1}
-                                </span>
-                                <span className="text-xs text-[#878A93]">
-                                  File
-                                </span>
-                              </div>
-                            </div>
-                            <a
-                              href={doc}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                        )?.map(
+                          (
+                            doc: string,
+                            index: number
+                          ) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
                             >
-                              <Download className="w-4 h-4 text-[#878A93] cursor-pointer hover:text-primary" />
-                            </a>
-                          </div>
-                        ))}
+                              <div className="flex items-center gap-2">
+                                <Image
+                                  src="/icons/file-icon.svg"
+                                  alt="file icon"
+                                  width={16}
+                                  height={16}
+                                />
+                                <div className="flex flex-col min-w-0">
+                                  <span className="text-sm font-medium text-[#1A1A1A] truncate">
+                                    Document{" "}
+                                    {index +
+                                      1}
+                                  </span>
+                                  <span className="text-xs text-[#878A93]">
+                                    File
+                                  </span>
+                                </div>
+                              </div>
+                              <a
+                                href={doc}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <Download className="w-4 h-4 text-[#878A93] cursor-pointer hover:text-primary" />
+                              </a>
+                            </div>
+                          )
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1331,7 +1453,9 @@ const ProjectDetails = () => {
                 )}
                 <Button
                   variant="outline"
-                  onClick={() => setIsTaskDetailsModalOpen(false)}
+                  onClick={() =>
+                    setIsTaskDetailsModalOpen(false)
+                  }
                 >
                   Close
                 </Button>
@@ -1346,9 +1470,13 @@ const ProjectDetails = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold">Assign Expert</h3>
+              <h3 className="text-xl font-semibold">
+                Assign Expert
+              </h3>
               <button
-                onClick={() => setIsExpertAssignModalOpen(false)}
+                onClick={() =>
+                  setIsExpertAssignModalOpen(false)
+                }
                 className="p-1 rounded-full hover:bg-gray-100"
               >
                 <X className="w-6 h-6" />
@@ -1400,7 +1528,9 @@ const ProjectDetails = () => {
             <div className="flex justify-end gap-3 mt-6">
               <Button
                 variant="outline"
-                onClick={() => setIsExpertAssignModalOpen(false)}
+                onClick={() =>
+                  setIsExpertAssignModalOpen(false)
+                }
               >
                 Cancel
               </Button>
@@ -1719,74 +1849,26 @@ const ProjectDetails = () => {
               </span>
             )}
 
-            {/* Deliverables */}
-            {/* <div className="flex flex-col gap-2">
-              <span className="text-[#1A1A1A] text-sm font-normal">
-                Deliverables
-              </span>
-              <ul className="list-none flex flex-col gap-2 text-sm text-[#727374]">
-                <li>Project Analysis Report</li>
-                <li>Implementation Plan</li>
-                <li>Progress Updates</li>
-                <li>Final Review</li>
-              </ul>
-            </div> */}
-
-            {/* Budget */}
             <div className="flex flex-col gap-2">
-              <span className="text-[#1A1A1A] text-sm font-normal">Budget</span>
+              <span className="text-[#1A1A1A] text-sm font-normal">
+                Budget
+              </span>
               <span className="text-sm text-[#727374]">
-                {projectDetails.totalCost
-                  ? `₦${projectDetails.totalCost.toLocaleString()}`
-                  : "No budget specified."}
+                {projectDetails.proposedTotalCost
+                  ? `${projectDetails.proposedTotalCost.toLocaleString()}`
+                  : "No budget specified"}
               </span>
             </div>
 
-            {/* Payment Status */}
-            {projectDetails.paymentStatus && (
-              <div className="flex flex-col gap-2">
-                <span className="text-[#1A1A1A] text-sm font-normal">
-                  Payment Status
-                </span>
-                <span className="text-sm text-[#727374] capitalize">
-                  {projectDetails.paymentStatus}
-                </span>
-              </div>
-            )}
-            {!projectDetails.paymentStatus && (
-              <span className="text-sm text-[#727374] italic">
-                Payment status not available.
+            <div className="flex flex-col gap-2">
+              <span className="text-[#1A1A1A] text-sm font-normal">
+                Payment Status
               </span>
-            )}
-
-            {/* Experts */}
-            {/* {projectDetails.experts && projectDetails.experts.length > 0 ? (
-      <div className="flex flex-col gap-2">
-        <span className="text-[#1A1A1A] text-sm font-normal">Assigned Expert</span>
-        {projectDetails.experts.map((expert: any) => (
-          <div
-            key={expert.id}
-            className="flex items-center justify-between bg-[#F9FAFB] p-3 rounded-xl"
-          >
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-[#1A1A1A]">{expert.name}</span>
-              <span className="text-xs text-[#727374]">{expert.email}</span>
+              <span className="text-sm text-[#727374] capitalize">
+                {projectDetails.paymentStatus ||
+                  "Not specified"}
+              </span>
             </div>
-            <span
-              className={`text-xs px-2 py-1 rounded-lg ${
-                expert.status === "active"
-                  ? "bg-green-100 text-green-600"
-                  : "bg-gray-100 text-gray-600"
-              }`}
-            >
-              {expert.status}
-            </span>
-          </div>
-        ))}
-      </div>
-    ) : (
-      <span className="text-sm text-[#727374] italic">No experts assigned yet.</span>
-    )} */}
           </div>
         )}
 
@@ -1797,7 +1879,8 @@ const ProjectDetails = () => {
                 Track tasks in real time.
               </span>
               <span className="text-sm text-[#727374]">
-                Review submissions and approve or request changes.
+                Review submissions and approve or request
+                changes.
               </span>
             </div>
 
@@ -2032,7 +2115,8 @@ const ProjectDetails = () => {
                             Task Progress
                           </span>
                           <span className="text-[#727374] text-sm">
-                            Track completion and review submissions
+                            Track completion and
+                            review submissions
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -2055,157 +2139,220 @@ const ProjectDetails = () => {
                     )}
 
                     {/* Submissions */}
-                    {task.submission && task.submission.length > 0 && (
-                      <div className="pt-3 border-t border-gray-100">
-                        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[#878A93] text-sm font-medium">
-                              Task Progress
-                            </span>
-                            <span className="text-[#727374] text-sm">
-                              Track completion and review submissions
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="rounded-xl"
-                              onClick={() => setShowNoteInput("needs-changes")}
-                            >
-                              Request Update
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="rounded-xl hover:bg-primary-hover"
-                              onClick={() => setShowNoteInput("approved")}
-                            >
-                              Mark as Completed
-                            </Button>
-                          </div>
-                        </div>
-
-                        {/* Note Input */}
-                        {showNoteInput && (
-                          <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                            <div className="flex flex-col gap-3">
-                              <label className="text-sm font-medium text-gray-700">
-                                Add a note for{" "}
-                                {showNoteInput === "approved"
-                                  ? "approval"
-                                  : "changes"}
-                                :
-                              </label>
-                              <textarea
-                                value={note}
-                                onChange={(e) => setNote(e.target.value)}
-                                placeholder="Enter your feedback here..."
-                                className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                rows={3}
-                              />
-                              <div className="flex items-center gap-2 justify-end">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setShowNoteInput(null);
-                                    setNote("");
-                                  }}
-                                >
-                                  Cancel
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  className="bg-primary text-white hover:bg-primary-hover"
-                                  onClick={() =>
-                                    handleStatusUpdate(
-                                      showNoteInput,
-                                      note,
-                                      task?.id
-                                    )
-                                  }
-                                  disabled={updateTaskChangesMutation.isPending}
-                                >
-                                  {updateTaskChangesMutation.isPending
-                                    ? "Updating..."
-                                    : "Submit"}
-                                </Button>
-                              </div>
+                    {task.submission &&
+                      task.submission.length > 0 && (
+                        <div className="pt-3 border-t border-gray-100">
+                          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[#878A93] text-sm font-medium">
+                                Task Progress
+                              </span>
+                              <span className="text-[#727374] text-sm">
+                                Track completion
+                                and review
+                                submissions
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="rounded-xl"
+                                onClick={() =>
+                                  setShowNoteInput(
+                                    "needs-changes"
+                                  )
+                                }
+                              >
+                                Request Update
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="rounded-xl hover:bg-primary-hover"
+                                onClick={() =>
+                                  setShowNoteInput(
+                                    "approved"
+                                  )
+                                }
+                              >
+                                Mark as
+                                Completed
+                              </Button>
                             </div>
                           </div>
-                        )}
 
-                        <div className="flex flex-col gap-3">
-                          <span className="text-[#878A93] text-sm font-medium mt-4">
-                            Submissions
-                          </span>
-
-                          {/* Links */}
-                          <div className="flex flex-wrap gap-2">
-                            {(
-                              task?.submission?.filter(
-                                (item: string) =>
-                                  !item.includes("res.cloudinary.com")
-                              ) || []
-                            )?.map((link: string, index: number) => (
-                              <Link
-                                href={link}
-                                target="_blank"
-                                key={index}
-                                className="flex items-center cursor-pointer gap-2 p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
-                              >
-                                <Link2 />
-                                <input
-                                  type="text"
-                                  className="w-full outline-none text-sm text-[#727374] bg-transparent"
-                                  value={link}
-                                  readOnly
+                          {/* Note Input */}
+                          {showNoteInput && (
+                            <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                              <div className="flex flex-col gap-3">
+                                <label className="text-sm font-medium text-gray-700">
+                                  Add a note
+                                  for{" "}
+                                  {showNoteInput ===
+                                    "approved"
+                                    ? "approval"
+                                    : "changes"}
+                                  :
+                                </label>
+                                <textarea
+                                  value={note}
+                                  onChange={(
+                                    e
+                                  ) =>
+                                    setNote(
+                                      e
+                                        .target
+                                        .value
+                                    )
+                                  }
+                                  placeholder="Enter your feedback here..."
+                                  className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  rows={3}
                                 />
-                              </Link>
-                            ))}
-                          </div>
-
-                          {/* Documents */}
-                          <div className="flex flex-wrap gap-2">
-                            {(
-                              task?.submission?.filter((item: string) =>
-                                item.includes("res.cloudinary.com")
-                              ) || []
-                            )?.map((doc: string, index: number) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <Image
-                                    src="/icons/file-icon.svg"
-                                    alt="file icon"
-                                    width={16}
-                                    height={16}
-                                  />
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="text-sm font-medium text-[#1A1A1A] truncate">
-                                      Document {index + 1}
-                                    </span>
-                                    <span className="text-xs text-[#878A93]">
-                                      File
-                                    </span>
-                                  </div>
+                                <div className="flex items-center gap-2 justify-end">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setShowNoteInput(
+                                        null
+                                      );
+                                      setNote(
+                                        ""
+                                      );
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className="bg-primary text-white hover:bg-primary-hover"
+                                    onClick={() =>
+                                      handleStatusUpdate(
+                                        showNoteInput,
+                                        note,
+                                        task?.id
+                                      )
+                                    }
+                                    disabled={
+                                      updateTaskChangesMutation.isPending
+                                    }
+                                  >
+                                    {updateTaskChangesMutation.isPending
+                                      ? "Updating..."
+                                      : "Submit"}
+                                  </Button>
                                 </div>
-                                <a
-                                  href={doc}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  <Download className="w-4 h-4 text-[#878A93] cursor-pointer hover:text-primary" />
-                                </a>
                               </div>
-                            ))}
+                            </div>
+                          )}
+
+                          <div className="flex flex-col gap-3">
+                            <span className="text-[#878A93] text-sm font-medium mt-4">
+                              Submissions
+                            </span>
+
+                            {/* Links */}
+                            <div className="flex flex-wrap gap-2">
+                              {(
+                                task?.submission?.filter(
+                                  (
+                                    item: string
+                                  ) =>
+                                    !item.includes(
+                                      "res.cloudinary.com"
+                                    )
+                                ) || []
+                              )?.map(
+                                (
+                                  link: string,
+                                  index: number
+                                ) => (
+                                  <Link
+                                    href={
+                                      link
+                                    }
+                                    target="_blank"
+                                    key={
+                                      index
+                                    }
+                                    className="flex items-center cursor-pointer gap-2 p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
+                                  >
+                                    <Link2 />
+                                    <input
+                                      type="text"
+                                      className="w-full outline-none text-sm text-[#727374] bg-transparent"
+                                      value={
+                                        link
+                                      }
+                                      readOnly
+                                    />
+                                  </Link>
+                                )
+                              )}
+                            </div>
+
+                            {/* Documents */}
+                            <div className="flex flex-wrap gap-2">
+                              {(
+                                task?.submission?.filter(
+                                  (
+                                    item: string
+                                  ) =>
+                                    item.includes(
+                                      "res.cloudinary.com"
+                                    )
+                                ) || []
+                              )?.map(
+                                (
+                                  doc: string,
+                                  index: number
+                                ) => (
+                                  <div
+                                    key={
+                                      index
+                                    }
+                                    className="flex items-center justify-between p-2 border border-[#EDEEF3] rounded-xl flex-1 min-w-0"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <Image
+                                        src="/icons/file-icon.svg"
+                                        alt="file icon"
+                                        width={
+                                          16
+                                        }
+                                        height={
+                                          16
+                                        }
+                                      />
+                                      <div className="flex flex-col min-w-0">
+                                        <span className="text-sm font-medium text-[#1A1A1A] truncate">
+                                          Document{" "}
+                                          {index +
+                                            1}
+                                        </span>
+                                        <span className="text-xs text-[#878A93]">
+                                          File
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <a
+                                      href={
+                                        doc
+                                      }
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      <Download className="w-4 h-4 text-[#878A93] cursor-pointer hover:text-primary" />
+                                    </a>
+                                  </div>
+                                )
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
                   </div>
                 ))
               ) : (
@@ -2219,10 +2366,13 @@ const ProjectDetails = () => {
                         No tasks yet
                       </h3>
                       <p className="text-sm text-gray-500 mb-4">
-                        Create your first task to start tracking progress
+                        Create your first task to start
+                        tracking progress
                       </p>
                       <Button
-                        onClick={() => setIsTaskModalOpen(true)}
+                        onClick={() =>
+                          setIsTaskModalOpen(true)
+                        }
                         className="bg-primary text-white hover:bg-primary-hover"
                       >
                         <Plus className="w-4 h-4 mr-2" />
@@ -2241,49 +2391,3 @@ const ProjectDetails = () => {
 };
 
 export default ProjectDetails;
-
-{
-  /* <Dialog open={openReview} onOpenChange={setOpenReview}>
-    <DialogContent className="!rounded-3xl">
-        <DialogTitle className="text-primary text-[20px]">
-            Write a review
-        </DialogTitle>
-        
-        <div className="flex flex-col gap-6">
-            <span className="text-[#878A93] text-sm">Your project was recently completed and we will like for you to leave a feedback and performance review for the expert</span>
-            <div className="flex items-center justify-center gap-4">
-                <Star className="w-[32px] h-[32px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                <Star className="w-[32px] h-[32px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                <Star className="w-[32px] h-[32px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                <Star className="w-[32px] h-[32px] text-[#CFD0D4] fill-[#E7ECEE]" />
-                <Star className="w-[32px] h-[32px] text-[#CFD0D4] fill-[#E7ECEE]" />
-            </div>
-
-            <div className="form-group flex flex-col gap-2">
-                <Label>Write your feedback</Label>
-                <Textarea className="rounded-[14px] py-6 px-4 border border-[#D1DAEC]"  />
-            </div>
-
-            <Button className="bg-primary text-white py-6 rounded-[14px] w-fit hover:bg-primary-hover hover:text-black">Submit review</Button>
-        </div>
-    </DialogContent>
-</Dialog>
-
-<Dialog open={openRejectReason} onOpenChange={setOpenRejectReason}>
-    <DialogContent className="!rounded-3xl">
-        <DialogTitle className="text-primary text-[20px]">
-            Request update
-        </DialogTitle>
-
-        <div className="flex flex-col gap-6">
-            <span className="text-[#878A93] text-sm">Kingly write detailed information as regards to why the submitted project has been rejected and what you want the expert to do?</span>
-            <div className="form-group flex flex-col gap-2">
-                <Label>Write your feedback</Label>
-                <Textarea className="rounded-[14px] py-6 px-4 border border-[#D1DAEC]"  />
-            </div>
-
-            <Button className="bg-primary text-white py-6 rounded-[14px] w-fit hover:bg-primary-hover hover:text-black">Submit request</Button>
-        </div>
-    </DialogContent>
-</Dialog> */
-}

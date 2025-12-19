@@ -1,6 +1,6 @@
 import {
-  Expert,
-  PaginatedExperts,
+	Expert,
+	PaginatedExperts,
 } from "@/app/(authenticated)/(withSidebar)/experts/page";
 import { axiosClient } from "@/lib/api/axiosclient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -8,470 +8,552 @@ import { AxiosError } from "axios";
 import { toast } from "sonner";
 
 export const useGetAllExpert = (
-  page: number = 1,
-  limit: number = 10,
-  status: string = "",
-  search: string = "",
-  role: string = "",
-  skill: string = "",
-  verified?: boolean | string
+	page: number = 1,
+	limit: number = 10,
+	status: string = "",
+	search: string = "",
+	role: string = "",
+	skill: string = "",
+	verified?: boolean | string
 ) => {
-  const { data, isLoading } = useQuery<{
-    status: boolean;
-    message: string;
-    data: PaginatedExperts;
-  }>({
-    queryKey: ["expert", page, limit, status, search, role, skill, verified],
-    queryFn: async () => {
-      try {
-        let url = `/experts?page=${page}&limit=${limit}`;
-        if (status && status !== "all") url += `&status=${status}`;
-        if (search) url += `&search=${encodeURIComponent(search)}`;
-        if (role && role !== "all") url += `&role=${encodeURIComponent(role)}`;
-        if (skill && skill !== "all") url += `&skill=${encodeURIComponent(skill)}`;
-        if (verified !== undefined && verified !== "all") url += `&verified=${verified}`;
+	const { data, isLoading } = useQuery<{
+		status: boolean;
+		message: string;
+		data: PaginatedExperts;
+	}>({
+		queryKey: ["expert", page, limit, status, search, role, skill, verified],
+		queryFn: async () => {
+			try {
+				let url = `/experts?page=${page}&limit=${limit}`;
+				if (status && status !== "all") url += `&status=${status}`;
+				if (search) url += `&search=${encodeURIComponent(search)}`;
+				if (role && role !== "all") url += `&role=${encodeURIComponent(role)}`;
+				if (skill && skill !== "all") url += `&skill=${encodeURIComponent(skill)}`;
+				if (verified !== undefined && verified !== "all") url += `&verified=${verified}`;
 
-        const response = await axiosClient.get(url);
-        if (response.data?.status === false) {
-          throw new Error(response.data?.message || "Failed to fetch experts.");
-        }
-        return response.data;
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          toast.error(
-            error.response?.data?.message || "Failed to fetch experts."
-          );
-        } else if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("An unexpected error occured while fetching experts.");
-        }
-        throw error;
-      }
-    },
-  });
+				const response = await axiosClient.get(url);
+				if (response.data?.status === false) {
+					throw new Error(response.data?.message || "Failed to fetch experts.");
+				}
+				return response.data;
+			} catch (error: unknown) {
+				if (error instanceof AxiosError) {
+					toast.error(
+						error.response?.data?.message || "Failed to fetch experts."
+					);
+				} else if (error instanceof Error) {
+					toast.error(error.message);
+				} else {
+					toast.error("An unexpected error occured while fetching experts.");
+				}
+				throw error;
+			}
+		},
+	});
 
-  return { expertList: data, isLoading };
+	return { expertList: data, isLoading };
 };
 
 export const useGetExpertById = (id: string) => {
-  const { data, isLoading } = useQuery({
-    queryKey: ["expert", id],
-    queryFn: async () => {
-      try {
-        const response = await axiosClient.get(`/expert/${id}`);
-        if (response.data?.status === false) {
-          throw new Error(response.data?.message || "Failed to fetch expert.");
-        }
-        return response?.data?.data;
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          toast.error(
-            error.response?.data?.message || "Failed to fetch expert."
-          );
-        } else if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("An unexpected error occurred while fetching expert.");
-        }
-        throw error;
-      }
-    },
-    enabled: !!id,
-  });
-  return { expertDetails: data, isLoading };
+	const { data, isLoading } = useQuery({
+		queryKey: ["expert", id],
+		queryFn: async () => {
+			try {
+				const response = await axiosClient.get(`/expert/${id}`);
+				if (response.data?.status === false) {
+					throw new Error(
+						response.data?.message || "Failed to fetch expert."
+					);
+				}
+				return response?.data?.data;
+			} catch (error: unknown) {
+				if (error instanceof AxiosError) {
+					toast.error(
+						error.response?.data?.message ||
+						"Failed to fetch expert."
+					);
+				} else if (error instanceof Error) {
+					toast.error(error.message);
+				} else {
+					toast.error(
+						"An unexpected error occurred while fetching expert."
+					);
+				}
+				throw error;
+			}
+		},
+		enabled: !!id,
+	});
+	return { expertDetails: data, isLoading };
+};
+
+export const useGetHires = (page: number = 1, limit: number = 10) => {
+	const { data, isLoading } = useQuery({
+		queryKey: ["hires", page, limit],
+		queryFn: async () => {
+			try {
+				const response = await axiosClient.get(
+					`/hires/admin?page=${page}&limit=${limit}`
+				);
+				if (response.data?.status === false) {
+					throw new Error(
+						response.data?.message || "Failed to fetch hires."
+					);
+				}
+				return response.data;
+			} catch (error: unknown) {
+				if (error instanceof AxiosError) {
+					toast.error(
+						error.response?.data?.message ||
+						"Failed to fetch hires."
+					);
+				} else if (error instanceof Error) {
+					toast.error(error.message);
+				} else {
+					toast.error(
+						"An unexpected error occured while fetching hires."
+					);
+				}
+				throw error;
+			}
+		},
+	});
+
+	return { hireList: data, isLoading };
+};
+
+export const useGetHireById = (id: string) => {
+	const { data, isLoading } = useQuery({
+		queryKey: ["hire", id],
+		queryFn: async () => {
+			try {
+				const response = await axiosClient.get(`/hire/admin/${id}`);
+				if (response.data?.status === false) {
+					throw new Error(
+						response.data?.message || "Failed to fetch hire."
+					);
+				}
+				return response?.data?.data;
+			} catch (error: unknown) {
+				if (error instanceof AxiosError) {
+					toast.error(
+						error.response?.data?.message ||
+						"Failed to fetch expert."
+					);
+				} else if (error instanceof Error) {
+					toast.error(error.message);
+				} else {
+					toast.error(
+						"An unexpected error occurred while fetching hire."
+					);
+				}
+				throw error;
+			}
+		},
+		enabled: !!id,
+	});
+	return { hireDetails: data, isLoading };
 };
 
 interface SearchExpertParams {
-  search?: string;
-  page?: number;
-  limit?: number;
-  status?: string;
-  role?: string;
-  skill?: string;
-  verified?: boolean | string;
+	search?: string;
+	page?: number;
+	limit?: number;
+	status?: string;
+	role?: string;
+	skill?: string;
+	verified?: boolean | string;
 }
 
 export const useSearchExpert = ({
-  search = "",
-  page = 1,
-  limit = 10,
-  status = "",
-  role = "",
-  skill = "",
-  verified,
+	search = "",
+	page = 1,
+	limit = 10,
+	status = "",
+	role = "",
+	skill = "",
+	verified,
 }: SearchExpertParams = {}) => {
-  const queryKey = ["expert", "search", { search, page, limit, status, role, skill, verified }];
+	const queryKey = ["expert", "search", { search, page, limit, status, role, skill, verified }];
 
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey,
-    queryFn: async () => {
-      try {
-        let url = `/experts?page=${page}&limit=${limit}`;
+	const { data, isLoading, isError, error } = useQuery({
+		queryKey,
+		queryFn: async () => {
+			try {
+				let url = `/experts?page=${page}&limit=${limit}`;
 
-        if (search) url += `&search=${encodeURIComponent(search)}`;
-        if (status && status !== "all") url += `&status=${status}`;
-        if (role && role !== "all") url += `&role=${encodeURIComponent(role)}`;
-        if (skill && skill !== "all") url += `&skill=${encodeURIComponent(skill)}`;
-        if (verified !== undefined && verified !== "all") url += `&verified=${verified}`;
+				if (search) url += `&search=${encodeURIComponent(search)}`;
+				if (status && status !== "all") url += `&status=${status}`;
+				if (role && role !== "all") url += `&role=${encodeURIComponent(role)}`;
+				if (skill && skill !== "all") url += `&skill=${encodeURIComponent(skill)}`;
+				if (verified !== undefined && verified !== "all") url += `&verified=${verified}`;
 
-        const response = await axiosClient.get(url);
+				const response = await axiosClient.get(url);
 
-        if (response.data?.status === false) {
-          throw new Error(response.data?.message || "Failed to search experts.");
-        }
+				if (response.data?.status === false) {
+					throw new Error(response.data?.message || "Failed to search experts.");
+				}
 
-        return response.data;
-      } catch (err: unknown) {
-        if (err instanceof AxiosError) {
-          toast.error(err.response?.data?.message || "Failed to search experts.");
-        } else if (err instanceof Error) {
-          toast.error(err.message);
-        } else {
-          toast.error("An unexpected error occurred while searching experts.");
-        }
-        throw err;
-      }
-    },
-    enabled: !!search || status !== "" || role !== "" || skill !== "" || verified !== undefined,
-  });
+				return response.data;
+			} catch (err: unknown) {
+				if (err instanceof AxiosError) {
+					toast.error(err.response?.data?.message || "Failed to search experts.");
+				} else if (err instanceof Error) {
+					toast.error(err.message);
+				} else {
+					toast.error("An unexpected error occurred while searching experts.");
+				}
+				throw err;
+			}
+		},
+		enabled: !!search || status !== "" || role !== "" || skill !== "" || verified !== undefined,
+	});
 
-  return { expertList: data, isLoading, isError, error };
+	return { expertList: data, isLoading, isError, error };
 };
 
 export const useGetAllBusinessProjects = (
-  businessId: string,
-  currentPage: number = 1,
-  itemsPerPage: number = 10,
-  statusFilter: string,
-  sortBy: string,
-  searchQuery: string
+	businessId: string,
+	currentPage: number = 1,
+	itemsPerPage: number = 10,
+	statusFilter: string,
+	sortBy: string,
+	searchQuery: string
 ) => {
-  const { data, isLoading, error } = useQuery<{
-    status: boolean;
-    message: string;
-    data: PaginatedExperts;
-  }>({
-    queryKey: [
-      "admin-accounts",
-      businessId,
-      currentPage,
-      itemsPerPage,
-      statusFilter,
-      sortBy,
-      searchQuery,
-    ],
-    queryFn: async () => {
-      try {
-        const response = await axiosClient.get(
-          `/projects/account/admin?businessId=${businessId}&page=${currentPage}&limit=${itemsPerPage}${statusFilter && statusFilter !== "all"
-            ? `&status=${statusFilter}`
-            : ""
-          }&sort=${sortBy}&search=${searchQuery}`
-        );
-        if (response.data?.status === false) {
-          throw new Error(
-            response.data?.message || "Failed to fetch admin accounts."
-          );
-        }
-        return response.data;
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          toast.error(
-            error.response?.data?.message || "Failed to fetch admin accounts."
-          );
-        } else if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error(
-            "An unexpected error occurred while fetching admin accounts."
-          );
-        }
-        throw error;
-      }
-    },
-    enabled: !!businessId,
-  });
+	const { data, isLoading, error } = useQuery<{
+		status: boolean;
+		message: string;
+		data: PaginatedExperts;
+	}>({
+		queryKey: [
+			"admin-accounts",
+			businessId,
+			currentPage,
+			itemsPerPage,
+			statusFilter,
+			sortBy,
+			searchQuery,
+		],
+		queryFn: async () => {
+			try {
+				const response = await axiosClient.get(
+					`/projects/account/admin?businessId=${businessId}&page=${currentPage}&limit=${itemsPerPage}${statusFilter && statusFilter !== "all"
+						? `&status=${statusFilter}`
+						: ""
+					}&sort=${sortBy}&search=${searchQuery}`
+				);
+				if (response.data?.status === false) {
+					throw new Error(
+						response.data?.message || "Failed to fetch admin accounts."
+					);
+				}
+				return response.data;
+			} catch (error: unknown) {
+				if (error instanceof AxiosError) {
+					toast.error(
+						error.response?.data?.message || "Failed to fetch admin accounts."
+					);
+				} else if (error instanceof Error) {
+					toast.error(error.message);
+				} else {
+					toast.error(
+						"An unexpected error occurred while fetching admin accounts."
+					);
+				}
+				throw error;
+			}
+		},
+		enabled: !!businessId,
+	});
 
-  return { AllBusinessProjects: data?.data, isLoading, error };
+	return { AllBusinessProjects: data?.data, isLoading, error };
 };
 
 export const useInviteExperts = (options?: {
-  onSuccess?: () => void;
-  onError?: () => void;
+	onSuccess?: () => void;
+	onError?: () => void;
 }) => {
-  const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      expertIds,
-    }: {
-      projectId: string;
-      expertIds: string[];
-    }) => {
-      try {
-        const response = await axiosClient.patch(
-          `/project/${projectId}/invite-experts`,
-          { experts: expertIds }
-        );
-        if (response.data?.status === false) {
-          throw new Error(
-            response.data?.message || "Failed to invite experts."
-          );
-        }
-        return response.data.data;
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          toast.error(
-            error.response?.data?.message || "Failed to invite experts."
-          );
-        } else if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("An unexpected error occurred while inviting experts.");
-        }
-        throw error;
-      }
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
-      queryClient.invalidateQueries({ queryKey: ["experts"] });
+	return useMutation({
+		mutationFn: async ({
+			projectId,
+			expertIds,
+		}: {
+			projectId: string;
+			expertIds: string[];
+		}) => {
+			try {
+				const response = await axiosClient.patch(
+					`/project/${projectId}/invite-experts`,
+					{ experts: expertIds }
+				);
+				if (response.data?.status === false) {
+					throw new Error(
+						response.data?.message || "Failed to invite experts."
+					);
+				}
+				return response.data.data;
+			} catch (error: unknown) {
+				if (error instanceof AxiosError) {
+					toast.error(
+						error.response?.data?.message ||
+						"Failed to invite experts."
+					);
+				} else if (error instanceof Error) {
+					toast.error(error.message);
+				} else {
+					toast.error(
+						"An unexpected error occurred while inviting experts."
+					);
+				}
+				throw error;
+			}
+		},
+		onSuccess: (data) => {
+			queryClient.invalidateQueries({ queryKey: ["projects"] });
+			queryClient.invalidateQueries({ queryKey: ["experts"] });
 
-      const { invitedExperts = [], rejectedExperts = [] } = data || {};
+			const { invitedExperts = [], rejectedExperts = [] } = data || {};
 
-      if (invitedExperts.length > 0) {
-        const invitedList = invitedExperts.map((e: any) => e.name).join(", ");
-        toast.success(`Invited experts: ${invitedList}`);
-      }
+			if (invitedExperts.length > 0) {
+				const invitedList = invitedExperts
+					.map((e: any) => e.name)
+					.join(", ");
+				toast.success(`Invited experts: ${invitedList}`);
+			}
 
-      if (rejectedExperts.length > 0) {
-        const rejectedList = rejectedExperts
-          .map((e: any) => `${e.name} (${e.reason})`)
-          .join("; ");
-        toast.error(`Rejected experts: ${rejectedList}`);
-      }
+			if (rejectedExperts.length > 0) {
+				const rejectedList = rejectedExperts
+					.map((e: any) => `${e.name} (${e.reason})`)
+					.join("; ");
+				toast.error(`Rejected experts: ${rejectedList}`);
+			}
 
-      if (invitedExperts.length === 0 && rejectedExperts.length === 0) {
-        toast.info("No experts were processed.");
-      }
+			if (invitedExperts.length === 0 && rejectedExperts.length === 0) {
+				toast.info("No experts were processed.");
+			}
 
-      options?.onSuccess?.();
-    },
-    onError: () => {
-      options?.onError?.();
-    },
-  });
+			options?.onSuccess?.();
+		},
+		onError: () => {
+			options?.onError?.();
+		},
+	});
 };
 
 export const useGetExpertsCount = (
-  businessId: string,
-  currentPage: number = 1,
-  itemsPerPage: number = 10,
-  statusFilter: string,
-  sortBy: string,
-  searchQuery: string
+	businessId: string,
+	currentPage: number = 1,
+	itemsPerPage: number = 10,
+	statusFilter: string,
+	sortBy: string,
+	searchQuery: string
 ) => {
-  const { data, isLoading, error } = useQuery<{
-    status: boolean;
-    message: string;
-    data: Expert;
-  }>({
-    queryKey: [
-      "experts-count",
-      businessId,
-      currentPage,
-      itemsPerPage,
-      statusFilter,
-      sortBy,
-      searchQuery,
-    ],
-    queryFn: async () => {
-      try {
-        const response = await axiosClient.get(
-          `/projects/experts-count/${businessId}?page=${currentPage}&limit=${itemsPerPage}${statusFilter && statusFilter !== "all"
-            ? `&status=${statusFilter}`
-            : ""
-          }&sort=${sortBy}&search=${searchQuery}`
-        );
-        if (response.data?.status === false) {
-          throw new Error(
-            response.data?.message || "Failed to fetch experts count."
-          );
-        }
-        return response.data;
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          toast.error(
-            error.response?.data?.message || "Failed to fetch experts count."
-          );
-        } else if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error(
-            "An unexpected error occurred while fetching experts count."
-          );
-        }
-        throw error;
-      }
-    },
-    enabled: !!businessId,
-  });
+	const { data, isLoading, error } = useQuery<{
+		status: boolean;
+		message: string;
+		data: Expert;
+	}>({
+		queryKey: [
+			"experts-count",
+			businessId,
+			currentPage,
+			itemsPerPage,
+			statusFilter,
+			sortBy,
+			searchQuery,
+		],
+		queryFn: async () => {
+			try {
+				const response = await axiosClient.get(
+					`/projects/experts-count/${businessId}?page=${currentPage}&limit=${itemsPerPage}${statusFilter && statusFilter !== "all"
+						? `&status=${statusFilter}`
+						: ""
+					}&sort=${sortBy}&search=${searchQuery}`
+				);
+				if (response.data?.status === false) {
+					throw new Error(
+						response.data?.message || "Failed to fetch experts count."
+					);
+				}
+				return response.data;
+			} catch (error: unknown) {
+				if (error instanceof AxiosError) {
+					toast.error(
+						error.response?.data?.message || "Failed to fetch experts count."
+					);
+				} else if (error instanceof Error) {
+					toast.error(error.message);
+				} else {
+					toast.error(
+						"An unexpected error occurred while fetching experts count."
+					);
+				}
+				throw error;
+			}
+		},
+		enabled: !!businessId,
+	});
 
-  return { expertsCount: data?.data, isLoading, error };
+	return { expertsCount: data?.data, isLoading, error };
 };
 
 export const useGetExpertPerformance = (id: string) => {
-  const { data, isLoading } = useQuery({
-    queryKey: ["expert-performance", id],
-    queryFn: async () => {
-      try {
-        const response = await axiosClient.get(`/expert-reviews/${id}/admin`);
-        if (response.data?.status === false) {
-          throw new Error(
-            response.data?.message || "Failed to fetch expert performance."
-          );
-        }
-        console.log(response.data);
-        return response?.data;
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          toast.error(
-            error.response?.data?.message ||
-            "Failed to fetch expert performance."
-          );
-        } else if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error(
-            "An unexpected error occurred while fetching expert performance."
-          );
-        }
-        throw error;
-      }
-    },
-    enabled: !!id,
-  });
-  return { expertPerformance: data, isLoading };
+	const { data, isLoading } = useQuery({
+		queryKey: ["expert-performance", id],
+		queryFn: async () => {
+			try {
+				const response = await axiosClient.get(`/expert-reviews/${id}/admin`);
+				if (response.data?.status === false) {
+					throw new Error(
+						response.data?.message || "Failed to fetch expert performance."
+					);
+				}
+				console.log(response.data);
+				return response?.data;
+			} catch (error: unknown) {
+				if (error instanceof AxiosError) {
+					toast.error(
+						error.response?.data?.message ||
+						"Failed to fetch expert performance."
+					);
+				} else if (error instanceof Error) {
+					toast.error(error.message);
+				} else {
+					toast.error(
+						"An unexpected error occurred while fetching expert performance."
+					);
+				}
+				throw error;
+			}
+		},
+		enabled: !!id,
+	});
+	return { expertPerformance: data, isLoading };
 };
 
 export const useGetExpertAccountDetails = (id: string) => {
-  const { data, isLoading } = useQuery({
-    queryKey: ["expert-account", id],
-    queryFn: async () => {
-      try {
-        const response = await axiosClient.get(
-          `/account-by-admin?expertId=${id}`
-        );
-        if (response.data?.status === false) {
-          throw new Error(
-            response.data?.message || "Failed to fetch expert account details."
-          );
-        }
-        console.log(response.data);
-        return response?.data;
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          if (error.response?.status === 404) {
-            return null;
-          }
-          toast.error(
-            error.response?.data?.message ||
-            "Failed to fetch expert account details."
-          );
-        } else if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error(
-            "An unexpected error occurred while fetching expert performance."
-          );
-        }
-        throw error;
-      }
-    },
-    enabled: !!id,
-  });
-  return { expertAccountDetails: data, isLoading };
+	const { data, isLoading } = useQuery({
+		queryKey: ["expert-account", id],
+		queryFn: async () => {
+			try {
+				const response = await axiosClient.get(
+					`/account-by-admin?expertId=${id}`
+				);
+				if (response.data?.status === false) {
+					throw new Error(
+						response.data?.message || "Failed to fetch expert account details."
+					);
+				}
+				console.log(response.data);
+				return response?.data;
+			} catch (error: unknown) {
+				if (error instanceof AxiosError) {
+					if (error.response?.status === 404) {
+						return null;
+					}
+					toast.error(
+						error.response?.data?.message ||
+						"Failed to fetch expert account details."
+					);
+				} else if (error instanceof Error) {
+					toast.error(error.message);
+				} else {
+					toast.error(
+						"An unexpected error occurred while fetching expert performance."
+					);
+				}
+				throw error;
+			}
+		},
+		enabled: !!id,
+	});
+	return { expertAccountDetails: data, isLoading };
 };
 // Haven't assigned this yet
 export const useAssignSupervisor = () => {
-  const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async ({
-      projectId,
-      supervisorData,
-    }: {
-      projectId: string;
-      supervisorData: { supervisorId: string };
-    }) => {
-      try {
-        const response = await axiosClient.patch(
-          `/project/${projectId}/assign-supervisor`,
-          supervisorData
-        );
-        if (response.data?.status === false) {
-          throw new Error(
-            response.data?.message || "Failed to assign supervisor."
-          );
-        }
-        return response.data;
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          toast.error(
-            error.response?.data?.message || "Failed to assign supervisor."
-          );
-        } else if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error(
-            "An unexpected error occurred while assigning supervisor."
-          );
-        }
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project"] });
-      toast.success("Supervisor assigned successfully!");
-    },
-  });
+	return useMutation({
+		mutationFn: async ({
+			projectId,
+			supervisorData,
+		}: {
+			projectId: string;
+			supervisorData: { supervisorId: string };
+		}) => {
+			try {
+				const response = await axiosClient.patch(
+					`/project/${projectId}/assign-supervisor`,
+					supervisorData
+				);
+				if (response.data?.status === false) {
+					throw new Error(
+						response.data?.message || "Failed to assign supervisor."
+					);
+				}
+				return response.data;
+			} catch (error: unknown) {
+				if (error instanceof AxiosError) {
+					toast.error(
+						error.response?.data?.message ||
+						"Failed to assign supervisor."
+					);
+				} else if (error instanceof Error) {
+					toast.error(error.message);
+				} else {
+					toast.error(
+						"An unexpected error occurred while assigning supervisor."
+					);
+				}
+				throw error;
+			}
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["project"] });
+			toast.success("Supervisor assigned successfully!");
+		},
+	});
 };
 
 export const useApproveExpert = (id: string) => {
-  const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 
-  const mutation = useMutation({
-    mutationFn: async () => {
-      try {
-        const response = await axiosClient.put(`/approve/expert/${id}`);
-        if (response.data?.status === false) {
-          throw new Error(
-            response.data?.message || "Failed to approve expert."
-          );
-        }
-        // console.log(response.data)
-        return response?.data;
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          toast.error(
-            error.response?.data?.message || "Failed to approve expert."
-          );
-        } else if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("An unexpected error occurred while approving expert.");
-        }
-        throw error;
-      }
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["expert", id] });
-      queryClient.invalidateQueries({ queryKey: ["experts"] });
-      toast.success(data?.message || "Expert approved successfully!");
-      console.log(data);
-    },
-  });
+	const mutation = useMutation({
+		mutationFn: async () => {
+			try {
+				const response = await axiosClient.put(`/approve/expert/${id}`);
+				if (response.data?.status === false) {
+					throw new Error(
+						response.data?.message || "Failed to approve expert."
+					);
+				}
+				// console.log(response.data)
+				return response?.data;
+			} catch (error: unknown) {
+				if (error instanceof AxiosError) {
+					toast.error(
+						error.response?.data?.message ||
+						"Failed to approve expert."
+					);
+				} else if (error instanceof Error) {
+					toast.error(error.message);
+				} else {
+					toast.error(
+						"An unexpected error occurred while approving expert."
+					);
+				}
+				throw error;
+			}
+		},
+		onSuccess: (data) => {
+			queryClient.invalidateQueries({ queryKey: ["expert", id] });
+			queryClient.invalidateQueries({ queryKey: ["experts"] });
+			toast.success(data?.message || "Expert approved successfully!");
+			console.log(data);
+		},
+	});
 
-  return mutation;
+	return mutation;
 };

@@ -27,15 +27,27 @@ import {
   useUpdateAdminBySuperAdmin,
 } from "@/hooks/useAuth";
 
-
-const ROLES = ["All roles", "super", "ops", "support", "vetting", "finance"] as const;
-const STATUS_FILTERS = ["All statuses", "active", "inactive", "Suspended"] as const;
+const ROLES = [
+  "All roles",
+  "super",
+  "ops",
+  "support",
+  "vetting",
+  "finance",
+] as const;
+const STATUS_FILTERS = [
+  "All statuses",
+  "active",
+  "inactive",
+  "Suspended",
+] as const;
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
   super: "Full system access. Can manage all users and settings.",
   ops: "Manages operations and day-to-day activities.",
   support: "Handles user support and customer service.",
-  vetting: "Reviews and approves expert profiles. Cannot access billing or assign experts.",
+  vetting:
+    "Reviews and approves expert profiles. Cannot access billing or assign experts.",
   finance: "Manages financial operations and billing.",
 };
 
@@ -48,7 +60,10 @@ const INITIAL_USER_STATE = {
   status: "active",
 };
 
-const validateUserForm = (user: typeof INITIAL_USER_STATE, isEditing: boolean) => {
+const validateUserForm = (
+  user: typeof INITIAL_USER_STATE,
+  isEditing: boolean
+) => {
   if (!user.name.trim()) {
     toast.error("Name is required");
     return false;
@@ -78,7 +93,15 @@ const exportToCSV = (data: AdminUser[]) => {
     return;
   }
 
-  const headers = ["ID", "Name", "Email", "Phone", "Role", "Status", "Last Login"];
+  const headers = [
+    "ID",
+    "Name",
+    "Email",
+    "Phone",
+    "Role",
+    "Status",
+    "Last Login",
+  ];
   const csvRows = [headers.join(",")];
 
   data.forEach((user) => {
@@ -99,7 +122,10 @@ const exportToCSV = (data: AdminUser[]) => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.setAttribute("href", url);
-  link.setAttribute("download", `admin_users_${new Date().toISOString().slice(0, 10)}.csv`);
+  link.setAttribute(
+    "download",
+    `admin_users_${new Date().toISOString().slice(0, 10)}.csv`
+  );
   link.style.visibility = "hidden";
   document.body.appendChild(link);
   link.click();
@@ -185,7 +211,9 @@ export default function UsersListPage() {
     createAdmin(newUser, {
       onSuccess: () => {
         const message = `Successfully added ${newUser.name} as a ${newUser.role}. They've received an email with login access. You can update their permission or suspend their account anytime.`;
-        toast.success(`Successfully added ${newUser.name} as ${newUser.role}`);
+        toast.success(
+          `Successfully added ${newUser.name} as ${newUser.role}`
+        );
         setSuccessMessage(message);
         setShowSuccessModal(true);
         handleCloseModal();
@@ -233,7 +261,9 @@ export default function UsersListPage() {
 
       switch (action) {
         case "suspend":
-          toast.info(`Suspend functionality for ${user.name} - To be implemented`);
+          toast.info(
+            `Suspend functionality for ${user.name} - To be implemented`
+          );
           break;
         default:
           console.log(`Action ${action} for user ${id}`);
@@ -289,7 +319,10 @@ export default function UsersListPage() {
                 }}
               />
 
-              <SearchInput value={searchQuery} onChange={handleSearchChange} />
+              <SearchInput
+                value={searchQuery}
+                onChange={handleSearchChange}
+              />
             </div>
 
             <div className="flex justify-end items-center gap-3">
@@ -347,27 +380,43 @@ export default function UsersListPage() {
                 className="p-1 bg-gray-100 rounded-full hover:bg-gray-200 border transition-colors"
                 aria-label="Close modal"
               >
-                <X className="text-xs text-gray-600" size={17} />
+                <X
+                  className="text-xs text-gray-600"
+                  size={17}
+                />
               </button>
             </div>
             <h3 className="text-sm md:text-xl font-semibold text-blue-900/90 mb-4 capitalize">
-              {isEditing ? "Edit Admin Data" : "New Admin Account Creation"}
+              {isEditing
+                ? "Edit Admin Data"
+                : "New Admin Account Creation"}
             </h3>
 
             <div className="space-y-4 md:space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name<span className="text-red-600">*</span>
+                  Full Name
+                  <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
                   placeholder="Yusuf Musa"
                   className="w-full p-3 border border-gray-300 rounded-xl outline-none placeholder:text-sm focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                  value={isEditing ? editingUser?.name || "" : newUser.name}
+                  value={
+                    isEditing
+                      ? editingUser?.name || ""
+                      : newUser.name
+                  }
                   onChange={(e) =>
                     isEditing
-                      ? setEditingUser({ ...editingUser!, name: e.target.value })
-                      : setNewUser({ ...newUser, name: e.target.value })
+                      ? setEditingUser({
+                        ...editingUser!,
+                        name: e.target.value,
+                      })
+                      : setNewUser({
+                        ...newUser,
+                        name: e.target.value,
+                      })
                   }
                   disabled={isEditing}
                 />
@@ -381,11 +430,21 @@ export default function UsersListPage() {
                   type="email"
                   placeholder="yusuf@scalepadi.com"
                   className="w-full p-3 border border-gray-300 rounded-xl outline-none placeholder:text-sm focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                  value={isEditing ? editingUser?.email || "" : newUser.email}
+                  value={
+                    isEditing
+                      ? editingUser?.email || ""
+                      : newUser.email
+                  }
                   onChange={(e) =>
                     isEditing
-                      ? setEditingUser({ ...editingUser!, email: e.target.value })
-                      : setNewUser({ ...newUser, email: e.target.value })
+                      ? setEditingUser({
+                        ...editingUser!,
+                        email: e.target.value,
+                      })
+                      : setNewUser({
+                        ...newUser,
+                        email: e.target.value,
+                      })
                   }
                   disabled={isEditing}
                 />
@@ -394,23 +453,37 @@ export default function UsersListPage() {
               {!isEditing && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Password<span className="text-red-600">*</span>
+                    Password
+                    <span className="text-red-600">*</span>
                   </label>
                   <div className="relative">
                     <input
-                      type={showPassword ? "text" : "password"}
+                      type={
+                        showPassword
+                          ? "text"
+                          : "password"
+                      }
                       placeholder="*********"
                       className="w-full p-3 pr-10 border border-gray-300 rounded-xl outline-none placeholder:text-sm focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
                       value={newUser.password}
                       onChange={(e) =>
-                        setNewUser({ ...newUser, password: e.target.value })
+                        setNewUser({
+                          ...newUser,
+                          password: e.target.value,
+                        })
                       }
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={() =>
+                        setShowPassword(!showPassword)
+                      }
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={
+                        showPassword
+                          ? "Hide password"
+                          : "Show password"
+                      }
                     >
                       {showPassword ? (
                         <EyeOff className="w-4 h-4" />
@@ -424,7 +497,8 @@ export default function UsersListPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number<span className="text-red-600">*</span>
+                  Phone Number
+                  <span className="text-red-600">*</span>
                 </label>
                 <div className="relative">
                   <Image
@@ -438,11 +512,21 @@ export default function UsersListPage() {
                     type="tel"
                     placeholder="+234 234567809"
                     className="pl-10 pr-4 p-3 w-full text-sm border border-gray-300 rounded-xl outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                    value={isEditing ? editingUser?.phone || "" : newUser.phone}
+                    value={
+                      isEditing
+                        ? editingUser?.phone || ""
+                        : newUser.phone
+                    }
                     onChange={(e) =>
                       isEditing
-                        ? setEditingUser({ ...editingUser!, phone: e.target.value })
-                        : setNewUser({ ...newUser, phone: e.target.value })
+                        ? setEditingUser({
+                          ...editingUser!,
+                          phone: e.target.value,
+                        })
+                        : setNewUser({
+                          ...newUser,
+                          phone: e.target.value,
+                        })
                     }
                   />
                 </div>
@@ -450,46 +534,86 @@ export default function UsersListPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Set Role<span className="text-red-600">*</span>
+                  Set Role
+                  <span className="text-red-600">*</span>
                 </label>
                 <select
                   className="w-full px-3 py-3 text-gray-500 border border-gray-300 rounded-xl outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                  value={isEditing ? editingUser?.role || "" : newUser.role}
-                  onChange={(e) => {
-                    const selectedRole = e.target.value as AdminUser["role"];
+                  value={
                     isEditing
-                      ? setEditingUser({ ...editingUser!, role: selectedRole })
-                      : setNewUser({ ...newUser, role: selectedRole });
+                      ? editingUser?.role || ""
+                      : newUser.role
+                  }
+                  onChange={(e) => {
+                    const selectedRole = e.target
+                      .value as AdminUser["role"];
+                    isEditing
+                      ? setEditingUser({
+                        ...editingUser!,
+                        role: selectedRole,
+                      })
+                      : setNewUser({
+                        ...newUser,
+                        role: selectedRole,
+                      });
                   }}
                 >
                   <option value="">Select a role</option>
                   <option value="super">Super Admin</option>
-                  <option value="ops">Ops Admin</option>
-                  <option value="support">Support</option>
-                  <option value="vetting">Vetting Admin</option>
-                  <option value="finance">Finance Admin</option>
+                  <option value="customer-support">
+                    Customer support
+                  </option>
+                  <option value="community-manager">
+                    Community manager
+                  </option>
+                  <option value="product-and-operations">
+                    Product and operations
+                  </option>
+                  <option value="finance-and-legal">
+                    Finance and legal
+                  </option>
                 </select>
               </div>
 
               <p className="text-gray-500 text-xs flex items-start mt-4">
-                <InfoIcon size={12} className="mr-2 mt-0.5 flex-shrink-0" />
+                <InfoIcon
+                  size={12}
+                  className="mr-2 mt-0.5 flex-shrink-0"
+                />
                 <span>
-                  {(isEditing ? editingUser?.role : newUser.role)
-                    ? getRoleDescription(isEditing ? editingUser?.role || "" : newUser.role)
+                  {(
+                    isEditing
+                      ? editingUser?.role
+                      : newUser.role
+                  )
+                    ? getRoleDescription(
+                      isEditing
+                        ? editingUser?.role || ""
+                        : newUser.role
+                    )
                     : "Select a role to see description"}
                 </span>
               </p>
 
               <div className="mt-6 flex justify-start space-x-3">
                 <button
-                  onClick={isEditing ? handleUpdateUser : handleAddUser}
+                  onClick={
+                    isEditing
+                      ? handleUpdateUser
+                      : handleAddUser
+                  }
                   disabled={isCreating || isUpdating}
                   className="flex items-center px-6 py-3 text-sm text-white bg-blue-800/90 rounded-xl hover:bg-blue-900/80 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
                 >
                   <span className="flex items-center">
-                    {isEditing ? "Update User" : "Send Invite"}
+                    {isEditing
+                      ? "Update User"
+                      : "Send Invite"}
                     {(isCreating || isUpdating) && (
-                      <Loader size={15} className="ml-2 animate-spin" />
+                      <Loader
+                        size={15}
+                        className="ml-2 animate-spin"
+                      />
                     )}
                   </span>
                 </button>
@@ -509,13 +633,18 @@ export default function UsersListPage() {
                 className="p-1 bg-gray-100 rounded-full hover:bg-gray-200 border transition-colors"
                 aria-label="Close success modal"
               >
-                <X className="text-xs text-gray-600" size={17} />
+                <X
+                  className="text-xs text-gray-600"
+                  size={17}
+                />
               </button>
             </div>
             <div className="flex flex-col items-center text-center">
               <CheckCircle className="w-16 h-16 text-green-600 mb-4" />
               <h3 className="text-sm md:text-2xl font-bold text-gray-900 mb-2">
-                {isEditing ? "Admin Updated Successfully" : "Admin Added Successfully"}
+                {isEditing
+                  ? "Admin Updated Successfully"
+                  : "Admin Added Successfully"}
               </h3>
               <p className="text-base md:text-lg text-gray-600 px-5 text-center mb-6">
                 {successMessage}
