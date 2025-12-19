@@ -3,14 +3,21 @@ import { useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
 
-export const useGetAllBusiness = (page: number = 1, limit: number = 10) => {
+export const useGetAllBusiness = (
+  page: number = 1,
+  limit: number = 10,
+  status: string = "",
+  verified?: boolean
+) => {
   const { data, isLoading } = useQuery({
-    queryKey: ["business", page, limit],
+    queryKey: ["business", page, limit, status, verified],
     queryFn: async () => {
       try {
-        const response = await axiosClient.get(
-          `/businesses?page=${page}&limit=${limit}`
-        );
+        let url = `/businesses?page=${page}&limit=${limit}`;
+        if (status) url += `&status=${status}`;
+        if (verified !== undefined) url += `&verified=${verified}`;
+
+        const response = await axiosClient.get(url);
         if (response.data?.status === false) {
           throw new Error(
             response.data?.message || "Failed to fetch business."

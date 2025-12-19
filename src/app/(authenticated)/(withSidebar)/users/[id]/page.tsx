@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useParams, useRouter } from "next/navigation";
 import { useGetAdminApprovedUsers, useGetAdminById } from "@/hooks/useAuth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const AdminDetails = () => {
   const [activeTab, setActiveTab] = useState<"task">("task");
@@ -52,7 +53,7 @@ const AdminDetails = () => {
   const params = useParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
-  const { AdminDetails } = useGetAdminById(id ?? "");
+  const { AdminDetails, isLoading: isAdminLoading } = useGetAdminById(id ?? "");
   console.log(AdminDetails);
 
   const { adminApprovedUsers, isLoading } = useGetAdminApprovedUsers(id ?? "");
@@ -143,23 +144,35 @@ const AdminDetails = () => {
 
               <div className="flex flex-col gap-2">
                 <span className="text-[#1A1A1A] font-medium text-[18px] capitalize sm:text-[20px]">
-                  {AdminDetails?.name || "user name"}
+                  {isAdminLoading ? (
+                    <Skeleton className="h-7 w-48" />
+                  ) : (
+                    AdminDetails?.name || "user name"
+                  )}
                 </span>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                   <span className="flex items-center gap-[2px] font-medium capitalize text-[#0DDC0E] text-sm">
                     <Verified className="w-4 h-4" />{" "}
-                    {AdminDetails?.role || "Admin"} admin
+                    {isAdminLoading ? (
+                      <Skeleton className="h-4 w-24" />
+                    ) : (
+                      `${AdminDetails?.role || "Admin"} admin`
+                    )}
                   </span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
                   <span className="flex items-center gap-[2px] text-sm text-[#878A93]">
                     <User2Icon className="w-4 h-4" />
                     Contact:{" "}
-                    <span className="text-[#121217] font-semibold">
-                      Lagos, Nigeria |{" "}
-                      {AdminDetails?.email || "admin@scalepadi.com "} |{" "}
-                      {AdminDetails?.phone || "+234 789012345"}
-                    </span>
+                    {isAdminLoading ? (
+                      <Skeleton className="h-4 w-64" />
+                    ) : (
+                      <span className="text-[#121217] font-semibold">
+                        Lagos, Nigeria |{" "}
+                        {AdminDetails?.email || "admin@scalepadi.com "} |{" "}
+                        {AdminDetails?.phone || "+234 789012345"}
+                      </span>
+                    )}
                   </span>
                 </div>
               </div>
@@ -191,7 +204,7 @@ const AdminDetails = () => {
             </div>
             <div className="flex flex-wrap items-center mt-3 sm:mt-5 gap-3">
               <Button
-                onClick={() => router.push(`/messages`)}
+                onClick={() => router.push(`/messages?userId=${id}&role=Admin`)}
                 className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black"
               >
                 <MessageCircle className="w-4 h-4" />
@@ -222,11 +235,10 @@ const AdminDetails = () => {
               <div
                 className={`flex cursor-pointer px-4 md:px-6 items-center justify-center border-b-2 pb-2
                                 hover:border-[#3A96E8] transition-colors 
-                                ${
-                                  activeTab === "task"
-                                    ? "border-[#3A96E8] text-black"
-                                    : "border-transparent"
-                                }`}
+                                ${activeTab === "task"
+                    ? "border-[#3A96E8] text-black"
+                    : "border-transparent"
+                  }`}
                 onClick={() => setActiveTab("task")}
               >
                 <span className="text-sm">Task</span>
@@ -328,7 +340,30 @@ const AdminDetails = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {adminApprovedUsers?.data?.length > 0 ? (
+                      {isLoading ? (
+                        Array.from({ length: 5 }).map((_, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell className="py-4">
+                              <Skeleton className="h-4 w-32" />
+                            </TableCell>
+                            <TableCell className="py-4">
+                              <Skeleton className="h-4 w-24" />
+                            </TableCell>
+                            <TableCell className="py-4">
+                              <Skeleton className="h-4 w-16" />
+                            </TableCell>
+                            <TableCell className="py-4">
+                              <Skeleton className="h-6 w-20" />
+                            </TableCell>
+                            <TableCell className="py-4">
+                              <Skeleton className="h-4 w-28" />
+                            </TableCell>
+                            <TableCell className="py-4">
+                              <Skeleton className="h-8 w-8 rounded-full" />
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : adminApprovedUsers?.data?.length > 0 ? (
                         adminApprovedUsers.data.map((user: any) => (
                           <TableRow
                             onClick={() => router.push(`/experts/${user.id}`)}
@@ -417,10 +452,6 @@ const AdminDetails = () => {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuItem>View</DropdownMenuItem>
-                                  {/* <DropdownMenuItem>Edit</DropdownMenuItem>
-                                  <DropdownMenuItem className="text-red-600">
-                                    Delete
-                                  </DropdownMenuItem> */}
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </TableCell>
@@ -432,9 +463,7 @@ const AdminDetails = () => {
                             colSpan={6}
                             className="py-8 text-center text-gray-500"
                           >
-                            {isLoading
-                              ? "Loading users..."
-                              : "This Admin has not reviewed any user accounts yet."}
+                            This Admin has not reviewed any user accounts yet.
                           </TableCell>
                         </TableRow>
                       )}

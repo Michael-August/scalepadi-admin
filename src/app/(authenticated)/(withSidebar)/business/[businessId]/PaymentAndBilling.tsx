@@ -133,18 +133,18 @@ export default function PaymentsTab({
     return transactionData.data.map((transaction) => {
       const isSubscription = !!transaction.subscriptionId;
       const isProject = !!transaction.projectId;
-      
-      const businessInfo = isSubscription 
-        ? transaction.subscriptionId?.businessId 
-        : isProject 
-        ? transaction.projectId?.businessId 
-        : null;
+
+      const businessInfo = isSubscription
+        ? transaction.subscriptionId?.businessId
+        : isProject
+          ? transaction.projectId?.businessId
+          : null;
 
       const businessName = businessInfo?.name || "N/A";
       const businessEmail = businessInfo?.email || "N/A";
-      
+
       const type = isSubscription ? "Subscription" : isProject ? "Project" : "Other";
-      
+
       let description = "";
       let planName = "";
       let projectTitle = "";
@@ -152,11 +152,11 @@ export default function PaymentsTab({
       let projectStatus = "";
 
       if (isSubscription) {
-        planName = transaction.subscriptionId?.planName || transaction.subscriptionId?.planId?.name || "Unknown Plan";
+        planName = transaction.subscriptionId?.planName || transaction.subscriptionId?.planId?.name || "N/A";
         subscriptionStatus = transaction.subscriptionId?.status || "unknown";
         description = `${planName} Subscription`;
       } else if (isProject) {
-        projectTitle = transaction.projectId?.title || "Unknown Project";
+        projectTitle = transaction.projectId?.title || "N/A";
         projectStatus = transaction.projectId?.status || "unknown";
         description = `Project: ${projectTitle}`;
       } else {
@@ -164,11 +164,11 @@ export default function PaymentsTab({
       }
 
       const formattedStatus = transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1);
-      const reference = isSubscription 
+      const reference = isSubscription
         ? `SUB-${transaction.subscriptionId?.id?.slice(-8)?.toUpperCase() || "N/A"}`
         : isProject
-        ? `PROJ-${transaction.projectId?.id?.slice(-8)?.toUpperCase() || "N/A"}`
-        : `TX-${transaction.id.slice(-8).toUpperCase()}`;
+          ? `PROJ-${transaction.projectId?.id?.slice(-8)?.toUpperCase() || "N/A"}`
+          : `TX-${transaction.id.slice(-8).toUpperCase()}`;
 
       return {
         id: transaction.id,
@@ -303,7 +303,7 @@ export default function PaymentsTab({
           <h2 id="transactions-heading" className="sr-only">
             Transactions
           </h2>
-          
+
           {/* Header */}
           <h1 className="text-2xl font-medium text-[#878A93] my-4">
             All transactions
@@ -474,11 +474,10 @@ export default function PaymentsTab({
                           </TableCell>
                           <TableCell className="py-4 whitespace-nowrap">
                             <Badge
-                              className={`min-w-[90px] justify-center text-xs font-medium ${
-                                transactionStatusStyles[
-                                  row.status.toLowerCase() as keyof typeof transactionStatusStyles
+                              className={`min-w-[90px] justify-center text-xs font-medium ${transactionStatusStyles[
+                                row.status.toLowerCase() as keyof typeof transactionStatusStyles
                                 ] || transactionStatusStyles.default
-                              }`}
+                                }`}
                             >
                               {row.status}
                             </Badge>
@@ -549,7 +548,7 @@ export default function PaymentsTab({
                             <span className="text-lg font-medium">No transactions found</span>
                             <span className="text-sm max-w-md">
                               {searchQuery || transactionStatus !== "All statuses" || transactionType !== "All types"
-                                ? "Try adjusting your search or filter criteria" 
+                                ? "Try adjusting your search or filter criteria"
                                 : "No transaction records available for this business."
                               }
                             </span>

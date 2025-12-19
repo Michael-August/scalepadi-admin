@@ -10,8 +10,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useRef } from "react";
-import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -142,11 +141,10 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
             <button
               key={option}
               type="button"
-              className={`w-full text-left px-4 py-2 capitalize text-sm first:rounded-t-md last:rounded-b-md transition-colors ${
-                selectedValue === option
-                  ? "bg-gray-100 text-gray-600"
-                  : "text-gray-600 hover:bg-gray-50"
-              }`}
+              className={`w-full text-left px-4 py-2 capitalize text-sm first:rounded-t-md last:rounded-b-md transition-colors ${selectedValue === option
+                ? "bg-gray-100 text-gray-600"
+                : "text-gray-600 hover:bg-gray-50"
+                }`}
               onClick={() => {
                 onSelect(option);
                 onToggle();
@@ -249,22 +247,22 @@ interface UserTableProps {
 const SkeletonRow = () => (
   <TableRow>
     <TableCell className="whitespace-nowrap">
-      <Skeleton width={100} height={16} />
+      <Skeleton className="h-4 w-[100px]" />
     </TableCell>
     <TableCell>
-      <Skeleton width={150} height={16} />
+      <Skeleton className="h-4 w-[150px]" />
     </TableCell>
     <TableCell>
-      <Skeleton width={80} height={16} />
+      <Skeleton className="h-4 w-[80px]" />
     </TableCell>
     <TableCell>
-      <Skeleton width={120} height={16} />
+      <Skeleton className="h-4 w-[120px]" />
     </TableCell>
     <TableCell>
-      <Skeleton width={80} height={16} />
+      <Skeleton className="h-4 w-[80px]" />
     </TableCell>
     <TableCell>
-      <Skeleton width={40} height={16} />
+      <Skeleton className="h-4 w-[40px]" />
     </TableCell>
   </TableRow>
 );
@@ -347,10 +345,9 @@ export const UserTable: React.FC<UserTableProps> = ({
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <span
-                    className={`w-28 justify-center px-2.5 py-1.5 inline-flex text-[13px] capitalize leading-5 font-semibold rounded-full ${
-                      roleStyles[user.role] ||
+                    className={`w-28 justify-center px-2.5 py-1.5 inline-flex text-[13px] capitalize leading-5 font-semibold rounded-full ${roleStyles[user.role] ||
                       "bg-gray-100 text-gray-800 border border-gray-900"
-                    }`}
+                      }`}
                   >
                     {user.role} admin
                   </span>
@@ -360,9 +357,8 @@ export const UserTable: React.FC<UserTableProps> = ({
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <span
-                    className={`w-16 justify-center px-2 py-1 inline-flex text-xs leading-5 font-semibold capitalize rounded-full ${
-                      statusStyles[user.status]
-                    }`}
+                    className={`w-16 justify-center px-2 py-1 inline-flex text-xs leading-5 font-semibold capitalize rounded-full ${statusStyles[user.status]
+                      }`}
                   >
                     {user.status}
                   </span>
@@ -390,7 +386,11 @@ export const UserTable: React.FC<UserTableProps> = ({
                         View profile
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => router.push(`/messages`)}
+                        onClick={(e) =>
+                          handleDropdownItemClick(e, () =>
+                            router.push(`/messages?userId=${user.id}&role=Admin`)
+                          )
+                        }
                       >
                         Chat
                       </DropdownMenuItem>

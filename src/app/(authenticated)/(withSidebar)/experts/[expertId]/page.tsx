@@ -15,7 +15,7 @@ import {
   Dot,
   House,
   Info,
-  Link,
+  Link as LinkIcon,
   MessageCircle,
   Star,
   Verified,
@@ -53,6 +53,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 // Dynamically import react-pdf components with no SSR
 const PDFViewer = dynamic(() => import("./PDFViewer"), {
@@ -253,13 +254,14 @@ const ExpertDetails = () => {
               </span>
             </div>
             <div className="flex items-center mt-5 gap-3">
-              <Button
-                onClick={() => router.push(`messages`)}
-                className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black"
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Chat
-              </Button>
+              <Link href={`/messages?userId=${expertId}&role=Expert`}>
+                <Button
+                  className="text-white bg-primary rounded-[14px] hover:bg-primary-hover hover:text-black w-full sm:w-auto"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Chat
+                </Button>
+              </Link>
 
               <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetTrigger asChild>
@@ -356,15 +358,15 @@ const ExpertDetails = () => {
                               project.status === "completed"
                                 ? "text-green-600"
                                 : project.status === "in-progress"
-                                ? "text-blue-600"
-                                : "text-amber-600";
+                                  ? "text-blue-600"
+                                  : "text-amber-600";
 
                             const badgeColor =
                               project.status === "completed"
                                 ? "bg-green-100 text-green-800"
                                 : project.status === "in-progress"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-amber-100 text-amber-800";
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-amber-100 text-amber-800";
 
                             return (
                               <TableRow
@@ -401,8 +403,7 @@ const ExpertDetails = () => {
                                         <div
                                           key={
                                             exp?.id?.id ||
-                                            `${
-                                              project?.id || "proj"
+                                            `${project?.id || "proj"
                                             }-exp-${expIndex}`
                                           }
                                           className="relative h-7 w-7 rounded-full overflow-hidden border-2 border-white shadow-sm bg-gray-100 flex items-center justify-center"
@@ -429,10 +430,10 @@ const ExpertDetails = () => {
                                       )}
                                     {(!project?.experts ||
                                       project.experts.length === 0) && (
-                                      <span className="text-xs text-gray-500">
-                                        None
-                                      </span>
-                                    )}
+                                        <span className="text-xs text-gray-500">
+                                          None
+                                        </span>
+                                      )}
                                   </div>
                                 </TableCell>
                                 <TableCell className="py-4">
@@ -506,10 +507,10 @@ const ExpertDetails = () => {
                                             )
                                               ? "Assigned"
                                               : assigningProjects.has(
-                                                  project?.id
-                                                )
-                                              ? "Assigning..."
-                                              : "Assign"}
+                                                project?.id
+                                              )
+                                                ? "Assigning..."
+                                                : "Assign"}
                                           </Button>
                                         </div>
                                       </TooltipTrigger>
@@ -517,13 +518,13 @@ const ExpertDetails = () => {
                                       {project?.experts?.some(
                                         (expert) => expert?.id?.id === expertId
                                       ) && (
-                                        <TooltipContent>
-                                          <p>
-                                            This expert is already assigned to
-                                            this project.
-                                          </p>
-                                        </TooltipContent>
-                                      )}
+                                          <TooltipContent>
+                                            <p>
+                                              This expert is already assigned to
+                                              this project.
+                                            </p>
+                                          </TooltipContent>
+                                        )}
                                     </Tooltip>
                                   </TooltipProvider>
                                 </TableCell>
@@ -596,7 +597,7 @@ const ExpertDetails = () => {
                               disabled={
                                 projectsLoading ||
                                 projectList.currentPage ===
-                                  projectList.totalPages
+                                projectList.totalPages
                               }
                               onClick={() =>
                                 handlePageChange(projectList.currentPage + 1)
@@ -618,25 +619,24 @@ const ExpertDetails = () => {
               onClick={handleApprove}
               disabled={isPending || expertDetails?.verified}
               variant="outline"
-              className={`rounded-[14px] ${
-                expertDetails?.verified
-                  ? "bg-green-500 text-white cursor-not-allowed"
-                  : "text-white bg-primary hover:bg-primary-hover hover:text-black"
-              }`}
+              className={`rounded-[14px] ${expertDetails?.verified
+                ? "bg-green-500 text-white cursor-not-allowed"
+                : "text-white bg-primary hover:bg-primary-hover hover:text-black"
+                }`}
             >
               {expertDetails?.verified
                 ? "Verified"
                 : isPending
-                ? "Verifying..."
-                : "Verify Expert"}
+                  ? "Verifying..."
+                  : "Verify Expert"}
             </Button>
 
-            <Button
+            {/* <Button
               variant={"outline"}
               className="rounded-[14px] bg-red-500 text-white hover:bg-primary-hover hover:text-black"
             >
               {expertDetails.status === "active" ? "Suspend" : "Activate"}
-            </Button>
+            </Button> */}
           </div>
         </div>
 
@@ -646,11 +646,10 @@ const ExpertDetails = () => {
               <div
                 className={`flex cursor-pointer w-full items-center justify-center border-b-2 pb-3 min-w-max
                 hover:border-[#3A96E8] transition-colors 
-                ${
-                  activeTab === "about"
+                ${activeTab === "about"
                     ? "border-[#3A96E8] text-[#3A96E8]"
                     : "border-transparent"
-                }`}
+                  }`}
                 onClick={() => setActiveTab("about")}
               >
                 <span className="text-sm">About</span>
@@ -659,11 +658,10 @@ const ExpertDetails = () => {
               <div
                 className={`flex cursor-pointer w-full items-center justify-center border-b-2 pb-3 min-w-max
                 hover:border-[#3A96E8] transition-colors 
-                ${
-                  activeTab === "documents"
+                ${activeTab === "documents"
                     ? "border-[#3A96E8] text-[#3A96E8]"
                     : "border-transparent"
-                }`}
+                  }`}
                 onClick={() => setActiveTab("documents")}
               >
                 <span className="text-sm">Documents</span>
@@ -672,11 +670,10 @@ const ExpertDetails = () => {
               <div
                 className={`flex cursor-pointer w-full items-center justify-center border-b-2 pb-3 min-w-max
                 hover:border-[#3A96E8] transition-colors 
-                ${
-                  activeTab === "performance"
+                ${activeTab === "performance"
                     ? "border-[#3A96E8] text-[#3A96E8]"
                     : "border-transparent"
-                }`}
+                  }`}
                 onClick={() => setActiveTab("performance")}
               >
                 <span className="text-sm">Performance</span>
@@ -685,11 +682,10 @@ const ExpertDetails = () => {
               <div
                 className={`flex cursor-pointer w-full items-center justify-center border-b-2 pb-3 min-w-max
                 hover:border-[#3A96E8] transition-colors 
-                ${
-                  activeTab === "account"
+                ${activeTab === "account"
                     ? "border-[#3A96E8] text-[#3A96E8]"
                     : "border-transparent"
-                }`}
+                  }`}
                 onClick={() => setActiveTab("account")}
               >
                 <span className="text-sm">Account details</span>
@@ -942,7 +938,7 @@ const ExpertDetails = () => {
                         Website
                       </span>
                       <span className="flex gap-2 border text-[#878A93] border-[#ABC6FB] bg-white rounded-[14px] p-[10px] items-center">
-                        <Link className="text-[#FFC371] w-4 h-4" />
+                        <LinkIcon className="text-[#FFC371] w-4 h-4" />
                         {expertDetails.socialLinks.website}
                       </span>
                     </div>
@@ -953,7 +949,7 @@ const ExpertDetails = () => {
                         LinkedIn
                       </span>
                       <span className="flex gap-2 border text-[#878A93] border-[#ABC6FB] bg-white rounded-[14px] p-[10px] items-center">
-                        <Link className="text-[#FFC371] w-4 h-4" />
+                        <LinkIcon className="text-[#FFC371] w-4 h-4" />
                         {expertDetails.socialLinks.linkedin}
                       </span>
                     </div>
@@ -964,7 +960,7 @@ const ExpertDetails = () => {
                         GitHub
                       </span>
                       <span className="flex gap-2 border text-[#878A93] border-[#ABC6FB] bg-white rounded-[14px] p-[10px] items-center">
-                        <Link className="text-[#FFC371] w-4 h-4" />
+                        <LinkIcon className="text-[#FFC371] w-4 h-4" />
                         {expertDetails.socialLinks.github}
                       </span>
                     </div>
@@ -975,7 +971,7 @@ const ExpertDetails = () => {
                         Twitter
                       </span>
                       <span className="flex gap-2 border text-[#878A93] border-[#ABC6FB] bg-white rounded-[14px] p-[10px] items-center">
-                        <Link className="text-[#FFC371] w-4 h-4" />
+                        <LinkIcon className="text-[#FFC371] w-4 h-4" />
                         {expertDetails.socialLinks.twitter}
                       </span>
                     </div>
@@ -1152,14 +1148,13 @@ const ExpertDetails = () => {
                         {Array.from({ length: 5 }, (_, index) => (
                           <Star
                             key={index}
-                            className={`w-[13.33px] h-[13.33px] ${
-                              index <
+                            className={`w-[13.33px] h-[13.33px] ${index <
                               Math.floor(
                                 expertPerformance?.data?.averageScore || 0
                               )
-                                ? "text-[#F2BB05] fill-[#F6CF50]"
-                                : "text-[#CFD0D4] fill-[#E7ECEE]"
-                            }`}
+                              ? "text-[#F2BB05] fill-[#F6CF50]"
+                              : "text-[#CFD0D4] fill-[#E7ECEE]"
+                              }`}
                           />
                         ))}
                       </div>
@@ -1182,8 +1177,8 @@ const ExpertDetails = () => {
                       const percentage =
                         expertPerformance?.data?.totalRatings > 0
                           ? (ratingCount /
-                              expertPerformance.data.totalRatings) *
-                            100
+                            expertPerformance.data.totalRatings) *
+                          100
                           : 0;
 
                       return (
@@ -1199,11 +1194,10 @@ const ExpertDetails = () => {
                               {Array.from({ length: 5 }, (_, index) => (
                                 <Star
                                   key={index}
-                                  className={`w-[13.33px] h-[13.33px] ${
-                                    index < stars
-                                      ? "text-[#F2BB05] fill-[#F6CF50]"
-                                      : "text-[#CFD0D4] fill-[#E7ECEE]"
-                                  }`}
+                                  className={`w-[13.33px] h-[13.33px] ${index < stars
+                                    ? "text-[#F2BB05] fill-[#F6CF50]"
+                                    : "text-[#CFD0D4] fill-[#E7ECEE]"
+                                    }`}
                                 />
                               ))}
                             </div>
@@ -1231,11 +1225,10 @@ const ExpertDetails = () => {
                           {Array.from({ length: 5 }, (_, index) => (
                             <Star
                               key={index}
-                              className={`w-[13.33px] h-[13.33px] ${
-                                index < Math.floor(rating.score)
-                                  ? "text-[#F2BB05] fill-[#F6CF50]"
-                                  : "text-[#CFD0D4] fill-[#E7ECEE]"
-                              }`}
+                              className={`w-[13.33px] h-[13.33px] ${index < Math.floor(rating.score)
+                                ? "text-[#F2BB05] fill-[#F6CF50]"
+                                : "text-[#CFD0D4] fill-[#E7ECEE]"
+                                }`}
                             />
                           ))}
                         </div>

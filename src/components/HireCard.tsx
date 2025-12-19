@@ -1,10 +1,11 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock } from "lucide-react";
-import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { Calendar, MessageSquare, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useRouter } from "next/navigation";
 
 export interface Hire {
 	businessId: {
@@ -16,6 +17,7 @@ export interface Hire {
 		name: string;
 		email: string;
 		id: string;
+		image?: string;
 	};
 	description: string;
 	duration: string;
@@ -30,29 +32,31 @@ export interface Hire {
 }
 
 function getStatusColor(status: string) {
-	switch (status.toLowerCase()) {
+	switch (status?.toLowerCase()) {
 		case "completed":
-			return "bg-success text-success-foreground";
+			return "bg-green-100 text-green-700 border-green-200";
 		case "active":
-			return "bg-primary text-primary-foreground";
+		case "in_progress":
+			return "bg-blue-100 text-blue-700 border-blue-200";
 		case "pending":
 		case "awaiting-response":
 		case "negotiating":
-			return "bg-warning text-warning-foreground";
+			return "bg-yellow-100 text-yellow-700 border-yellow-200";
 		case "cancelled":
-			return "bg-destructive text-destructive-foreground";
+		case "declined":
+			return "bg-red-100 text-red-700 border-red-200";
 		case "approved":
 		case "accepted":
-			return "bg-success text-success-foreground";
+			return "bg-green-100 text-green-700 border-green-200";
 		case "requested":
-			return "bg-secondary text-secondary-foreground";
+			return "bg-gray-100 text-gray-700 border-gray-200";
 		default:
-			return "bg-muted text-muted-foreground";
+			return "bg-gray-100 text-gray-700 border-gray-200";
 	}
 }
 
-function formatCurrency(amount: number) {
-	return new Intl.NumberFormat("en-US", {
+export function formatCurrency(amount: number) {
+	return new Intl.NumberFormat("en-NG", {
 		style: "currency",
 		currency: "NGN",
 		minimumFractionDigits: 0,
@@ -60,112 +64,92 @@ function formatCurrency(amount: number) {
 	}).format(amount);
 }
 
-function formatDate(dateString: string) {
-	return new Intl.DateTimeFormat("en-US", {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-	}).format(new Date(dateString));
-}
+export function HireCard({ hire, setHire }: { hire: Hire; setHire: (hire: Hire) => void }) {
+	const router = useRouter();
 
-export function HireCard({ hire, setHire }: { hire: Hire; setHire: any }) {
+	const handleMessage = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		router.push(`/messages?userId=${hire.expertId.id}&role=Expert`);
+	};
+
 	return (
 		<Card
-			key={hire.id}
+			className="overflow-hidden hover:shadow-lg transition-all duration-300 border-[#E9E9E9] flex flex-col h-full cursor-pointer group"
 			onClick={() => setHire(hire)}
-			className="p-6 hover:shadow-md transition-shadow cursor-pointer"
 		>
-			<div className="flex items-start justify-between">
-				<div className="flex-1">
-					<div className="flex items-start gap-4">
-						<div className="flex-1">
-							<div className="flex items-center gap-3 mb-2">
-								<h3 className="font-semibold text-lg text-foreground">
-									{hire.expertId.name}
-								</h3>
-								<Badge
-									className={getStatusColor(hire.hireStatus)}
-								>
-									{hire.hireStatus}
-								</Badge>
-							</div>
-							<p className="text-muted-foreground mb-3 text-balance">
-								{hire.description}
-							</p>
-							<div className="flex items-center gap-6 text-sm text-muted-foreground">
-								<div className="flex items-center gap-1">
-									<Calendar className="h-4 w-4" />
-									<span>{hire.duration}</span>
-								</div>
-								<div className="flex items-center gap-1">
-									<span>
-										{formatCurrency(hire.commissionDue)}
-									</span>
-								</div>
-								<div className="flex items-center gap-1">
-									<Clock className="h-4 w-4" />
-									<span>
-										{"Created"} {formatDate(hire.createdAt)}
-									</span>
-								</div>
-							</div>
-						</div>
-						<div className="flex flex-col gap-2 min-w-0">
-							<div className="text-right">
-								<p className="text-sm text-muted-foreground">
-									{"Status Breakdown"}
-								</p>
-								<div className="flex flex-col gap-2 mt-1">
-									<div className="flex items-center justify-between gap-2">
-										<span className="text-xs text-muted-foreground">
-											{"Business:"}
-										</span>
-										<Badge
-											variant="outline"
-											className="text-xs"
-										>
-											{hire.businessStatus}
-										</Badge>
-									</div>
-									<div className="flex items-center justify-between gap-2">
-										<span className="text-xs text-muted-foreground">
-											{"Expert:"}
-										</span>
-										<Badge
-											variant="outline"
-											className="text-xs"
-										>
-											{hire.expertStatus}
-										</Badge>
-									</div>
-									{/* <div className="flex items-center justify-between gap-2">
-										<span className="text-xs text-muted-foreground">
-											{"Admin:"}
-										</span>
-										<Badge
-											variant="outline"
-											className="text-xs"
-										>
-											{hire.adminStatus}
-										</Badge>
-									</div> */}
-								</div>
-							</div>
+			<CardContent className="p-5 flex-1 flex flex-col gap-4">
+				{/* Header: Expert Info + Status */}
+				<div className="flex items-center justify-between gap-3">
+					<div className="flex items-center gap-3">
+						<Avatar className="h-10 w-10 border border-[#F2F2F2]">
+							<AvatarImage src={hire.expertId.image} />
+							<AvatarFallback className="bg-primary/10 text-primary font-bold">
+								{hire.expertId.name?.charAt(0).toUpperCase()}
+							</AvatarFallback>
+						</Avatar>
+						<div className="flex flex-col">
+							<h3 className="font-bold text-sm text-[#0E1426] line-clamp-1 group-hover:text-primary transition-colors">
+								{hire.expertId.name}
+							</h3>
+							<span className="text-[10px] text-[#878A93] font-medium">
+								{hire.businessId.name} (Client)
+							</span>
 						</div>
 					</div>
+					<Badge
+						variant="outline"
+						className={`${getStatusColor(hire.hireStatus)} text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-sm whitespace-nowrap capitalize`}
+					>
+						{hire.hireStatus?.replace("_", " ")}
+					</Badge>
 				</div>
-				{/* <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>{"View Details"}</DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">{"Cancel Hire"}</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu> */}
-			</div>
+
+				{/* Description */}
+				<p className="text-[#3E4351] text-xs leading-relaxed line-clamp-3 min-h-[4.5em]">
+					{hire.description || "No description provided"}
+				</p>
+
+				{/* Details Grid */}
+				<div className="grid grid-cols-2 gap-3 mt-auto pt-2">
+					<div className="flex flex-col gap-1">
+						<span className="text-[10px] text-[#878A93] font-medium flex items-center gap-1">
+							<Calendar className="h-3 w-3" /> Duration
+						</span>
+						<span className="text-xs font-bold text-[#0E1426]">
+							{hire.duration}
+						</span>
+					</div>
+					<div className="flex flex-col gap-1">
+						<span className="text-[10px] text-[#878A93] font-medium">
+							Comm. Due
+						</span>
+						<span className="text-xs font-bold text-primary">
+							{formatCurrency(hire.commissionDue) || 0}
+						</span>
+					</div>
+				</div>
+			</CardContent>
+
+			<CardFooter className="p-4 bg-[#FBFCFC] border-t border-[#F2F2F2] flex gap-2">
+				<Button
+					variant="outline"
+					size="sm"
+					className="flex-1 text-xs h-9 gap-2 border-[#D1DAEC] text-[#3E4351]"
+					onClick={handleMessage}
+				>
+					<MessageSquare className="h-3.5 w-3.5" />
+					Message
+				</Button>
+				<Button
+					size="sm"
+					className="flex-1 text-xs h-9 gap-2 shadow-sm"
+					onClick={() => setHire(hire)}
+				>
+					<ExternalLink className="h-3.5 w-3.5" />
+					Details
+				</Button>
+			</CardFooter>
 		</Card>
 	);
 }
+

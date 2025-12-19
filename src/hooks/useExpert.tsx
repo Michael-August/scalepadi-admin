@@ -7,36 +7,44 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
 
-export const useGetAllExpert = (page: number = 1, limit: number = 10) => {
+export const useGetAllExpert = (
+	page: number = 1,
+	limit: number = 10,
+	status: string = "",
+	search: string = "",
+	role: string = "",
+	skill: string = "",
+	verified?: boolean | string
+) => {
 	const { data, isLoading } = useQuery<{
 		status: boolean;
 		message: string;
 		data: PaginatedExperts;
 	}>({
-		queryKey: ["expert", page, limit],
+		queryKey: ["expert", page, limit, status, search, role, skill, verified],
 		queryFn: async () => {
 			try {
-				const response = await axiosClient.get(
-					`/experts?page=${page}&limit=${limit}`
-				);
+				let url = `/experts?page=${page}&limit=${limit}`;
+				if (status && status !== "all") url += `&status=${status}`;
+				if (search) url += `&search=${encodeURIComponent(search)}`;
+				if (role && role !== "all") url += `&role=${encodeURIComponent(role)}`;
+				if (skill && skill !== "all") url += `&skill=${encodeURIComponent(skill)}`;
+				if (verified !== undefined && verified !== "all") url += `&verified=${verified}`;
+
+				const response = await axiosClient.get(url);
 				if (response.data?.status === false) {
-					throw new Error(
-						response.data?.message || "Failed to fetch experts."
-					);
+					throw new Error(response.data?.message || "Failed to fetch experts.");
 				}
 				return response.data;
 			} catch (error: unknown) {
 				if (error instanceof AxiosError) {
 					toast.error(
-						error.response?.data?.message ||
-							"Failed to fetch experts."
+						error.response?.data?.message || "Failed to fetch experts."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);
 				} else {
-					toast.error(
-						"An unexpected error occured while fetching experts."
-					);
+					toast.error("An unexpected error occured while fetching experts.");
 				}
 				throw error;
 			}
@@ -62,7 +70,7 @@ export const useGetExpertById = (id: string) => {
 				if (error instanceof AxiosError) {
 					toast.error(
 						error.response?.data?.message ||
-							"Failed to fetch expert."
+						"Failed to fetch expert."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);
@@ -79,14 +87,21 @@ export const useGetExpertById = (id: string) => {
 	return { expertDetails: data, isLoading };
 };
 
-export const useGetHires = (page: number = 1, limit: number = 10) => {
+export const useGetHires = (
+	page: number = 1,
+	limit: number = 10,
+	status: string = "",
+	search: string = ""
+) => {
 	const { data, isLoading } = useQuery({
-		queryKey: ["hires", page, limit],
+		queryKey: ["hires", page, limit, status, search],
 		queryFn: async () => {
 			try {
-				const response = await axiosClient.get(
-					`/hires/admin?page=${page}&limit=${limit}`
-				);
+				let url = `/hires/admin?page=${page}&limit=${limit}`;
+				if (status && status !== "all") url += `&status=${status}`;
+				if (search) url += `&search=${encodeURIComponent(search)}`;
+
+				const response = await axiosClient.get(url);
 				if (response.data?.status === false) {
 					throw new Error(
 						response.data?.message || "Failed to fetch hires."
@@ -97,7 +112,7 @@ export const useGetHires = (page: number = 1, limit: number = 10) => {
 				if (error instanceof AxiosError) {
 					toast.error(
 						error.response?.data?.message ||
-							"Failed to fetch hires."
+						"Failed to fetch hires."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);
@@ -130,7 +145,7 @@ export const useGetHireById = (id: string) => {
 				if (error instanceof AxiosError) {
 					toast.error(
 						error.response?.data?.message ||
-							"Failed to fetch expert."
+						"Failed to fetch expert."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);
@@ -147,44 +162,58 @@ export const useGetHireById = (id: string) => {
 	return { hireDetails: data, isLoading };
 };
 
-export const useSearchExpert = (
-	search: string,
-	page: number = 1,
-	limit: number = 10
-) => {
+interface SearchExpertParams {
+	search?: string;
+	page?: number;
+	limit?: number;
+	status?: string;
+	role?: string;
+	skill?: string;
+	verified?: boolean | string;
+}
+
+export const useSearchExpert = ({
+	search = "",
+	page = 1,
+	limit = 10,
+	status = "",
+	role = "",
+	skill = "",
+	verified,
+}: SearchExpertParams = {}) => {
+	const queryKey = ["expert", "search", { search, page, limit, status, role, skill, verified }];
+
 	const { data, isLoading, isError, error } = useQuery({
-		queryKey: ["expert", search, page, limit],
+		queryKey,
 		queryFn: async () => {
 			try {
-				const response = await axiosClient.get(
-					`/experts?page=${page}&limit=${limit}&search=${encodeURIComponent(
-						search
-					)}`
-				);
+				let url = `/experts?page=${page}&limit=${limit}`;
+
+				if (search) url += `&search=${encodeURIComponent(search)}`;
+				if (status && status !== "all") url += `&status=${status}`;
+				if (role && role !== "all") url += `&role=${encodeURIComponent(role)}`;
+				if (skill && skill !== "all") url += `&skill=${encodeURIComponent(skill)}`;
+				if (verified !== undefined && verified !== "all") url += `&verified=${verified}`;
+
+				const response = await axiosClient.get(url);
 
 				if (response.data?.status === false) {
-					throw new Error(
-						response.data?.message || "Failed to fetch expert."
-					);
+					throw new Error(response.data?.message || "Failed to search experts.");
 				}
 
 				return response.data;
 			} catch (err: unknown) {
 				if (err instanceof AxiosError) {
-					toast.error(
-						err.response?.data?.message || "Failed to fetch expert."
-					);
+					toast.error(err.response?.data?.message || "Failed to search experts.");
 				} else if (err instanceof Error) {
 					toast.error(err.message);
 				} else {
-					toast.error(
-						"An unexpected error occurred while fetching experts."
-					);
+					toast.error("An unexpected error occurred while searching experts.");
 				}
 				throw err;
 			}
 		},
-		enabled: !!search,
+		enabled: !!search || status !== "" || role !== "" || skill !== "" || verified !== undefined,
 	});
 
 	return { expertList: data, isLoading, isError, error };
@@ -215,24 +244,21 @@ export const useGetAllBusinessProjects = (
 		queryFn: async () => {
 			try {
 				const response = await axiosClient.get(
-					`/projects/account/admin?businessId=${businessId}&page=${currentPage}&limit=${itemsPerPage}${
-						statusFilter && statusFilter !== "all"
-							? `&status=${statusFilter}`
-							: ""
+					`/projects/account/admin?businessId=${businessId}&page=${currentPage}&limit=${itemsPerPage}${statusFilter && statusFilter !== "all"
+						? `&status=${statusFilter}`
+						: ""
 					}&sort=${sortBy}&search=${searchQuery}`
 				);
 				if (response.data?.status === false) {
 					throw new Error(
-						response.data?.message ||
-							"Failed to fetch admin accounts."
+						response.data?.message || "Failed to fetch admin accounts."
 					);
 				}
 				return response.data;
 			} catch (error: unknown) {
 				if (error instanceof AxiosError) {
 					toast.error(
-						error.response?.data?.message ||
-							"Failed to fetch admin accounts."
+						error.response?.data?.message || "Failed to fetch admin accounts."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);
@@ -279,7 +305,7 @@ export const useInviteExperts = (options?: {
 				if (error instanceof AxiosError) {
 					toast.error(
 						error.response?.data?.message ||
-							"Failed to invite experts."
+						"Failed to invite experts."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);
@@ -348,24 +374,21 @@ export const useGetExpertsCount = (
 		queryFn: async () => {
 			try {
 				const response = await axiosClient.get(
-					`/projects/experts-count/${businessId}?page=${currentPage}&limit=${itemsPerPage}${
-						statusFilter && statusFilter !== "all"
-							? `status=${statusFilter}`
-							: ""
+					`/projects/experts-count/${businessId}?page=${currentPage}&limit=${itemsPerPage}${statusFilter && statusFilter !== "all"
+						? `&status=${statusFilter}`
+						: ""
 					}&sort=${sortBy}&search=${searchQuery}`
 				);
 				if (response.data?.status === false) {
 					throw new Error(
-						response.data?.message ||
-							"Failed to fetch experts count."
+						response.data?.message || "Failed to fetch experts count."
 					);
 				}
 				return response.data;
 			} catch (error: unknown) {
 				if (error instanceof AxiosError) {
 					toast.error(
-						error.response?.data?.message ||
-							"Failed to fetch experts count."
+						error.response?.data?.message || "Failed to fetch experts count."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);
@@ -388,13 +411,10 @@ export const useGetExpertPerformance = (id: string) => {
 		queryKey: ["expert-performance", id],
 		queryFn: async () => {
 			try {
-				const response = await axiosClient.get(
-					`/expert-reviews/${id}/admin`
-				);
+				const response = await axiosClient.get(`/expert-reviews/${id}/admin`);
 				if (response.data?.status === false) {
 					throw new Error(
-						response.data?.message ||
-							"Failed to fetch expert performance."
+						response.data?.message || "Failed to fetch expert performance."
 					);
 				}
 				console.log(response.data);
@@ -403,7 +423,7 @@ export const useGetExpertPerformance = (id: string) => {
 				if (error instanceof AxiosError) {
 					toast.error(
 						error.response?.data?.message ||
-							"Failed to fetch expert performance."
+						"Failed to fetch expert performance."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);
@@ -430,8 +450,7 @@ export const useGetExpertAccountDetails = (id: string) => {
 				);
 				if (response.data?.status === false) {
 					throw new Error(
-						response.data?.message ||
-							"Failed to fetch expert account details."
+						response.data?.message || "Failed to fetch expert account details."
 					);
 				}
 				console.log(response.data);
@@ -443,7 +462,7 @@ export const useGetExpertAccountDetails = (id: string) => {
 					}
 					toast.error(
 						error.response?.data?.message ||
-							"Failed to fetch expert account details."
+						"Failed to fetch expert account details."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);
@@ -486,7 +505,7 @@ export const useAssignSupervisor = () => {
 				if (error instanceof AxiosError) {
 					toast.error(
 						error.response?.data?.message ||
-							"Failed to assign supervisor."
+						"Failed to assign supervisor."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);
@@ -523,7 +542,7 @@ export const useApproveExpert = (id: string) => {
 				if (error instanceof AxiosError) {
 					toast.error(
 						error.response?.data?.message ||
-							"Failed to approve expert."
+						"Failed to approve expert."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);

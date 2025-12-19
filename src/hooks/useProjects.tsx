@@ -15,7 +15,9 @@ export type Project = {
 	goal?: string;
 	resources?: string[];
 	proposedTotalCost?: number;
+	totalCost?: number;
 	paymentStatus?: string;
+	location?: string;
 	adminApproved?: boolean;
 	requestSupervisor?: boolean;
 	businessId?: {
@@ -26,6 +28,7 @@ export type Project = {
 		verified?: boolean;
 		status?: string;
 		id: string;
+		country?: string;
 	};
 	experts?: { id: { id: string }; name: string; image: string }[];
 };
@@ -86,7 +89,7 @@ export const useGetAllProjects = (
 				if (error instanceof AxiosError) {
 					toast.error(
 						error.response?.data?.message ||
-							"Failed to fetch projects."
+						"Failed to fetch projects."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);
@@ -119,7 +122,7 @@ export const useGetProjectById = (id: string) => {
 				if (error instanceof AxiosError) {
 					toast.error(
 						error.response?.data?.message ||
-							"Failed to fetch project."
+						"Failed to fetch project."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);
@@ -161,7 +164,7 @@ export const useAssignSupervisor = () => {
 				if (error instanceof AxiosError) {
 					toast.error(
 						error.response?.data?.message ||
-							"Failed to assign supervisor."
+						"Failed to assign supervisor."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);
@@ -187,13 +190,13 @@ export const useApproveProject = () => {
 			projectId,
 			approved,
 		}: // totalCost,
-		// discount,
-		{
-			projectId: string;
-			approved: boolean;
-			// totalCost: number;
-			// discount: number;
-		}) => {
+			// discount,
+			{
+				projectId: string;
+				approved: boolean;
+				// totalCost: number;
+				// discount: number;
+			}) => {
 			try {
 				const response = await axiosClient.patch(
 					`/project/${projectId}/approve`,
@@ -209,7 +212,7 @@ export const useApproveProject = () => {
 				if (error instanceof AxiosError) {
 					toast.error(
 						error.response?.data?.message ||
-							"Failed to approve project."
+						"Failed to approve project."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);
@@ -253,7 +256,7 @@ export const useInviteExperts = () => {
 				if (error instanceof AxiosError) {
 					toast.error(
 						error.response?.data?.message ||
-							"Failed to invite experts."
+						"Failed to invite experts."
 					);
 				} else if (error instanceof Error) {
 					toast.error(error.message);

@@ -114,9 +114,8 @@ const ExpertSelectionRow = ({
 }) => {
   return (
     <tr
-      className={`border-b hover:bg-gray-50 transition-colors ${
-        isSelected ? "bg-blue-50 border-blue-200" : "border-gray-200"
-      } ${isAlreadyAssigned ? "opacity-60" : ""}`}
+      className={`border-b hover:bg-gray-50 transition-colors ${isSelected ? "bg-blue-50 border-blue-200" : "border-gray-200"
+        } ${isAlreadyAssigned ? "opacity-60" : ""}`}
       onClick={() => !isAlreadyAssigned && onSelect(expert.id)}
     >
       <td className="p-3">
@@ -208,8 +207,8 @@ const ExpertSelectionRow = ({
           {isAlreadyAssigned
             ? "Already Assigned"
             : isSelected
-            ? "Selected"
-            : "Select"}
+              ? "Selected"
+              : "Select"}
         </Button>
       </td>
     </tr>
@@ -229,6 +228,10 @@ const AssignExpertModal = ({
   onPageChange,
   expertSearchTerm,
   onExpertSearchChange,
+  expertStatusFilter,
+  onExpertStatusChange,
+  expertVerifiedFilter,
+  onExpertVerifiedChange,
   selectedExpertIds,
   onExpertSelectionChange,
   assignedExpertIds = [], // New prop to track already assigned experts
@@ -245,6 +248,10 @@ const AssignExpertModal = ({
   onPageChange: (page: number) => void;
   expertSearchTerm: string;
   onExpertSearchChange: (term: string) => void;
+  expertStatusFilter: string;
+  onExpertStatusChange: (status: string) => void;
+  expertVerifiedFilter: string;
+  onExpertVerifiedChange: (verified: string) => void;
   selectedExpertIds: string[];
   onExpertSelectionChange: (expertIds: string[]) => void;
   assignedExpertIds?: string[]; // Array of expert IDs already assigned to the project
@@ -374,30 +381,58 @@ const AssignExpertModal = ({
 
           {/* Expert Selection */}
           <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="flex items-center space-x-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Select Experts
-                </h3>
-                {safeExperts.length > 0 && selectableExperts.length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSelectAll}
-                    className="h-8 text-xs"
-                  >
-                    {allSelectableSelected ? "Deselect All" : "Select All"}
-                  </Button>
-                )}
-              </div>
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search experts..."
-                  value={expertSearchTerm}
-                  onChange={(e) => onExpertSearchChange(e.target.value)}
-                  className="pl-10 w-full h-9 text-sm border-gray-300"
-                />
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center space-x-4">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Select Experts
+                  </h3>
+                  {safeExperts.length > 0 && selectableExperts.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSelectAll}
+                      className="h-8 text-xs"
+                    >
+                      {allSelectableSelected ? "Deselect All" : "Select All"}
+                    </Button>
+                  )}
+                </div>
+
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <Select value={expertStatusFilter} onValueChange={onExpertStatusChange}>
+                    <SelectTrigger className="w-[140px] h-9">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={expertVerifiedFilter} onValueChange={onExpertVerifiedChange}>
+                    <SelectTrigger className="w-[140px] h-9">
+                      <SelectValue placeholder="Verified" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="true">Verified</SelectItem>
+                      <SelectItem value="false">Unverified</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Search experts..."
+                      value={expertSearchTerm}
+                      onChange={(e) => onExpertSearchChange(e.target.value)}
+                      className="pl-10 w-full h-9 text-sm border-gray-300"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -431,9 +466,9 @@ const AssignExpertModal = ({
                   <Search className="h-8 w-8 text-gray-400" />
                 </div>
                 <p className="text-sm">No experts found</p>
-                {expertSearchTerm && (
+                {(expertSearchTerm || expertStatusFilter !== "all" || expertVerifiedFilter !== "all") && (
                   <p className="text-xs text-gray-400 mt-1">
-                    Try adjusting your search terms
+                    Try adjusting your filters
                   </p>
                 )}
               </div>
@@ -540,10 +575,9 @@ const AssignExpertModal = ({
                   Assigning...
                 </>
               ) : (
-                `Assign ${
-                  selectedExpertIds.length > 0
-                    ? `(${selectedExpertIds.length})`
-                    : ""
+                `Assign ${selectedExpertIds.length > 0
+                  ? `(${selectedExpertIds.length})`
+                  : ""
                 }`
               )}
             </Button>
@@ -567,6 +601,8 @@ const Projects = () => {
 
   const [expertCurrentPage, setExpertCurrentPage] = useState(1);
   const [expertSearchTerm, setExpertSearchTerm] = useState("");
+  const [expertStatusFilter, setExpertStatusFilter] = useState("all");
+  const [expertVerifiedFilter, setExpertVerifiedFilter] = useState("all");
   const [selectedExpertIds, setSelectedExpertIds] = useState<string[]>([]);
 
   const router = useRouter();
@@ -578,23 +614,21 @@ const Projects = () => {
     searchTerm
   );
 
-  const { expertList: allExperts, isLoading: isLoadingAllExperts } = useGetAllExpert(
-    expertCurrentPage,
-    10
-  );
+  // Separate fetches for stats to ensure accurate totals across all pages
+  const { projectList: pendingProjectsList } = useGetAllProjects(1, 1, "pending");
+  const { projectList: inProgressProjectsList } = useGetAllProjects(1, 1, "in-progress");
+  const { projectList: completedProjectsList } = useGetAllProjects(1, 1, "completed");
+  const { projectList: totalProjectsList } = useGetAllProjects(1, 1, "all");
 
-  const { expertList: searchResults, isLoading: isLoadingExperts } = useSearchExpert(
+  const { expertList: expertsToDisplay, isLoading: isLoadingExpertsToDisplay } = useGetAllExpert(
+    expertCurrentPage,
+    10,
+    expertStatusFilter,
     expertSearchTerm,
-    expertCurrentPage,
-    10
+    "", // role
+    "", // skill
+    expertVerifiedFilter !== "all" ? (expertVerifiedFilter === "true") : undefined
   );
-
-  const expertsToDisplay = expertSearchTerm
-    ? searchResults?.data
-    : allExperts?.data;
-  const isLoadingExpertsToDisplay = expertSearchTerm
-    ? isLoadingExperts
-    : isLoadingAllExperts;
 
   const { mutate: inviteExperts } = useInviteExperts();
 
@@ -616,27 +650,21 @@ const Projects = () => {
     return data;
   }, [projectList, dateFilter]);
 
-  
-  const statusCounts = useMemo(() => {
-    if (!projectList?.data)
-      return { pending: 0, "in-progress": 0, completed: 0, total: 0 };
 
-    const data = projectList.data;
+  const statusCounts = useMemo(() => {
     return {
-      pending: data.filter((project) => project.status === "pending").length,
-      "in-progress": data.filter((project) => project.status === "in-progress")
-        .length,
-      completed: data.filter((project) => project.status === "completed")
-        .length,
-      total: projectList.totalItems,
+      pending: pendingProjectsList?.totalItems || 0,
+      "in-progress": inProgressProjectsList?.totalItems || 0,
+      completed: completedProjectsList?.totalItems || 0,
+      total: totalProjectsList?.totalItems || 0,
     };
-  }, [projectList]);
-  
+  }, [pendingProjectsList, inProgressProjectsList, completedProjectsList, totalProjectsList]);
+
   const assignedExpertIds = useMemo(() => {
     return selectedProject?.experts?.map((expert) => expert.id.id) || [];
   }, [selectedProject]);
 
-  
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, sortFilter, dateFilter, rowsPerPage]);
@@ -645,6 +673,8 @@ const Projects = () => {
     if (isModalOpen) {
       setExpertCurrentPage(1);
       setExpertSearchTerm("");
+      setExpertStatusFilter("all");
+      setExpertVerifiedFilter("all");
       setSelectedExpertIds([]);
     }
   }, [isModalOpen]);
@@ -669,6 +699,8 @@ const Projects = () => {
     setIsAssigning(false);
     setSelectedExpertIds([]);
     setExpertSearchTerm("");
+    setExpertStatusFilter("all");
+    setExpertVerifiedFilter("all");
   }, []);
 
   const handleAssignProject = useCallback(
@@ -705,6 +737,16 @@ const Projects = () => {
     setExpertCurrentPage(1);
   }, []);
 
+  const handleExpertStatusChange = useCallback((status: string) => {
+    setExpertStatusFilter(status);
+    setExpertCurrentPage(1);
+  }, []);
+
+  const handleExpertVerifiedChange = useCallback((verified: string) => {
+    setExpertVerifiedFilter(verified);
+    setExpertCurrentPage(1);
+  }, []);
+
   if (isLoading) {
     return (
       <TableSkeleton
@@ -728,15 +770,19 @@ const Projects = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         project={selectedProject}
-        experts={expertsToDisplay?.data || []}
+        experts={expertsToDisplay?.data?.data || []}
         isLoadingExperts={isLoadingExpertsToDisplay}
         onAssignExpert={handleAssignProject}
         isAssigning={isAssigning}
         currentPage={expertCurrentPage}
-        totalPages={expertsToDisplay?.totalPages || 1}
+        totalPages={expertsToDisplay?.data?.totalPages || 1}
         onPageChange={handleExpertPageChange}
         expertSearchTerm={expertSearchTerm}
         onExpertSearchChange={handleExpertSearchChange}
+        expertStatusFilter={expertStatusFilter}
+        onExpertStatusChange={handleExpertStatusChange}
+        expertVerifiedFilter={expertVerifiedFilter}
+        onExpertVerifiedChange={handleExpertVerifiedChange}
         selectedExpertIds={selectedExpertIds}
         onExpertSelectionChange={handleExpertSelectionChange}
         assignedExpertIds={assignedExpertIds}
@@ -789,7 +835,7 @@ const Projects = () => {
         </Button> */}
       </div>
 
-      <div className="w-full bg-white overflow-x-auto p-6 rounded-lg border border-gray-200">
+      <div className="w-full bg-white overflow-x-auto p-6 rounded-lg border border-gray-200 my-4 md:my-6">
         {/* Header */}
         <h1 className="text-xl md:text-2xl font-medium text-[#878A93] mb-6">
           Project List
@@ -885,8 +931,8 @@ const Projects = () => {
                               project.status === "completed"
                                 ? "text-[#04E762]"
                                 : project.status === "in-progress"
-                                ? "text-primary"
-                                : "text-[#F2BB05]"
+                                  ? "text-primary"
+                                  : "text-[#F2BB05]"
                             }
                           />
                         </div>
@@ -906,13 +952,12 @@ const Projects = () => {
                     <TableCell className="py-4 capitalize">
                       <Badge
                         variant="secondary"
-                        className={`${
-                          project.status === "completed"
-                            ? "border border-[#04E762] text-[#04E762]"
-                            : project.status === "in-progress"
+                        className={`${project.status === "completed"
+                          ? "border border-[#04E762] text-[#04E762]"
+                          : project.status === "in-progress"
                             ? "border border-primary text-primary"
                             : "border border-[#F2BB05] text-[#F2BB05]"
-                        } text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent w-[80px] sm:w-[80px] md:w-[80px] truncate text-center flex justify-center`}
+                          } text-xs font-normal px-2 py-1 bg-transparent hover:bg-transparent w-[80px] sm:w-[80px] md:w-[80px] truncate text-center flex justify-center`}
                       >
                         {project.status.replace("-", " ")}
                       </Badge>

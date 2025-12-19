@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import {
 	Send,
 	Search,
@@ -21,10 +21,10 @@ import { ChatListSkeleton } from "@/components/skeletons/chats.skeleton";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useGetAllExpert } from "@/hooks/useExpert";
 import { useGetAllBusiness } from "@/hooks/useBusiness";
-import { useGetAdminList } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { ChatWindowSkeleton } from "@/components/skeletons/messages.skeleton";
+import { useSearchParams } from "next/navigation";
 
 interface Participant {
 	id: string;
@@ -69,13 +69,15 @@ const colors = [
 function getColorForUser(name: string) {
 	// create a simple hash based on name
 	let hash = 0;
-	for (let i = 0; i < name.length; i++) {
-		hash = name.charCodeAt(i) + ((hash << 5) - hash);
+	if (name) {
+		for (let i = 0; i < name.length; i++) {
+			hash = name.charCodeAt(i) + ((hash << 5) - hash);
+		}
 	}
 	return colors[Math.abs(hash) % colors.length];
 }
 
-export default function MessagesPage() {
+function MessagesContent() {
 	const [selectedExpert, setSelectedExpert] = useState<any>();
 	const [messages, setMessages] = useState<Message[]>([]);
 
@@ -88,14 +90,13 @@ export default function MessagesPage() {
 
 	const [chatMessagesToFetch, setChatMessagesToFetch] = useState("");
 
-	const { expertList, isLoading: isLoadingExperts } = useGetAllExpert();
-	const { businessList, isLoading: isLoadingBusinesses } =
-		useGetAllBusiness();
-	// const { AdminUserList, isLoading: isLoadingAdminUsers } = useGetAdminList();
+	const { expertList } = useGetAllExpert();
+	const { businessList } = useGetAllBusiness();
+	// const { AdminUserList, isLoading: isLoadingAdminUsers } = useGetAdminList(1, 100);
 
 	const { messages: chatMessages, isLoading: isLoadingMessages } =
 		useGetChatMessages(chatMessagesToFetch);
-	const { sendMessage, isPending: isPendingSendMessage } =
+	const { sendMessage } =
 		useSendMessages(chatMessagesToFetch);
 
 	const [users, setUsers] = useState<IUserToChat[]>([]);
@@ -116,6 +117,16 @@ export default function MessagesPage() {
 					console.log(res);
 					setFindUsersToChat(false);
 					setChatMessagesToFetch(res?.data?.id);
+
+					// Set selected expert from response if available
+					if (res?.data?.participants) {
+						const otherParticipant = res.data.participants.find(
+							(p: any) => p.user?._id === userId || p.user === userId
+						);
+						if (otherParticipant) {
+							setSelectedExpert(otherParticipant);
+						}
+					}
 				},
 				onError: (error) => {
 					toast.error(`${error.message}`);
@@ -123,6 +134,10 @@ export default function MessagesPage() {
 			}
 		);
 	};
+
+	// ... (rest of component function)
+
+
 
 	const handleSendMessage = () => {
 		if (!input.trim()) return;
@@ -146,7 +161,7 @@ export default function MessagesPage() {
 		sendMessage(
 			{ chatId: chatMessagesToFetch, text: input },
 			{
-				onSuccess: (res) => {
+				onSuccess: (res: any) => {
 					setMessages((prev) =>
 						prev.map((msg) =>
 							msg.id === tempMessage.id ? res.data : msg
@@ -158,7 +173,7 @@ export default function MessagesPage() {
 					setMessages((prev) =>
 						prev.map((msg) =>
 							msg.id === tempMessage.id
-								? { ...msg, status: "failed" }
+								? { ...msg }
 								: msg
 						)
 					);
@@ -169,7 +184,7 @@ export default function MessagesPage() {
 	};
 
 	useEffect(() => {
-		// const admins: IUserToChat[] = (AdminUserList ?? [])?.map(
+		// const admins: IUserToChat[] = (AdminUserList?.data ?? [])?.map(
 		// 	(admin: any) => {
 		// 		return {
 		// 			id: admin?.id,
@@ -189,7 +204,7 @@ export default function MessagesPage() {
 				};
 			}
 		);
-		const business: IUserToChat[] = (expertList?.data?.data ?? []).map(
+		const business: IUserToChat[] = (businessList?.data?.data ?? []).map(
 			(business: any) => {
 				return {
 					id: business?.id,
@@ -206,6 +221,19 @@ export default function MessagesPage() {
 	useEffect(() => {
 		setLoggedInUser(JSON.parse(localStorage.getItem("user") || "{}"));
 	}, []);
+
+	const searchParams = useSearchParams();
+	const userIdParam = searchParams.get("userId");
+	const roleParam = searchParams.get("role");
+
+	useEffect(() => {
+		if (userIdParam && roleParam) {
+			// Only initiate chat if not already active or loading
+			if (!chatMessagesToFetch && !isPending) {
+				handleCreateChat(userIdParam, roleParam);
+			}
+		}
+	}, [userIdParam, roleParam, chatMessagesToFetch, isPending]);
 
 	useEffect(() => {
 		setMessages(chatMessages);
@@ -251,16 +279,15 @@ export default function MessagesPage() {
 									)
 								);
 							}}
-							className={`flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-gray-100 ${
-								selectedExpert?._id ===
+							className={`flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-gray-100 ${selectedExpert?._id ===
 								chat.participants.find(
 									(p: {
 										user: { _id: string; name: string };
 									}) => p?.user?._id !== loggedInUser?.id
 								)?._id
-									? "bg-gray-100"
-									: ""
-							}`}
+								? "bg-gray-100"
+								: ""
+								}`}
 						>
 							<div className="w-10 h-10 rounded-full overflow-hidden">
 								<Avatar className="w-10 h-10">
@@ -385,22 +412,20 @@ export default function MessagesPage() {
 								return (
 									<div
 										key={idx}
-										className={`flex flex-col mb-2 ${
-											isMe
-												? "items-end text-right"
-												: "items-start text-left"
-										}`}
+										className={`flex flex-col mb-2 ${isMe
+											? "items-end text-right"
+											: "items-start text-left"
+											}`}
 									>
 										<div className="text-xs text-gray-500 mb-1">
 											{isMe ? "You" : msg.sender.model}{" "}
 											{/* show "You" or the sender's model */}
 										</div>
 										<div
-											className={`p-2 rounded-lg max-w-xs text-sm ${
-												isMe
-													? "bg-blue-100 text-blue-900"
-													: "bg-gray-100 text-gray-900"
-											}`}
+											className={`p-2 rounded-lg max-w-xs text-sm ${isMe
+												? "bg-blue-100 text-blue-900"
+												: "bg-gray-100 text-gray-900"
+												}`}
 										>
 											{msg.content}
 										</div>
@@ -530,5 +555,13 @@ export default function MessagesPage() {
 				</DialogContent>
 			</Dialog>
 		</div>
+	);
+}
+
+export default function MessagesPage() {
+	return (
+		<Suspense fallback={<div className="flex h-screen items-center justify-center">Loading chats...</div>}>
+			<MessagesContent />
+		</Suspense>
 	);
 }

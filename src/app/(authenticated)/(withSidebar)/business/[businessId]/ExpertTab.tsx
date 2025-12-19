@@ -7,7 +7,7 @@ import {
   ChevronRight,
   Star,
 } from "lucide-react";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -35,7 +35,8 @@ interface Expert {
   name: string;
   email: string;
   profilePicture?: string;
-  role?: string;
+  role?: string[];
+  skills?: string[];
   status?: string;
   rating?: number;
   taskInvolvement?: number;
@@ -55,8 +56,31 @@ interface ExpertTabProps {
   businessId: string;
 }
 
+// Helper to render tags (Role/Skills) with limit
+const RenderTags = ({ items }: { items: string[] }) => {
+  if (!items || items.length === 0) return <span className="text-gray-500 text-sm">N/A</span>;
+
+  const displayItems = items.slice(0, 2);
+  const remaining = items.length - 2;
+
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {displayItems.map((item, i) => (
+        <Badge key={i} variant="secondary" className="text-[10px] px-1.5 py-0.5 font-normal whitespace-nowrap bg-gray-100 text-gray-700 hover:bg-gray-200">
+          {item}
+        </Badge>
+      ))}
+      {remaining > 0 && (
+        <span className="text-[10px] text-gray-500 font-medium ml-1">
+          +{remaining} more
+        </span>
+      )}
+    </div>
+  );
+};
+
 // Component to handle individual expert performance
-function ExpertRow({ expert }: { expert: any }) {
+function ExpertRow({ expert }: { expert: Expert }) {
   const { expertPerformance, isLoading: performanceLoading } = useGetExpertPerformance(expert.id);
 
   // Calculate rating from performance data
@@ -83,7 +107,9 @@ function ExpertRow({ expert }: { expert: any }) {
           ) : (
             <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
               <span className="text-xs font-medium text-purple-600">
-                {expert.name.split(" ").map((part: string) => part[0]).join("").toUpperCase()}
+                {expert.name && expert.name.length > 0
+                  ? expert.name.split(" ").map((part: string) => part[0]).join("").toUpperCase().slice(0, 2)
+                  : "EX"}
               </span>
             </div>
           )}
@@ -93,20 +119,21 @@ function ExpertRow({ expert }: { expert: any }) {
         </div>
       </TableCell>
 
-      <TableCell className="py-4 whitespace-nowrap">
-        <span className="text-gray-900 text-sm">
-          {expert.role}
-        </span>
+      <TableCell className="py-4 max-w-[200px]">
+        <RenderTags items={expert.role || []} />
+      </TableCell>
+
+      <TableCell className="py-4 max-w-[200px]">
+        <RenderTags items={expert.skills || []} />
       </TableCell>
 
       <TableCell className="py-4 whitespace-nowrap">
         <Badge
           variant="outline"
-          className={`w-20 justify-center ${
-            expert.status === "Active" ? "bg-green-100 text-green-800" :
+          className={`w-20 justify-center ${expert.status === "Active" ? "bg-green-100 text-green-800" :
             expert.status === "Inactive" ? "bg-gray-100 text-gray-800" :
-            "bg-yellow-100 text-yellow-800"
-          }`}
+              "bg-yellow-100 text-yellow-800"
+            }`}
         >
           {expert.status}
         </Badge>
@@ -139,9 +166,12 @@ export default function ExpertTab({
   sortBy,
   businessId,
 }: ExpertTabProps) {
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [skillFilter, setSkillFilter] = useState("all");
+
   const { expertsCount, isLoading, error } = useGetExpertsCount(
     businessId,
-    currentPage, 
+    currentPage,
     itemsPerPage,
     statusFilter,
     sortBy,
@@ -150,27 +180,45 @@ export default function ExpertTab({
 
   const expertsData = useMemo(() => {
     if (!expertsCount) return [];
-    
-    const expertsArray = Array.isArray(expertsCount) 
-      ? expertsCount 
+
+    const expertsArray = Array.isArray(expertsCount)
+      ? expertsCount
       : (expertsCount as any)?.data && Array.isArray((expertsCount as any).data)
         ? (expertsCount as any).data
         : [];
-    
-    return expertsArray.map((expert: any) => {
+
+    return expertsArray.map((expert: any): Expert => {
       const expertId = expert.expertId || expert.id || "";
-      
+
       return {
         id: expertId,
-        name: expert.name || "",
-        email: expert.email || "",
+        name: expert.name || "N/A",
+        email: expert.email || "N/A",
         profilePicture: expert.profilePicture,
-        role: expert.role || "Expert",
+        // Ensure role and skills are arrays. 
+        role: Array.isArray(expert.role) ? expert.role : expert.role ? [expert.role] : [],
+        skills: Array.isArray(expert.skills) ? expert.skills : expert.skills ? [expert.skills] : [],
         status: expert.status || "Active",
         taskInvolvement: expert.count || 0,
       };
     });
   }, [expertsCount]);
+
+  // Extract unique roles and skills for filters from the CURRENT fetched data
+  // Note: Since this is server-paginated, this only filters visible items. 
+  // Ideally, filter lists should come from a separate API or the server response metadata.
+  const uniqueRoles = useMemo(() => {
+    const roles = new Set<string>();
+    expertsData.forEach((e: Expert) => e.role?.forEach(r => roles.add(r)));
+    return Array.from(roles).sort();
+  }, [expertsData]);
+
+  const uniqueSkills = useMemo(() => {
+    const skills = new Set<string>();
+    expertsData.forEach((e: Expert) => e.skills?.forEach(s => skills.add(s)));
+    return Array.from(skills).sort();
+  }, [expertsData]);
+
 
   const filteredExperts = useMemo(() => {
     return expertsData.filter((expert: Expert) => {
@@ -180,18 +228,22 @@ export default function ExpertTab({
         searchQuery === "" ||
         expert.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         expert.email.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesStatus && matchesSearch;
+
+      const matchesRole = roleFilter === "all" || (expert.role && expert.role.includes(roleFilter));
+
+      const matchesSkill = skillFilter === "all" || (expert.skills && expert.skills.includes(skillFilter));
+
+      return matchesStatus && matchesSearch && matchesRole && matchesSkill;
     });
-  }, [statusFilter, searchQuery, expertsData]);
+  }, [statusFilter, searchQuery, roleFilter, skillFilter, expertsData]);
 
-  const paginatedExperts = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredExperts.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredExperts, currentPage, itemsPerPage]);
+  // If the backend is handling pagination, we shouldn't slice the data again.
+  // We assume 'expertsData' IS the page.
+  const paginatedExperts = filteredExperts;
 
-  const totalPages = useMemo(() => {
-    return Math.ceil(filteredExperts.length / itemsPerPage);
-  }, [filteredExperts, itemsPerPage]);
+  // Pagination Logic handling
+  // If result length < itemsPerPage, we are on the last page.
+  const isLastPage = expertsData.length < itemsPerPage;
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
@@ -200,7 +252,7 @@ export default function ExpertTab({
   };
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) {
+    if (!isLastPage) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -211,16 +263,22 @@ export default function ExpertTab({
   ) => {
     if (data.length === 0) return;
 
-    const headers = Object.keys(data[0]);
+    // Custom CSV Logic for arrays
+    const headers = ["ID", "Name", "Email", "Roles", "Skills", "Status", "Task Involvement"];
     const csvRows = [];
 
     csvRows.push(headers.join(","));
 
-    for (const row of data) {
-      const values = headers.map((header) => {
-        const escaped = ("" + row[header]).replace(/"/g, '\\"');
-        return `"${escaped}"`;
-      });
+    for (const row of data as any[]) {
+      const values = [
+        `"${row.id}"`,
+        `"${row.name}"`,
+        `"${row.email}"`,
+        `"${(row.role || []).join("; ")}"`,
+        `"${(row.skills || []).join("; ")}"`,
+        `"${row.status}"`,
+        `"${row.taskInvolvement}"`
+      ];
       csvRows.push(values.join(","));
     }
 
@@ -241,10 +299,10 @@ export default function ExpertTab({
   };
 
   if (isLoading) {
-    return <TableSkeleton 
-      columns={6} 
-      rows={5} 
-      headers={["Expert Name", "Role", "Status", "Rating", "Task Involvement", "Action"]}
+    return <TableSkeleton
+      columns={7}
+      rows={5}
+      headers={["Expert Name", "Role", "Skills", "Status", "Rating", "Task Involvement", "Action"]}
     />;
   }
 
@@ -268,48 +326,90 @@ export default function ExpertTab({
           </p>
 
           {/* Filters */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div className="flex flex-wrap gap-2">
-              <Select
-                value={statusFilter}
-                onValueChange={(value) => {
-                  setStatusFilter(value);
-                  setCurrentPage(1);
-                }}
-              >
-                <SelectTrigger className="w-[180px] h-9 text-xs rounded-xl text-gray-500 border-gray-300">
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Inactive">Inactive</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="relative w-full md:w-[200px]">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
+          <div className="flex flex-col gap-4 mb-6">
+            <div className="flex flex-wrap gap-2 items-center justify-between">
+              <div className="flex flex-wrap gap-2">
+                {/* Status Filter */}
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value) => {
+                    setStatusFilter(value);
                     setCurrentPage(1);
                   }}
-                  className="pl-10 w-full h-9 text-xs rounded-xl text-gray-500 border-gray-300"
-                />
+                >
+                  <SelectTrigger className="w-[140px] h-9 text-xs rounded-xl text-gray-500 border-gray-300">
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All statuses</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Role Filter */}
+                <Select
+                  value={roleFilter}
+                  onValueChange={(value) => {
+                    setRoleFilter(value);
+                    // setCurrentPage(1); // Client side filter doesn't reset server page usually, but maybe it should?
+                  }}
+                >
+                  <SelectTrigger className="w-[140px] h-9 text-xs rounded-xl text-gray-500 border-gray-300">
+                    <SelectValue placeholder="All Roles" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    {uniqueRoles.map(role => (
+                      <SelectItem key={role} value={role}>{role}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Skill Filter */}
+                <Select
+                  value={skillFilter}
+                  onValueChange={(value) => {
+                    setSkillFilter(value);
+                  }}
+                >
+                  <SelectTrigger className="w-[140px] h-9 text-xs rounded-xl text-gray-500 border-gray-300">
+                    <SelectValue placeholder="All Skills" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Skills</SelectItem>
+                    {uniqueSkills.map(skill => (
+                      <SelectItem key={skill} value={skill}>{skill}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+
+                <div className="relative w-full md:w-[200px]">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="pl-10 w-full h-9 text-xs rounded-xl text-gray-500 border-gray-300"
+                  />
+                </div>
               </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 text-xs rounded-xl text-gray-500 border-gray-300 bg-transparent"
+                onClick={() => exportToCSV(filteredExperts, "experts_list")}
+              >
+                <Download className="h-3 w-3 mr-2" />
+                Export CSV
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 text-xs rounded-xl text-gray-500 border-gray-300 bg-transparent"
-              onClick={() => exportToCSV(filteredExperts, "experts_list")}
-            >
-              <Download className="h-3 w-3 mr-2" />
-              Export CSV
-            </Button>
           </div>
 
           {/* Table */}
@@ -320,8 +420,11 @@ export default function ExpertTab({
                   <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
                     Expert Name
                   </TableHead>
-                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
+                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap min-w-[150px]">
                     Role
+                  </TableHead>
+                  <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap min-w-[150px]">
+                    Skills
                   </TableHead>
                   <TableHead className="text-[#878A93] font-medium text-sm py-4 whitespace-nowrap">
                     Status
@@ -345,7 +448,7 @@ export default function ExpertTab({
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="py-4 text-center text-gray-500"
                     >
                       No experts found matching your criteria
@@ -357,7 +460,8 @@ export default function ExpertTab({
           </div>
 
           {/* Pagination */}
-          {filteredExperts.length > 0 && (
+          {/* Note: We show pagination controls if we have results OR if we are on a page > 1 (to allowing going back) */}
+          {(expertsData.length > 0 || currentPage > 1) && (
             <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Rows per page</span>
@@ -382,7 +486,7 @@ export default function ExpertTab({
 
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-600">
-                  {currentPage} of {totalPages}
+                  Page {currentPage}
                 </span>
                 <div className="flex items-center gap-1">
                   <Button
@@ -399,7 +503,7 @@ export default function ExpertTab({
                     size="sm"
                     className="h-8 w-8 p-0"
                     onClick={handleNextPage}
-                    disabled={currentPage === totalPages || totalPages === 0}
+                    disabled={isLastPage}
                   >
                     <ChevronRight className="h-4 w-4 text-gray-600" />
                   </Button>
