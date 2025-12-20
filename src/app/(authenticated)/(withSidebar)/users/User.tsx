@@ -1,4 +1,3 @@
-// UserTable.tsx - Reusable user table component with all sub-components
 "use client";
 
 import {
@@ -56,10 +55,30 @@ const statusStyles: Record<string, string> = {
 
 const roleStyles: Record<string, string> = {
   super: "bg-green-100/50 text-green-500/70 border border-green-500/70",
-  ops: "bg-pink-100/50 text-pink-500/70 border border-pink-500/70",
-  support: "bg-purple-100/50 text-purple-500/70 border border-purple-500/70",
-  finance: "bg-blue-100/50 text-blue-500/70 border border-blue-500/70",
-  vetting: "bg-orange-100/50 text-orange-500/70 border border-orange-500/70",
+  "customer-support": "bg-pink-100/50 text-pink-500/70 border border-pink-500/70",
+  "community-manager": "bg-purple-100/50 text-purple-500/70 border border-purple-500/70",
+  "product-and-operations": "bg-blue-100/50 text-blue-500/70 border border-blue-500/70",
+  "finance-and-legal": "bg-orange-100/50 text-orange-500/70 border border-orange-500/70",
+};
+
+// Helper function to format role display text
+const formatRoleText = (role: string): string => {
+  const roleMap: Record<string, string> = {
+    super: "Super",
+    "customer-support": "Customer Support",
+    "community-manager": "Community Manager",
+    "product-and-operations": "Product and Operations",
+    "finance-and-legal": "Finance and Legal",
+  };
+  return roleMap[role] || role;
+};
+
+// Helper function to get role display with admin suffix only for super
+const getRoleDisplay = (role: string): string => {
+  if (role === "super") {
+    return "Super Admin";
+  }
+  return formatRoleText(role);
 };
 
 
@@ -134,7 +153,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
       </button>
       {isOpen && (
         <div
-          className="absolute z-10 mt-1 capitalize w-32 bg-white border border-gray-200 rounded-xl shadow-lg"
+          className="absolute z-10 mt-1 capitalize w-48 bg-white border border-gray-200 rounded-xl shadow-lg"
           role="listbox"
         >
           {options.map((option) => (
@@ -345,11 +364,11 @@ export const UserTable: React.FC<UserTableProps> = ({
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <span
-                    className={`w-28 justify-center px-2.5 py-1.5 inline-flex text-[13px] capitalize leading-5 font-semibold rounded-full ${roleStyles[user.role] ||
+                    className={`px-2.5 py-1.5 inline-flex text-[12px] leading-5 font-semibold rounded-full ${roleStyles[user.role] ||
                       "bg-gray-100 text-gray-800 border border-gray-900"
                       }`}
                   >
-                    {user.role} admin
+                    {getRoleDisplay(user.role)}
                   </span>
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-sm text-gray-500">
