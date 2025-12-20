@@ -30,10 +30,10 @@ import {
 const ROLES = [
   "All roles",
   "super",
-  "ops",
-  "support",
-  "vetting",
-  "finance",
+  "customer-support",
+  "community-manager",
+  "product-and-operations",
+  "finance-and-legal",
 ] as const;
 const STATUS_FILTERS = [
   "All statuses",
@@ -44,11 +44,10 @@ const STATUS_FILTERS = [
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
   super: "Full system access. Can manage all users and settings.",
-  ops: "Manages operations and day-to-day activities.",
-  support: "Handles user support and customer service.",
-  vetting:
-    "Reviews and approves expert profiles. Cannot access billing or assign experts.",
-  finance: "Manages financial operations and billing.",
+  "customer-support": "Handles user support and customer service.",
+  "community-manager": "Manages community and engagement activities.",
+  "product-and-operations": "Manages operations and product-related activities.",
+  "finance-and-legal": "Manages financial operations and legal matters.",
 };
 
 const INITIAL_USER_STATE = {
@@ -164,8 +163,20 @@ export default function UsersListPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   const admins = useMemo(() => {
-    return AdminUserList?.data || [];
-  }, [AdminUserList?.data]);
+    let data = AdminUserList?.data || [];
+    
+    // Frontend filtering for role
+    if (selectedRole !== "All roles") {
+      data = data.filter((user: AdminUser) => user.role === selectedRole);
+    }
+    
+    // Frontend filtering for status
+    if (selectedStatus !== "All statuses") {
+      data = data.filter((user: AdminUser) => user.status === selectedStatus);
+    }
+    
+    return data;
+  }, [AdminUserList?.data, selectedRole, selectedStatus]);
 
   const totalPages = AdminUserList?.totalPages || 0;
   const totalItems = AdminUserList?.totalItems || 0;
@@ -547,31 +558,25 @@ export default function UsersListPage() {
                   onChange={(e) => {
                     const selectedRole = e.target
                       .value as AdminUser["role"];
-                    isEditing
-                      ? setEditingUser({
+                    if (isEditing) {
+                      setEditingUser({
                         ...editingUser!,
                         role: selectedRole,
-                      })
-                      : setNewUser({
+                      });
+                    } else {
+                      setNewUser({
                         ...newUser,
                         role: selectedRole,
                       });
+                    }
                   }}
                 >
                   <option value="">Select a role</option>
-                  <option value="super">Super Admin</option>
-                  <option value="customer-support">
-                    Customer support
-                  </option>
-                  <option value="community-manager">
-                    Community manager
-                  </option>
-                  <option value="product-and-operations">
-                    Product and operations
-                  </option>
-                  <option value="finance-and-legal">
-                    Finance and legal
-                  </option>
+                  <option value="super">Super</option>
+                  <option value="customer-support">Customer Support</option>
+                  <option value="community-manager">Community Manager</option>
+                  <option value="product-and-operations">Product and Operations</option>
+                  <option value="finance-and-legal">Finance and Legal</option>
                 </select>
               </div>
 
