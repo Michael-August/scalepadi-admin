@@ -338,6 +338,7 @@ function MessagesContent() {
 					)}
 					{filteredChats.map((chat: any) => {
 						const otherParticipant = chat.otherParticipant;
+						// console.log(otherParticipant);
 						if (!otherParticipant) return null;
 
 						const otherId = otherParticipant.user?._id || otherParticipant.user?.id || otherParticipant.user;
@@ -379,9 +380,12 @@ function MessagesContent() {
 
 								<div className="flex-1 min-w-0">
 									<div className="flex items-center justify-between mb-0.5">
-										<h3 className="text-sm font-bold text-[#0E1426] truncate max-w-[120px]">
-											{otherParticipant.user?.name || "Unknown User"}
-										</h3>
+										<div className="flex gap-0.5">
+											<h3 className="text-sm font-bold text-[#0E1426] truncate max-w-[120px]">
+												{otherParticipant.user?.name || "Unknown User"}
+											</h3>
+											<span className="text-xs mt-0.5 text-gray-400">({otherParticipant?.userModel || "Unknown Role"})</span>
+										</div>
 										{lastMsg?.createdAt && (
 											<span className="text-[10px] text-gray-400 font-medium">
 												{isToday(new Date(lastMsg.createdAt))
@@ -456,7 +460,7 @@ function MessagesContent() {
 							</div>
 						</div>
 					</div>
-					<div className="flex-1 p-4 max-h-full overflow-y-auto flex flex-col gap-4">
+					<div className="flex-1 p-4 max-h-full overflow-y-auto flex flex-col gap-0.5">
 						{messages?.length === 0 && !isLoadingMessages && (
 							<div className="flex flex-col items-center justify-center h-full text-center p-8">
 								<div className="w-16 h-16 flex items-center justify-center rounded-full bg-gray-100 mb-4">
@@ -472,13 +476,13 @@ function MessagesContent() {
 							return (
 								<div
 									key={idx}
-									className={`flex flex-col mb-2 ${isMe ? "items-end" : "items-start"}`}
+									className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
 								>
-									<div className="text-[10px] text-gray-400 mb-1 px-1">
+									<div className="text-[10px] text-gray-400 px-1">
 										{isMe ? "You" : (selectedExpert?.user?.name || msg.sender.model)}
 									</div>
 									<div
-										className={`p-3 rounded-2xl max-w-sm text-sm shadow-sm ${isMe
+										className={`px-3 py-1.5 rounded-2xl max-w-sm text-sm shadow-sm ${isMe
 											? "bg-primary text-white rounded-tr-none"
 											: "bg-gray-100 text-gray-900 rounded-tl-none"
 											}`}
