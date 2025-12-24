@@ -97,8 +97,7 @@ function MessagesContent() {
 
 	const { messages: chatMessages, isLoading: isLoadingMessages } =
 		useGetChatMessages(chatMessagesToFetch);
-	const { sendMessage } =
-		useSendMessages(chatMessagesToFetch);
+	const { sendMessage } = useSendMessages(chatMessagesToFetch);
 
 	const [users, setUsers] = useState<IUserToChat[]>([]);
 	const [loggedInUser, setLoggedInUser] = useState<any>();
@@ -122,7 +121,8 @@ function MessagesContent() {
 
 					if (res?.data?.participants) {
 						const otherParticipant = res.data.participants.find(
-							(p: any) => p.user?._id === userId || p.user === userId
+							(p: any) =>
+								p.user?._id === userId || p.user === userId
 						);
 						if (otherParticipant) {
 							setSelectedExpert(otherParticipant);
@@ -198,7 +198,9 @@ function MessagesContent() {
 		);
 
 		const allUsers = [...experts, ...business];
-		const uniqueUsers = Array.from(new Map(allUsers.map((u) => [u.id, u])).values());
+		const uniqueUsers = Array.from(
+			new Map(allUsers.map((u) => [u.id, u])).values()
+		);
 		setUsers(uniqueUsers);
 	}, [expertList, businessList]);
 
@@ -211,7 +213,13 @@ function MessagesContent() {
 	const roleParam = searchParams.get("role");
 
 	useEffect(() => {
-		if (userIdParam && roleParam && chats && !isPending && !hasProcessedParams.current) {
+		if (
+			userIdParam &&
+			roleParam &&
+			chats &&
+			!isPending &&
+			!hasProcessedParams.current
+		) {
 			const myId = loggedInUser?.id || loggedInUser?._id;
 
 			// Find if a chat with this user already exists
@@ -224,10 +232,12 @@ function MessagesContent() {
 
 			if (existingChat) {
 				setChatMessagesToFetch(existingChat._id);
-				const otherParticipant = existingChat.participants.find((p: any) => {
-					const pId = p.user?._id || p.user?.id || p.user;
-					return pId !== myId;
-				});
+				const otherParticipant = existingChat.participants.find(
+					(p: any) => {
+						const pId = p.user?._id || p.user?.id || p.user;
+						return pId !== myId;
+					}
+				);
 				if (otherParticipant) setSelectedExpert(otherParticipant);
 				hasProcessedParams.current = true;
 			} else {
@@ -246,33 +256,39 @@ function MessagesContent() {
 		if (!chats) return [];
 		const myId = loggedInUser?.id || loggedInUser?._id;
 
-		return chats.filter((chat: any) => {
-			const hasMessages = chat.lastMessage || (chat.messages && chat.messages.length > 0);
-			const isCurrentlySelected = chat._id === chatMessagesToFetch;
-			return hasMessages || isCurrentlySelected;
-		}).map((chat: any) => {
-			const otherParticipant = chat.participants.find((p: any) => {
-				const pId = p.user?._id || p.user?.id || p.user;
-				return pId !== myId;
+		return chats
+			.filter((chat: any) => {
+				const hasMessages =
+					chat.lastMessage ||
+					(chat.messages && chat.messages.length > 0);
+				const isCurrentlySelected = chat._id === chatMessagesToFetch;
+				return hasMessages || isCurrentlySelected;
+			})
+			.map((chat: any) => {
+				const otherParticipant = chat.participants.find((p: any) => {
+					const pId = p.user?._id || p.user?.id || p.user;
+					return pId !== myId;
+				});
+
+				// Calculate unread count specifically for the admin
+				// 1. If the admin sent the last message, unread count for the admin should be 0
+				// 2. If the chat is currently selected, unread count should be 0
+				const isLastSenderMe =
+					chat.lastMessage?.sender?.id === myId ||
+					chat.lastMessage?.sender?._id === myId;
+				const isCurrentlyActive = chat._id === chatMessagesToFetch;
+
+				let unreadCount = chat.unreadCount || 0;
+				if (isLastSenderMe || isCurrentlyActive) {
+					unreadCount = 0;
+				}
+
+				return {
+					...chat,
+					otherParticipant,
+					unreadCount,
+				};
 			});
-
-			// Calculate unread count specifically for the admin
-			// 1. If the admin sent the last message, unread count for the admin should be 0
-			// 2. If the chat is currently selected, unread count should be 0
-			const isLastSenderMe = chat.lastMessage?.sender?.id === myId || chat.lastMessage?.sender?._id === myId;
-			const isCurrentlyActive = chat._id === chatMessagesToFetch;
-
-			let unreadCount = chat.unreadCount || 0;
-			if (isLastSenderMe || isCurrentlyActive) {
-				unreadCount = 0;
-			}
-
-			return {
-				...chat,
-				otherParticipant,
-				unreadCount
-			};
-		});
 	}, [chats, loggedInUser, chatMessagesToFetch]);
 
 	const filteredChats = useMemo(() => {
@@ -292,7 +308,11 @@ function MessagesContent() {
 	const filteredUsers = useMemo(() => {
 		if (!searchUser.trim()) return users;
 		const s = searchUser.toLowerCase();
-		return users.filter(u => u.name.toLowerCase().includes(s) || u.email?.toLowerCase().includes(s));
+		return users.filter(
+			(u) =>
+				u.name.toLowerCase().includes(s) ||
+				u.email?.toLowerCase().includes(s)
+		);
 	}, [users, searchUser]);
 
 	return (
@@ -301,7 +321,9 @@ function MessagesContent() {
 			<div className="w-80 border-r border-[#EFF2F3] flex flex-col bg-[#FBFCFC]">
 				<div className="p-4 space-y-4">
 					<div className="flex items-center justify-between">
-						<h1 className="text-xl font-bold text-[#0E1426]">Messages</h1>
+						<h1 className="text-xl font-bold text-[#0E1426]">
+							Messages
+						</h1>
 						<div
 							onClick={() => setFindUsersToChat(true)}
 							className="p-2 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all cursor-pointer"
@@ -341,7 +363,10 @@ function MessagesContent() {
 						// console.log(otherParticipant);
 						if (!otherParticipant) return null;
 
-						const otherId = otherParticipant.user?._id || otherParticipant.user?.id || otherParticipant.user;
+						const otherId =
+							otherParticipant.user?._id ||
+							otherParticipant.user?.id ||
+							otherParticipant.user;
 						const isSelected = chatMessagesToFetch === chat._id;
 
 						const lastMsg = chat.lastMessage;
@@ -354,23 +379,31 @@ function MessagesContent() {
 									setChatMessagesToFetch(chat._id);
 									setSelectedExpert(otherParticipant);
 								}}
-								className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${isSelected
-									? "bg-white shadow-md border-l-4 border-l-primary"
-									: "hover:bg-gray-100 border-l-4 border-l-transparent"
-									}`}
+								className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
+									isSelected
+										? "bg-white shadow-md border-l-4 border-l-primary"
+										: "hover:bg-gray-100 border-l-4 border-l-transparent"
+								}`}
 							>
 								<div className="relative flex-shrink-0">
 									<Avatar className="h-12 w-12 border-2 border-white shadow-sm">
 										<AvatarImage
-											src={otherParticipant.user?.avatar || otherParticipant.user?.profilePicture || otherParticipant.user?.image}
+											src={
+												otherParticipant.user?.avatar ||
+												otherParticipant.user
+													?.profilePicture ||
+												otherParticipant.user?.image
+											}
 											alt={otherParticipant.user?.name}
 										/>
 										<AvatarFallback
 											className={`${getColorForUser(
-												otherParticipant.user?.name || "?"
+												otherParticipant.user?.name ||
+													"?"
 											)} text-white text-xs font-bold`}
 										>
-											{otherParticipant.user?.name?.[0]?.toUpperCase() || "?"}
+											{otherParticipant.user?.name?.[0]?.toUpperCase() ||
+												"?"}
 										</AvatarFallback>
 									</Avatar>
 									{chat.online && (
@@ -382,23 +415,47 @@ function MessagesContent() {
 									<div className="flex items-center justify-between mb-0.5">
 										<div className="flex gap-0.5">
 											<h3 className="text-sm font-bold text-[#0E1426] truncate max-w-[120px]">
-												{otherParticipant.user?.name || "Unknown User"}
+												{otherParticipant.user?.name ||
+													"Unknown User"}
 											</h3>
-											<span className="text-xs mt-0.5 text-gray-400">({otherParticipant?.userModel || "Unknown Role"})</span>
+											<span className="text-xs mt-0.5 text-gray-400">
+												(
+												{otherParticipant?.userModel ||
+													"Unknown Role"}
+												)
+											</span>
 										</div>
 										{lastMsg?.createdAt && (
 											<span className="text-[10px] text-gray-400 font-medium">
-												{isToday(new Date(lastMsg.createdAt))
-													? format(new Date(lastMsg.createdAt), "h:mm a")
-													: formatDistanceToNow(new Date(lastMsg.createdAt), { addSuffix: false })}
+												{isToday(
+													new Date(lastMsg.createdAt)
+												)
+													? format(
+															new Date(
+																lastMsg.createdAt
+															),
+															"h:mm a"
+													  )
+													: formatDistanceToNow(
+															new Date(
+																lastMsg.createdAt
+															),
+															{ addSuffix: false }
+													  )}
 											</span>
 										)}
 									</div>
 
 									<div className="flex items-center justify-between">
-										<p className={`text-xs truncate max-w-[140px] ${unreadCount > 0 ? "text-[#0E1426] font-bold" : "text-gray-500"
-											}`}>
-											{lastMsg?.content || `Start a conversation...`}
+										<p
+											className={`text-xs truncate max-w-[140px] ${
+												unreadCount > 0
+													? "text-[#0E1426] font-bold"
+													: "text-gray-500"
+											}`}
+										>
+											{lastMsg?.content ||
+												`Start a conversation...`}
 										</p>
 										{unreadCount > 0 && (
 											<span className="flex items-center justify-center min-w-[18px] h-[18px] bg-primary text-white text-[10px] font-bold rounded-full px-1 shadow-sm">
@@ -426,9 +483,12 @@ function MessagesContent() {
 						/>
 					</div>
 					<div className="text-center space-y-2">
-						<h2 className="text-2xl font-bold text-[#0E1426]">Scalepadi Chats</h2>
+						<h2 className="text-2xl font-bold text-[#0E1426]">
+							ScalePadi Chats
+						</h2>
 						<p className="text-sm text-gray-500 max-w-[280px]">
-							Select a conversation from the sidebar or start a new one to begin messaging.
+							Select a conversation from the sidebar or start a
+							new one to begin messaging.
 						</p>
 					</div>
 					<button
@@ -444,8 +504,17 @@ function MessagesContent() {
 					<div className="border-b border-[#EFF2F3] p-4 bg-[#FBFCFC] flex items-center justify-between">
 						<div className="flex items-center gap-3">
 							<Avatar className="h-10 w-10 border border-[#EFF2F3]">
-								<AvatarImage src={selectedExpert?.user?.avatar || selectedExpert?.user?.profilePicture} />
-								<AvatarFallback className={`${getColorForUser(selectedExpert?.user?.name)} text-white font-bold`}>
+								<AvatarImage
+									src={
+										selectedExpert?.user?.avatar ||
+										selectedExpert?.user?.profilePicture
+									}
+								/>
+								<AvatarFallback
+									className={`${getColorForUser(
+										selectedExpert?.user?.name
+									)} text-white font-bold`}
+								>
 									{selectedExpert?.user?.name?.[0]?.toUpperCase()}
 								</AvatarFallback>
 							</Avatar>
@@ -455,7 +524,9 @@ function MessagesContent() {
 								</h2>
 								<div className="flex items-center gap-1.5">
 									<span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-									<span className="text-[10px] text-gray-400 font-medium">Active now</span>
+									<span className="text-[10px] text-gray-400 font-medium">
+										Active now
+									</span>
 								</div>
 							</div>
 						</div>
@@ -466,31 +537,46 @@ function MessagesContent() {
 								<div className="w-16 h-16 flex items-center justify-center rounded-full bg-gray-100 mb-4">
 									<MessageSquare className="h-8 w-8 text-gray-400" />
 								</div>
-								<h3 className="text-lg font-medium text-gray-700">No messages yet</h3>
-								<p className="text-sm text-gray-500 mt-1">Start the conversation below.</p>
+								<h3 className="text-lg font-medium text-gray-700">
+									No messages yet
+								</h3>
+								<p className="text-sm text-gray-500 mt-1">
+									Start the conversation below.
+								</p>
 							</div>
 						)}
 						{isLoadingMessages && <ChatWindowSkeleton />}
 						{messages?.map((msg, idx) => {
-							const isMe = msg.sender.id === loggedInUser?.id || msg.sender.id === loggedInUser?._id;
+							const isMe =
+								msg.sender.id === loggedInUser?.id ||
+								msg.sender.id === loggedInUser?._id;
 							return (
 								<div
 									key={idx}
-									className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
+									className={`flex flex-col ${
+										isMe ? "items-end" : "items-start"
+									}`}
 								>
 									<div className="text-[10px] text-gray-400 px-1">
-										{isMe ? "You" : (selectedExpert?.user?.name || msg.sender.model)}
+										{isMe
+											? "You"
+											: selectedExpert?.user?.name ||
+											  msg.sender.model}
 									</div>
 									<div
-										className={`px-3 py-1.5 rounded-2xl max-w-sm text-sm shadow-sm ${isMe
-											? "bg-primary text-white rounded-tr-none"
-											: "bg-gray-100 text-gray-900 rounded-tl-none"
-											}`}
+										className={`px-3 py-1.5 rounded-2xl max-w-sm text-sm shadow-sm ${
+											isMe
+												? "bg-primary text-white rounded-tr-none"
+												: "bg-gray-100 text-gray-900 rounded-tl-none"
+										}`}
 									>
 										{msg.content}
 									</div>
 									<div className="text-[9px] text-gray-400 mt-1 px-1">
-										{format(new Date(msg.createdAt), "h:mm a")}
+										{format(
+											new Date(msg.createdAt),
+											"h:mm a"
+										)}
 									</div>
 								</div>
 							);
@@ -507,7 +593,9 @@ function MessagesContent() {
 								onChange={(e) => setInput(e.target.value)}
 								placeholder="Type a message..."
 								className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
-								onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+								onKeyDown={(e) =>
+									e.key === "Enter" && handleSendMessage()
+								}
 							/>
 							<button
 								onClick={handleSendMessage}
@@ -543,18 +631,28 @@ function MessagesContent() {
 								<div
 									key={user.id}
 									className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
-									onClick={() => handleCreateChat(user?.id, user?.role)}
+									onClick={() =>
+										handleCreateChat(user?.id, user?.role)
+									}
 								>
 									<Avatar className="h-10 w-10 border border-white shadow-sm font-bold">
 										<AvatarImage src={user?.avatar} />
-										<AvatarFallback className={`${getColorForUser(user?.name)} text-white`}>
+										<AvatarFallback
+											className={`${getColorForUser(
+												user?.name
+											)} text-white`}
+										>
 											{user?.name?.[0]?.toUpperCase()}
 										</AvatarFallback>
 									</Avatar>
 
 									<div className="flex-1 min-w-0">
-										<div className="text-sm font-bold text-[#0E1426] truncate">{user.name}</div>
-										<div className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">{user.role}</div>
+										<div className="text-sm font-bold text-[#0E1426] truncate">
+											{user.name}
+										</div>
+										<div className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">
+											{user.role}
+										</div>
 									</div>
 								</div>
 							))}
@@ -568,12 +666,18 @@ function MessagesContent() {
 
 export default function MessagesPage() {
 	return (
-		<Suspense fallback={<div className="flex h-[88vh] items-center justify-center bg-white rounded-2xl border border-[#EFF2F3]">
-			<div className="flex flex-col items-center gap-4">
-				<div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-				<span className="text-sm text-gray-500 font-medium">Loading your conversations...</span>
-			</div>
-		</div>}>
+		<Suspense
+			fallback={
+				<div className="flex h-[88vh] items-center justify-center bg-white rounded-2xl border border-[#EFF2F3]">
+					<div className="flex flex-col items-center gap-4">
+						<div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+						<span className="text-sm text-gray-500 font-medium">
+							Loading your conversations...
+						</span>
+					</div>
+				</div>
+			}
+		>
 			<MessagesContent />
 		</Suspense>
 	);
